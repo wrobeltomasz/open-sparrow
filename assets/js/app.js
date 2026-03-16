@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             menuEl.prepend(dashLink);
         }
         
+        // Load initial table data
         loadTable(schema, firstTableName, gridTitleEl, addRowBtn);
         setupPagination(schema);
     }
@@ -138,7 +139,6 @@ function renderBooleanFilters() {
             
             // Link directly to unified applySearch function
             select.addEventListener('change', applySearch);
-            
             filterBar.appendChild(select);
         }
     }
@@ -166,14 +166,14 @@ async function applySearch() {
     });
 
     let rows = fullData.filter(row => {
-        // Validate Boolean Filters First
+        // Validate boolean filters first
         for (const filter of activeBoolFilters) {
             const rowVal = row[filter.col];
             const rowBool = (rowVal === true || rowVal === 't' || rowVal === 'true' || rowVal === 1);
             if (rowBool !== filter.val) return false;
         }
 
-        // Validate Text Search Second
+        // Validate text search second
         if (q) {
             if (selectedColumn) {
                 const raw = (row[selectedColumn] ?? '').toString().toLowerCase();
