@@ -11,9 +11,9 @@
 <body>
 
 <header>
-	<a href="index.php" class="brand-logo">
-		<img src="assets/img/logo-blue.png" alt="OpenSparrow Logo" />
-	</a>
+    <a href="index.php" class="brand-logo">
+        <img src="assets/img/logo-blue.png" alt="Sparrow Logo" />
+    </a>
 
     <input id="globalSearch" type="text" placeholder="Find..." />
 
@@ -31,7 +31,7 @@
                 position: absolute;
                 top: -8px;
                 right: -10px;
-                background: red;
+                background: var(--danger);
                 color: white;
                 border-radius: 50%;
                 padding: 2px 6px;
@@ -61,9 +61,15 @@
                 <ul id="notif-list" style="list-style: none; margin: 0; padding: 0;"></ul>
             </div>
         </div>
+
+        <a href="/admin/index.php" title="Admin" style="text-decoration: none; font-size: 20px; margin-right: 15px; vertical-align: middle; display: inline-block; transition: opacity 0.2s;">
+            ⚙️
+        </a>
+
         <button onclick="window.location.href='logout.php'" class="btn-logout">
             Logout
         </button>
+        
         <button id="hamburger" class="hamburger">☰</button>
     </div>
 </header>
@@ -191,7 +197,7 @@
                             notifList.appendChild(li);
                         });
                     } else {
-                        notifList.innerHTML = '<li style="padding:15px; text-align:center; color:#777;">Brak powiadomień</li>';
+                        notifList.innerHTML = '<li style="padding:15px; text-align:center; color:#777;">No new notifications</li>';
                     }
                 }
             });
