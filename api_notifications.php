@@ -1,53 +1,46 @@
 <?php
-// api_notifications.php
+declare(strict_types=1);
+
 session_start();
-require_once 'includes/db.php';
-header('Content-Type: application/json');
 
-// NOTE: Fetch the logged-in user's ID from the session here. 
-// Hardcoded to 1 for testing purposes. Replace with e.g., $_SESSION['user_id']
-$userId = $_SESSION['user_id'] ?? 1; 
+// Enforce strict session validation
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
 
-$action = $_GET['action'] ?? 'get_count';
-$today = date('Y-m-d');
+// Load database helpers
+require __DIR__ . '/includes/db.php';
+
+$conn = db_connect();
+
+// Securely assign authenticated user ID
+$userId = (int)$_SESSION['user_id'];
+
+header('Content-Type: application/json; charset=utf-8');
 
 try {
-    $conn = db_connect();
+    // Fetch notifications only for the currently logged-in user
+    $sql = 'SELECT id, message, is_read, created_at FROM "app"."users_notifications" WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50';
+    $res = pg_query_params($conn, $sql, [$userId]);
 
-    // Fetches the count of unread notifications for TODAY or from the past
-    if ($action === 'get_count') {
-        $sql = "SELECT COUNT(*) FROM app.users_notifications 
-                WHERE user_id = $1 AND is_read = FALSE AND notify_date <= $2";
-        $res = pg_query_params($conn, $sql, array($userId, $today));
-        $count = pg_fetch_result($res, 0, 0);
-        echo json_encode(['status' => 'success', 'count' => (int)$count]);
+    if (!$res) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Database query failed']);
         exit;
     }
 
-    // Fetches the list of notifications for the dropdown menu
-    if ($action === 'get_list') {
-        $sql = "SELECT * FROM app.users_notifications 
-                WHERE user_id = $1 AND notify_date <= $2 
-                ORDER BY is_read ASC, created_at DESC LIMIT 10";
-        $res = pg_query_params($conn, $sql, array($userId, $today));
-        $notifications = pg_fetch_all($res) ?: [];
-        echo json_encode(['status' => 'success', 'notifications' => $notifications]);
-        exit;
+    $notifications = [];
+    while ($row = pg_fetch_assoc($res)) {
+        $notifications[] = $row;
     }
+    pg_free_result($res);
 
-    // Marks the notification as read
-    if ($action === 'mark_read') {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $notifId = $data['id'] ?? 0;
-        if ($notifId) {
-            $sql = "UPDATE app.users_notifications SET is_read = TRUE WHERE id = $1 AND user_id = $2";
-            pg_query_params($conn, $sql, array($notifId, $userId));
-            echo json_encode(['status' => 'success']);
-        }
-        exit;
-    }
+    echo json_encode(['notifications' => $notifications]);
 
-} catch (Exception $e) {
-    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Internal server error']);
+    exit;
 }
-?>

@@ -2,9 +2,9 @@
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let eventsData = [];
-let appSchema = null;
+let appSchema = null; // Store schema object globally
 
-// Initialize calendar
+// Init calendar when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchSchema();
     await fetchEvents();
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// Fetch schema securely from API
+// Fetch schema definition from backend
 async function fetchSchema() {
     if (typeof window.schema !== 'undefined') {
         appSchema = window.schema;
@@ -39,29 +39,20 @@ async function fetchSchema() {
         appSchema = schema;
         return;
     }
-    
     try {
-        // Secure fetch with Cache Buster
-        const res = await fetch('api.php?api=schema&v=' + Date.now());
+        const res = await fetch('includes/schema.json');
         if (res.ok) {
             appSchema = await res.json();
         }
     } catch (err) {
-        console.warn('Could not fetch schema for calendar', err);
+        console.warn('Failed to fetch schema in calendar', err);
     }
 }
 
-// Fetch events from backend API securely
+// Fetch calendar events via API
 async function fetchEvents() {
     try {
-        // Correct endpoint with Cache Buster
-        const res = await fetch('api.php?api=calendar&v=' + Date.now());
-        
-        if (!res.ok) {
-            console.error('HTTP Error fetching calendar events', res.status);
-            return;
-        }
-        
+        const res = await fetch('api.php?api=calendar');
         const data = await res.json();
         eventsData = data.events || [];
     } catch (err) {
@@ -69,13 +60,14 @@ async function fetchEvents() {
     }
 }
 
-// Render grid
+// Render the main calendar grid
 function renderCalendar() {
     const container = document.getElementById('calendarContainer');
     const title = document.getElementById('calendarTitle');
     
     container.innerHTML = '';
 
+    // Initialize floating tooltip container
     let tooltip = document.getElementById('calendar-event-tooltip');
     if (!tooltip) {
         tooltip = document.createElement('div');
@@ -127,25 +119,41 @@ function renderCalendar() {
             evEl.className = 'calendar-event';
             evEl.style.backgroundColor = ev.color;
             
-            let iconHtml = '';
+            // Build icon safely without innerHTML
             if (ev.icon) {
                 if (ev.icon.includes('/') || ev.icon.includes('.')) {
-                    iconHtml = `<img src="${ev.icon}" style="width:14px; height:14px; vertical-align:middle; margin-right:4px;">`;
+                    const img = document.createElement('img');
+                    img.src = ev.icon;
+                    img.style.cssText = 'width:14px; height:14px; vertical-align:middle; margin-right:4px;';
+                    evEl.appendChild(img);
                 } else {
-                    iconHtml = `<span style="margin-right:4px;">${ev.icon}</span>`;
+                    const iconSpan = document.createElement('span');
+                    iconSpan.style.marginRight = '4px';
+                    iconSpan.textContent = ev.icon;
+                    evEl.appendChild(iconSpan);
                 }
             }
-            evEl.innerHTML = `${iconHtml}${ev.title}`;
+            
+            // Append title safely
+            const titleText = document.createTextNode(ev.title);
+            evEl.appendChild(titleText);
             
             evEl.addEventListener('click', () => {
                 window.location.href = `edit.php?table=${ev.table}&id=${ev.id}`;
             });
 
+            // Handle tooltip hover event safely
             evEl.addEventListener('mouseenter', (e) => {
-                let html = `<div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px;">${ev.title}</div>`;
+                tooltip.innerHTML = '';
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.style.cssText = 'font-weight: bold; font-size: 14px; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px;';
+                headerDiv.textContent = ev.title;
+                tooltip.appendChild(headerDiv);
                 
                 if (ev.rowData) {
                     for (const [key, val] of Object.entries(ev.rowData)) {
+                        // Skip raw IDs and foreign key base names
                         if (key.endsWith('__display')) continue;
                         if (key === 'id') continue; 
 
@@ -154,20 +162,35 @@ function renderCalendar() {
                         if (displayVal !== null && displayVal !== '') {
                             let label = key;
                             
+                            // Get friendly name from schema
                             if (appSchema && appSchema.tables[ev.table]?.columns?.[key]) {
                                 label = appSchema.tables[ev.table].columns[key].display_name || key;
                             }
 
-                            html += `<div style="margin-bottom: 4px;"><strong style="color:#555;">${label}:</strong> <span style="color:#111;">${displayVal}</span></div>`;
+                            // Build tooltip row safely
+                            const rowDiv = document.createElement('div');
+                            rowDiv.style.marginBottom = '4px';
+                            
+                            const strong = document.createElement('strong');
+                            strong.style.color = '#555';
+                            strong.textContent = `${label}: `;
+                            
+                            const spanVal = document.createElement('span');
+                            spanVal.style.color = '#111';
+                            spanVal.textContent = displayVal;
+                            
+                            rowDiv.appendChild(strong);
+                            rowDiv.appendChild(spanVal);
+                            tooltip.appendChild(rowDiv);
                         }
                     }
                 }
                 
-                tooltip.innerHTML = html;
                 tooltip.style.display = 'block';
 
                 const rect = evEl.getBoundingClientRect();
                 
+                // Position tooltip below or above the element dynamically
                 let topPos = rect.bottom + window.scrollY + 5;
                 if (topPos + tooltip.offsetHeight > window.innerHeight + window.scrollY) {
                     topPos = rect.top + window.scrollY - tooltip.offsetHeight - 5;
@@ -177,6 +200,7 @@ function renderCalendar() {
                 tooltip.style.top = topPos + 'px';
             });
 
+            // Hide tooltip on mouseleave
             evEl.addEventListener('mouseleave', () => {
                 tooltip.style.display = 'none';
             });
