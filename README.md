@@ -11,9 +11,14 @@
 **OpenSparrow** is an advanced, JSON schema-driven platform for building database management systems (like ERPs, CRMs, and Admin Panels) using PHP, PostgreSQL, and Vanilla JavaScript.
 
 ![Data Grid](assets/img/grid.png)
+Grid view.<br /><br />
 
+<img width="1893" height="850" alt="OpenSparrow-admin" src="https://github.com/user-attachments/assets/cdfcbf8f-e4fa-4897-8a03-98e5f8357ab2" />
+Admin panel.<br /><br />
 
 At the core of the system is its "Schema-Driven" architecture. Instead of writing repetitive code for every view, you define your tables, relationships, and forms in JSON files. The platform dynamically generates a complete, secure user interface with inline data editing, charting capabilities, and event management.
+
+
 
 ### ✨ Core Features
 
