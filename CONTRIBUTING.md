@@ -1,11 +1,11 @@
-# Contributing to OpenSparrow 🐦
+# Contributing to OpenSparrow
 
 First of all, thank you for considering contributing to OpenSparrow! 🎉  
 We welcome contributions of all kinds — bug reports, feature suggestions, documentation improvements, and code.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Fork the repository
 Click the **Fork** button on GitHub and clone your fork:
@@ -34,7 +34,7 @@ Click the **Fork** button on GitHub and clone your fork:
 
 ---
 
-## 🐛 Reporting Issues
+## Reporting Issues
 
 If you find a bug, please open an issue and include:
 
@@ -52,7 +52,7 @@ Environment details:
 
 ---
 
-## 🔀 Pull Request Process
+## Pull Request Process
 
 ### 1. Create a branch
 
@@ -89,7 +89,7 @@ Use clear and descriptive messages:
 
 ---
 
-## 🎨 Code Style
+## Code Style
 
 We aim to keep the code clean and consistent.
 
@@ -111,7 +111,7 @@ Until then, match the existing code style in the project.
 
 ---
 
-## 💡 Contribution Tips
+## Contribution Tips
 
 - Start with small issues if you're new  
 - Read existing code before making changes  
@@ -120,10 +120,10 @@ Until then, match the existing code style in the project.
 
 ---
 
-## 📄 License
+## License
 
 By contributing, you agree that your contributions will be licensed under the GNU LGPL v3 license.
 
 ---
 
-Thanks again for helping improve OpenSparrow! 🚀
+Thanks again for helping improve OpenSparrow!
