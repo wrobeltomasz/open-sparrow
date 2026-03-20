@@ -7,7 +7,8 @@ export const helpTexts = {
     type: "Database data type (e.g., String(255), integer, boolean, date).",
     fk_ref: "Select a related table. If selected, specify the Reference Column (usually 'id') and Display Column (what users see).",
     url_template: "Template for the link when an event is clicked (e.g., edit.php?table=tasks&id={id}).",
-    display_columns: "For 'list' widget type only: A comma-separated list of database columns to display in each row."
+    display_columns: "For 'list' widget type only: A comma-separated list of database columns to display in each row.",
+    notified_users: "Select specific active users who will receive notifications." // Added help text for users
 };
 
 export function moveArrayItem(arr, index, direction) {
@@ -218,4 +219,62 @@ export function createCheckbox(key, labelText, value, onChange, defaultValue = t
     container.style.marginBottom = '15px';
     container.appendChild(wrapper);
     return container;
+}
+
+// New function to handle multiple choices via checkboxes list
+export function createMultiSelect(key, labelText, options, selectedValues, onChange) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'form-group';
+    
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    wrapper.appendChild(label);
+
+    const container = document.createElement('div');
+    container.style.cssText = 'max-height: 150px; overflow-y: auto; border: 1px solid #cbd5e1; padding: 10px; border-radius: 4px; background: #fff;';
+
+    const safeValues = Array.isArray(selectedValues) ? [...selectedValues] : [];
+
+    if (options.length === 0) {
+        container.innerHTML = '<span style="color:#777; font-size:13px;">No options available</span>';
+    } else {
+        options.forEach(opt => {
+            const lbl = document.createElement('label');
+            lbl.style.cssText = 'display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; font-weight: normal;';
+            
+            const chk = document.createElement('input');
+            chk.type = 'checkbox';
+            chk.value = opt.value;
+            const optValNum = Number(opt.value);
+            chk.checked = safeValues.includes(opt.value) || safeValues.includes(String(opt.value)) || safeValues.includes(optValNum);
+            chk.style.marginRight = '8px';
+
+            chk.addEventListener('change', () => {
+                let current = [...safeValues];
+                if (chk.checked) {
+                    if (!current.includes(optValNum)) current.push(optValNum);
+                } else {
+                    current = current.filter(v => Number(v) !== optValNum);
+                }
+                safeValues.length = 0;
+                safeValues.push(...current);
+                onChange([...safeValues]);
+            });
+
+            lbl.appendChild(chk);
+            lbl.appendChild(document.createTextNode(opt.label));
+            container.appendChild(lbl);
+        });
+    }
+
+    wrapper.appendChild(container);
+    
+    if (helpTexts[key]) {
+        const help = document.createElement('span');
+        help.className = 'help-text';
+        help.textContent = helpTexts[key];
+        wrapper.appendChild(help);
+    }
+    
+    return wrapper;
 }

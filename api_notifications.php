@@ -3,44 +3,69 @@ declare(strict_types=1);
 
 session_start();
 
-// Enforce strict session validation
+// Block unauthenticated access immediately to prevent IDOR
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
     exit;
 }
 
-// Load database helpers
-require __DIR__ . '/includes/db.php';
-
-$conn = db_connect();
-
-// Securely assign authenticated user ID
-$userId = (int)$_SESSION['user_id'];
+require_once __DIR__ . '/includes/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-try {
-    // Fetch notifications only for the currently logged-in user
-    $sql = 'SELECT id, message, is_read, created_at FROM "app"."users_notifications" WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50';
-    $res = pg_query_params($conn, $sql, [$userId]);
+// Safely cast the authenticated user ID
+$userId = (int)$_SESSION['user_id'];
 
-    if (!$res) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Database query failed']);
+$action = $_GET['action'] ?? 'get_count';
+
+try {
+    $conn = db_connect();
+
+    // Fetch the count of unread notifications for the user
+    if ($action === 'get_count') {
+        // Removed notify_date <= today to show upcoming notifications immediately
+        $sql = 'SELECT COUNT(*) FROM "app"."users_notifications" WHERE user_id = $1 AND is_read = FALSE';
+        $res = pg_query_params($conn, $sql, [$userId]);
+        $count = pg_fetch_result($res, 0, 0);
+        
+        echo json_encode(['status' => 'success', 'count' => (int)$count]);
         exit;
     }
 
-    $notifications = [];
-    while ($row = pg_fetch_assoc($res)) {
-        $notifications[] = $row;
+    // Fetch the list of notifications for the dropdown menu
+    if ($action === 'get_list') {
+        // Removed notify_date <= today to show upcoming notifications immediately
+        $sql = 'SELECT * FROM "app"."users_notifications" WHERE user_id = $1 ORDER BY is_read ASC, created_at DESC LIMIT 10';
+        $res = pg_query_params($conn, $sql, [$userId]);
+        $notifications = pg_fetch_all($res) ?: [];
+        
+        echo json_encode(['status' => 'success', 'notifications' => $notifications]);
+        exit;
     }
-    pg_free_result($res);
 
-    echo json_encode(['notifications' => $notifications]);
+    // Mark a specific notification as read
+    if ($action === 'mark_read') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $notifId = (int)($data['id'] ?? 0);
+        
+        if ($notifId > 0) {
+            $sql = 'UPDATE "app"."users_notifications" SET is_read = TRUE WHERE id = $1 AND user_id = $2';
+            pg_query_params($conn, $sql, [$notifId, $userId]);
+            echo json_encode(['status' => 'success']);
+        } else {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid ID']);
+        }
+        exit;
+    }
+    
+    // Fallback for unknown actions
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
 
 } catch (Throwable $e) {
+    // Return generic error message to prevent sensitive data leakage
     http_response_code(500);
-    echo json_encode(['error' => 'Internal server error']);
-    exit;
+    echo json_encode(['status' => 'error', 'message' => 'Internal server error']);
 }

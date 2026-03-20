@@ -1,22 +1,19 @@
 // admin/calendar.js
-import { createTextInput, createSelectInput, createColorInput, createIconPicker } from './ui.js';
+import { createTextInput, createSelectInput, createColorInput, createIconPicker, createMultiSelect } from './ui.js';
 
 export function renderCalendarEditor(key, itemData, isArray, ctx) {
     const { workspaceEl, getTableOptions, getColumnOptionsForTable, renderEditor } = ctx;
     
-    if (itemData.date_field !== undefined) {
-        itemData.date_column = itemData.date_field;
-        delete itemData.date_field;
+    // Legacy cleanup mapping
+    if (itemData.date_field !== undefined) { itemData.date_column = itemData.date_field; delete itemData.date_field; }
+    if (itemData.title_field !== undefined) { itemData.title_column = itemData.title_field; delete itemData.title_field; }
+    if (itemData.user_id_field !== undefined) { delete itemData.user_id_field; }
+    if (itemData.user_id_column !== undefined) { delete itemData.user_id_column; }
+
+    // Ensure array structure for selected users
+    if (!Array.isArray(itemData.notified_users)) {
+        itemData.notified_users = [];
     }
-    if (itemData.title_field !== undefined) {
-        itemData.title_column = itemData.title_field;
-        delete itemData.title_field;
-    }
-    if (itemData.user_id_field !== undefined) {
-        itemData.user_id_column = itemData.user_id_field;
-        delete itemData.user_id_field;
-    }
-    // ------------------------------------------------
 
     const columnOptions = getColumnOptionsForTable(itemData.table);
 
@@ -24,7 +21,6 @@ export function renderCalendarEditor(key, itemData, isArray, ctx) {
         itemData.table = v; 
         itemData.date_column = ""; 
         itemData.title_column = ""; 
-        itemData.user_id_column = "";
         renderEditor(key, itemData, isArray); 
     }));
     
@@ -41,6 +37,36 @@ export function renderCalendarEditor(key, itemData, isArray, ctx) {
     
     workspaceEl.appendChild(createColorInput('color', 'Event Color', itemData.color || '#3788d8', v => itemData.color = v));
     workspaceEl.appendChild(createTextInput('notify_before_days', 'Notify Before (Days)', itemData.notify_before_days, v => itemData.notify_before_days = parseInt(v) || 0));
-    workspaceEl.appendChild(createSelectInput('user_id_column', 'User ID Column (For notifications)', columnOptions, itemData.user_id_column, v => itemData.user_id_column = v));
+
+    // Async block for loading active users from database
+    const usersWrapper = document.createElement('div');
+    usersWrapper.innerHTML = '<p style="color:#777; font-size:13px;">Loading active users...</p>';
+    workspaceEl.appendChild(usersWrapper);
+
+    fetch('api.php?action=users_list')
+        .then(res => res.json())
+        .then(data => {
+            usersWrapper.innerHTML = '';
+            if (data.status === 'success') {
+                // Filter only active users
+                const activeUsers = data.users
+                    .filter(u => u.is_active === true)
+                    .map(u => ({ value: u.id, label: u.username }));
+                
+                usersWrapper.appendChild(createMultiSelect(
+                    'notified_users', 
+                    'Users to Notify (Multi-select)', 
+                    activeUsers, 
+                    itemData.notified_users, 
+                    v => itemData.notified_users = v
+                ));
+            } else {
+                usersWrapper.innerHTML = `<p style="color:red; font-size:13px;">Error loading users: ${data.error}</p>`;
+            }
+        })
+        .catch(() => {
+            usersWrapper.innerHTML = '<p style="color:red; font-size:13px;">Network error while fetching users.</p>';
+        });
+
     workspaceEl.appendChild(createTextInput('url_template', 'URL Template', itemData.url_template, v => itemData.url_template = v));
 }
