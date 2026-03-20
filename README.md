@@ -29,6 +29,75 @@ At the core of the system is its "Schema-Driven" architecture. Instead of writin
 * **Dashboard Engine:** A robust data aggregation engine directly executing SQL operations (COUNT, SUM, AVG, MIN, MAX, GROUP BY) on PostgreSQL. It enables the quick construction of statistical tiles, ranked lists, and charts configured via `dashboard.json`.
 * **Calendar & Automated CRON Notifications:** Map any database table with a date column to a visual calendar. A dedicated background script (`cron_notifications.php`) securely pushes smart notifications to users based on upcoming events.
 
+### 🗂️ Project Structure
+
+```text
+open-sparrow/
+|- admin/
+|  |- api.php                # Admin-side API endpoints
+|  |- app.js                 # Admin app bootstrap and shared logic
+|  |- calendar.js            # Calendar configuration UI logic
+|  |- dashboard.js           # Dashboard builder/configuration logic
+|  |- database.js            # Database settings and connection UI logic
+|  |- docs.js                # Documentation/help tab logic in admin
+|  |- health.js              # System health checks and diagnostics UI
+|  |- index.php              # Admin panel entry point
+|  |- schema.js              # Schema editor logic (tables/fields/relations)
+|  |- security.js            # Security settings UI (auth/debug controls)
+|  |- style.css              # Admin-specific styles
+|  |- ui.js                  # Shared admin UI components/helpers
+|  `- users.js               # User management tab logic
+|
+|- assets/
+|  |- css/
+|  |  |- mobile.css          # Responsive/mobile styling overrides
+|  |  `- styles.css          # Main frontend styling
+|  |- icons/                 # Icon assets used by the UI
+|  |- img/                   # Image assets (screenshots, illustrations)
+|  `- js/
+|     |- app.js              # Main frontend app initialization
+|     |- calendar.js         # Calendar view behaviors
+|     |- dashboard.js        # Dashboard rendering logic
+|     |- debug.js            # Debug mode/client-side diagnostics
+|     |- export_csv.js       # CSV export actions
+|     |- grid_actions.js     # Data grid row/action handlers
+|     |- grid_fk.js          # Foreign key rendering/resolution helpers
+|     |- grid.js             # Core data grid rendering and interaction
+|     `- pagination.js       # Pagination controls and state
+|
+|- cron/
+|  `- cron_notifications.php # Scheduled event notification runner
+|
+|- includes/
+|  |- api_helpers.php        # Shared API validation/response helpers
+|  `- db.php                 # PostgreSQL connection and DB utilities
+|
+|- templates/
+|  `- template.php           # Base page template/layout wrapper
+|
+|- api_notifications.php     # Notification API endpoint
+|- api.php                   # Main application API endpoint (CRUD)
+|- calendar.php              # Calendar page entry point
+|- create.php                # Record creation form/page
+|- dashboard.php             # Dashboard page entry point
+|- edit.php                  # Record editing page
+|- index.php                 # Main app landing page/data grid
+|- login.php                 # Authentication/login page
+|- logout.php                # Session logout handler
+|- CONTRIBUTING.md           # Contribution guidelines
+|- COPYING                   # License text copy
+|- LICENCE                   # Additional license file variant
+`- README.md                 # Project documentation
+```
+
+### Structure Notes
+
+* The root-level `*.php` files are the main runtime entry points for users and APIs.
+* The `admin/` folder contains a separate administrative interface for configuration and maintenance.
+* Frontend behavior is split into focused modules in `assets/js/` (grid, dashboard, calendar, export, etc.).
+* Shared backend building blocks live in `includes/` to avoid duplicate DB/API logic.
+* Reusable view scaffolding is centralized in `templates/template.php`.
+
 ### 🚀 Quick Start (60-Second Setup)
 
 1. Clone the repository to your server (PHP > 8.0 and PostgreSQL required).
@@ -64,6 +133,15 @@ Rdzeniem systemu jest architektura "Schema-Driven". Zamiast pisać powtarzalny k
 * **Wizualny Panel Administratora:** Wbudowany interfejs graficzny (`/admin`) pozwalający na wyklikanie całej struktury aplikacji. Posiada dedykowane zakładki do edycji Schematu, Dashboardów, Kalendarza, a także wbudowaną Diagnostykę Serwera (System Health) i przełącznik "Debug Mode".
 * **Silnik Dashboardów:** Mechanizm agregacji danych prosto z bazy PostgreSQL (obsługa COUNT, SUM, AVG, MIN, MAX i GROUP BY). Pozwala na szybkie budowanie kafelków statystycznych, list rankingowych i wykresów konfigurowanych w `dashboard.json`.
 * **Kalendarz i Automatyczne Powiadomienia (CRON):** Możliwość zmapowania dowolnej tabeli z datą na widok kalendarza. Dedykowany skrypt `cron_notifications.php` codziennie sprawdza nadchodzące zdarzenia i bezpiecznie wysyła powiadomienia do użytkowników.
+
+### 🗂️ Struktura projektu
+
+* `admin/` - Pliki panelu administratora (UI, edytor schematu, diagnostyka i narzędzia bezpieczeństwa).
+* `assets/` - Statyczne zasoby frontendu (CSS, moduły JavaScript, obrazy i ikony).
+* `includes/` - Współdzielone komponenty backendu (połączenie z bazą i helpery API).
+* `cron/` - Skrypty zadań cyklicznych, w tym powiadomienia harmonogramu.
+* Główne pliki `*.php` w katalogu głównym - Widoki aplikacji i endpointy API (`index.php`, `api.php`, `dashboard.php` itd.).
+* `templates/` - Wspólne szablony układu wykorzystywane przez widoki.
 
 ### 🚀 Szybki start (Instalacja w 60 sekund)
 
