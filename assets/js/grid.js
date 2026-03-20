@@ -12,6 +12,7 @@ let displayedColumns = [];
 let filteredData = [];
 let sortState = { column: null, asc: true };
 
+// Build dynamic menu from schema
 export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
   const ul = document.createElement('ul');
   
@@ -24,6 +25,7 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
     const a = document.createElement('a');
     a.href = '#';
 
+    // Append icon if it exists
     if (cfg.icon) {
       const img = document.createElement('img');
       img.src = cfg.icon;
@@ -35,6 +37,7 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
     textSpan.textContent = cfg.display_name || t;
     a.appendChild(textSpan);
 
+    // Handle menu item click
     a.onclick = e => {
       e.preventDefault();
       menuEl.querySelectorAll('a').forEach(link => link.classList.remove('active'));
@@ -51,6 +54,7 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
   debugLog("Menu built", Object.keys(schema.tables));
 }
 
+// Fetch and load table data
 export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
   debugLog("Loading table", table);
 
@@ -64,6 +68,7 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
 
     fullData = data.rows || [];
     
+    // Filter out hidden columns and PK
     displayedColumns = (data.columns || []).filter(c => {
       if (c === 'id') return false;
       const colCfg = schema.tables[table].columns[c] || {};
@@ -76,6 +81,7 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
     addRowBtn.disabled = false;
     sortState = { column: null, asc: true };
 
+    // Redirect to create form on button click
     addRowBtn.onclick = () => {
       debugLog("Redirect to create form", { table: currentTable });
       window.location.href = `create.php?table=${currentTable}`;
@@ -83,12 +89,14 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
 
     await renderGrid(schema);
 
+    // Dispatch event to re-init filters
     document.dispatchEvent(new Event("tableLoaded"));
   } catch (err) {
     console.error("Failed to load table data:", err);
   }
 }
 
+// Preload foreign key relations
 async function preloadForeignKeys(schema) {
   const fks = schema.tables[currentTable]?.foreign_keys;
   if (!fks) return;
@@ -100,6 +108,7 @@ async function preloadForeignKeys(schema) {
     if (fkCfg) {
       const refTable = fkCfg.reference_table;
       
+      // Fetch related data if not cached
       if (!fkCache[refTable]) {
         fkCache[refTable] = fetch(`index.php?api=list&table=${encodeURIComponent(refTable)}`)
           .then(res => res.json())
@@ -117,6 +126,7 @@ async function preloadForeignKeys(schema) {
   await Promise.all(fetchPromises);
 }
 
+// Render the main data grid
 export async function renderGrid(schema) {
   const gridEl = document.getElementById('grid');
   const table = document.createElement('table');
@@ -129,12 +139,14 @@ export async function renderGrid(schema) {
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
 
+  // Add expand column for subtables
   if (hasSubtables) {
     const thExpand = document.createElement('th');
     thExpand.style.width = '30px';
     headRow.appendChild(thExpand);
   }
 
+  // Create table headers
   displayedColumns.forEach(col => {
     const th = document.createElement('th');
     const colCfg = schema.tables[currentTable].columns[col] || {};
@@ -152,6 +164,7 @@ export async function renderGrid(schema) {
       renderGrid(schema);
     });
 
+    // Add sort indicator
     if (sortState.column === col) {
       th.textContent += sortState.asc ? ' ▲' : ' ▼';
     }
@@ -171,6 +184,7 @@ export async function renderGrid(schema) {
   for (const row of pageRows) {
     const tr = document.createElement('tr');
 
+    // Handle subtable drilldown
     if (hasSubtables) {
       const tdExpand = document.createElement('td');
       const btnExpand = document.createElement('button');
@@ -207,6 +221,7 @@ export async function renderGrid(schema) {
             subTitle.style.color = 'var(--text)';
             subWrapper.appendChild(subTitle);
 
+            // Fetch related subtable rows
             try {
               const res = await fetch(`index.php?api=list&table=${encodeURIComponent(sub.table)}&filter_col=${encodeURIComponent(sub.foreign_key)}&filter_val=${encodeURIComponent(row.id)}`);
               const data = await res.json();
@@ -272,6 +287,7 @@ export async function renderGrid(schema) {
 
       const td = document.createElement('td');
 
+      // Render enum as dropdown
       if (type === 'enum') {
         const select = document.createElement('select');
         select.dataset.column = col;
@@ -314,6 +330,7 @@ export async function renderGrid(schema) {
         attachCellEvents(select);
         td.appendChild(select);
       }
+      // Render boolean as checkbox
       else if (type.includes('boolean')) {
         const input = document.createElement('input');
         input.type = 'checkbox';
@@ -324,6 +341,7 @@ export async function renderGrid(schema) {
         attachCellEvents(input);
         td.appendChild(input);
       }
+      // Render date picker
       else if (type.includes('date')) {
         const input = document.createElement('input');
         input.type = 'date';
@@ -334,6 +352,7 @@ export async function renderGrid(schema) {
         attachCellEvents(input);
         td.appendChild(input);
       }
+      // Render editable text cell
       else {
         td.contentEditable = 'true';
         td.classList.add('editable');
@@ -343,6 +362,7 @@ export async function renderGrid(schema) {
         const strVal = String(value).trim();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         
+        // Handle URL links
         if (/^https?:\/\//i.test(strVal)) {
             const a = document.createElement('a');
             a.href = strVal;
@@ -358,7 +378,9 @@ export async function renderGrid(schema) {
             });
 
             td.appendChild(a);
-        } else if (emailRegex.test(strVal)) {
+        } 
+        // Handle email links
+        else if (emailRegex.test(strVal)) {
             const a = document.createElement('a');
             a.href = `mailto:${strVal}`;
             a.textContent = strVal;
@@ -367,8 +389,6 @@ export async function renderGrid(schema) {
             a.style.cursor = 'pointer';
             
             a.addEventListener('click', (e) => {
-                // Nie używamy preventDefault(), żeby przeglądarka mogła naturalnie
-                // otworzyć domyślnego klienta poczty e-mail
                 e.stopPropagation();
             });
 
@@ -398,6 +418,7 @@ export async function renderGrid(schema) {
 
     const tdActions = document.createElement('td');
     
+    // Edit action button
     const editBtn = document.createElement('button');
     editBtn.textContent = 'Edit';
     editBtn.style.marginRight = '8px';
@@ -406,6 +427,7 @@ export async function renderGrid(schema) {
     });
     tdActions.appendChild(editBtn);
 
+    // Delete action button
     const delBtn = document.createElement('button');
     delBtn.textContent = 'Delete';
     delBtn.className = 'danger';
@@ -436,6 +458,7 @@ export async function renderGrid(schema) {
   debugLog("Grid rendered", { rows: pageRows.length });
 }
 
+// Custom client-side sorting function
 function sortData() {
   if (!sortState.column) return;
   const col = sortState.column;
@@ -462,6 +485,7 @@ function sortData() {
   });
 }
 
+// Convert dates to standard ISO format for input fields
 function normalizeDateValue(value) {
   if (!value) return '';
   if (typeof value === 'string') {
@@ -479,14 +503,17 @@ function normalizeDateValue(value) {
   return '';
 }
 
+// Return current grid state
 export function getState() {
   return { currentTable, fullData, filteredData, displayedColumns, sortState };
 }
 
+// Update filtered dataset
 export function setFilteredData(rows) {
   filteredData = rows;
 }
 
+// Initialize export button event listener
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('exportCsv');
   if (btn) {
