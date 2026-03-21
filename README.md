@@ -110,11 +110,26 @@ git clone https://github.com/wrobeltomasz/open-sparrow.git
 cd open-sparrow
 ```
 
-### 2. Install dependencies
+### 2. Run with Docker (Quick Start)
+If you have Docker installed, you can start the entire stack with a single command. This handles PHP, Nginx, and PostgreSQL for you:
+
+```bash
+# Set permissions and start containers
+sudo chown -R 82:82 includes/ && docker compose up -d --build
+```
+
+Security Note
+1. The includes/ directory stores database.json and dashboard.json.
+2. .htaccess file is included to block public web access to these files.
+3. Important: Ensure includes/*.json is added to your .gitignore before committing changes to avoid leaking credentials.
+
+The app will be available at: http://localhost:8080
+
+### 3. Install dependencies
 
 There is no dependency install step required for the current repository state.
 
-### 3. Set up environment variables (.env example)
+### 4. Set up environment variables (.env example)
 
 OpenSparrow can read PostgreSQL environment variables:
 
@@ -128,7 +143,7 @@ PGPASSWORD=postgres
 
 Important: there is no `.env` loader in the current codebase. Define these variables in your server or shell environment, or use the admin UI Database tab.
 
-### 4. Configure database connection from Admin
+### 5. Configure database connection from Admin
 
 Open the admin panel:
 
@@ -145,7 +160,7 @@ Then go to the Database tab:
 
 The settings are stored in `includes/database.json`.
 
-### 5. Run database migrations (system initialization)
+### 6. Run database migrations (system initialization)
 
 In Admin -> System Health, click Initialize System Tables.
 
@@ -157,7 +172,7 @@ This creates required tables in schema `app`, including:
 
 This is the migration-equivalent step for the current project.
 
-### 6. Start the development server
+### 7. Start the development server
 
 Option A (recommended): serve through Apache/Nginx and open:
 
@@ -173,7 +188,7 @@ Then open:
 
 - http://localhost:8000/admin
 
-### 7. Start building your app
+### 8. Start building your app
 
 After setup:
 
