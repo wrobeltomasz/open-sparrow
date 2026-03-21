@@ -1,35 +1,53 @@
-# OpenSparrow
+<div align="center">
+  <img src="assets/img/logo-blue.png" alt="OpenSparrow banner" width="220" />
 
-![License](https://img.shields.io/badge/license-LGPL%20v3-blue.svg)
-![PHP](https://img.shields.io/badge/PHP-8.x-purple.svg)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-blue.svg)
+  <h1>OpenSparrow</h1>
+
+  <p><strong>Schema-driven PHP platform to build CRUD apps, dashboards, and calendars on PostgreSQL in minutes.</strong></p>
+
+  <p>
+    <a href="LICENCE"><img src="https://img.shields.io/badge/License-LGPL%20v3-blue.svg" alt="License: LGPL v3" /></a>
+    <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.0%2B-777BB4?logo=php&logoColor=white" alt="PHP 8.0+" /></a>
+    <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"><img src="https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript ES6+" /></a>
+  </p>
+</div>
 
 ---
 
-## 🇬🇧 English
+## Overview
 
-**OpenSparrow** is an advanced, JSON schema-driven platform for building database management systems (like ERPs, CRMs, and Admin Panels) using PHP, PostgreSQL, and Vanilla JavaScript.
+OpenSparrow is a JSON schema-driven platform for internal systems such as CRM and ERP tools. Define your tables and relations once, and OpenSparrow generates data grids, forms, dashboard widgets, and calendar views.
 
-![Data Grid](assets/img/grid.png)
-Grid view.<br /><br />
+Demo: http://www.demo.opensparrow.org
 
-<img width="1893" height="850" alt="OpenSparrow-admin" src="https://github.com/user-attachments/assets/cdfcbf8f-e4fa-4897-8a03-98e5f8357ab2" />
-Admin panel.<br /><br />
+---
 
-At the core of the system is its "Schema-Driven" architecture. Instead of writing repetitive code for every view, you define your tables, relationships, and forms in JSON files. The platform dynamically generates a complete, secure user interface with inline data editing, charting capabilities, and event management.
+## Dashboard Preview
 
+<img width="1899" height="869" alt="OpenSparrow data grid" src="assets/img/grid.png" />
+Grid view.
 
+<br /><br />
 
-### Core Features
+<img width="1893" height="850" alt="OpenSparrow dashboard and admin panel" src="https://github.com/user-attachments/assets/cdfcbf8f-e4fa-4897-8a03-98e5f8357ab2" />
+Admin panel.
 
-* **Zero-Configuration Setup:** Forget about manual config file editing. Connect to your database and initialize the entire system structure with a single click directly from your browser!
-* **JSON-Driven Data Grid (CRUD):** Automatically generates tables and forms based on `schema.json`. It fully supports foreign key resolution (displaying names instead of IDs), nested sub-tables, field constraints (`not_null`, `readonly`), and custom status coloring (`enum_colors`).
-* **Dynamic API & Security:** The built-in `api.php` safely processes GET, POST, PATCH (for inline cell edits), and DELETE requests. It enforces strict session-based authentication and automatically records all data modifications into a secure internal audit log.
-* **Visual Admin Panel:** A built-in GUI (`/admin`) that allows you to configure your entire application structure without touching a single line of code. It features dedicated tabs for Schema, Dashboards, Calendar configurations, built-in Server Diagnostics (System Health), and a "Debug Mode" toggle.
-* **Dashboard Engine:** A robust data aggregation engine directly executing SQL operations (COUNT, SUM, AVG, MIN, MAX, GROUP BY) on PostgreSQL. It enables the quick construction of statistical tiles, ranked lists, and charts configured via `dashboard.json`.
-* **Calendar & Automated CRON Notifications:** Map any database table with a date column to a visual calendar. A dedicated background script (`cron_notifications.php`) securely pushes smart notifications to users based on upcoming events.
+---
 
-### 🗂️ Project Structure
+## Features
+
+- **Zero-Configuration Setup:** Configure your PostgreSQL connection and initialize core system tables directly from the admin interface.
+- **JSON-Driven Data Grid (CRUD):** Generate tables and forms from `schema.json` with support for nested relations, constraints, and enum color states.
+- **Inline Editing and Safe API Flow:** Update records directly in the grid using PATCH while keeping request handling centralized in `api.php`.
+- **Dashboard Engine:** Build metrics and grouped summaries using COUNT, SUM, AVG, MIN, MAX, and GROUP BY operations on PostgreSQL data.
+- **Calendar and Notifications:** Map date-based records to calendar views and trigger scheduled reminders through the cron notification runner.
+- **Visual Admin Panel:** Manage schema, dashboards, calendar settings, users, and security options from `/admin`.
+- **Audit Logging:** Data changes are tracked in internal log tables for traceability.
+- **Export and Navigation Tools:** Use CSV export and pagination modules for day-to-day data operations.
+
+---
+
+## Project Structure
 
 ```text
 open-sparrow/
@@ -47,36 +65,20 @@ open-sparrow/
 |  |- style.css              # Admin-specific styles
 |  |- ui.js                  # Shared admin UI components/helpers
 |  `- users.js               # User management tab logic
-|
 |- assets/
-|  |- css/
-|  |  |- mobile.css          # Responsive/mobile styling overrides
-|  |  `- styles.css          # Main frontend styling
+|  |- css/                   # Frontend style files
 |  |- icons/                 # Icon assets used by the UI
-|  |- img/                   # Image assets (screenshots, illustrations)
-|  `- js/
-|     |- app.js              # Main frontend app initialization
-|     |- calendar.js         # Calendar view behaviors
-|     |- dashboard.js        # Dashboard rendering logic
-|     |- debug.js            # Debug mode/client-side diagnostics
-|     |- export_csv.js       # CSV export actions
-|     |- grid_actions.js     # Data grid row/action handlers
-|     |- grid_fk.js          # Foreign key rendering/resolution helpers
-|     |- grid.js             # Core data grid rendering and interaction
-|     `- pagination.js       # Pagination controls and state
-|
+|  |- img/                   # Image assets (logos, screenshots)
+|  `- js/                    # Frontend JavaScript modules
 |- cron/
 |  `- cron_notifications.php # Scheduled event notification runner
-|
 |- includes/
 |  |- api_helpers.php        # Shared API validation/response helpers
 |  `- db.php                 # PostgreSQL connection and DB utilities
-|
 |- templates/
 |  `- template.php           # Base page template/layout wrapper
-|
-|- api_notifications.php     # Notification API endpoint
 |- api.php                   # Main application API endpoint (CRUD)
+|- api_notifications.php     # Notification API endpoint
 |- calendar.php              # Calendar page entry point
 |- create.php                # Record creation form/page
 |- dashboard.php             # Dashboard page entry point
@@ -87,32 +89,111 @@ open-sparrow/
 |- CONTRIBUTING.md           # Contribution guidelines
 |- COPYING                   # License text copy
 |- LICENCE                   # Additional license file variant
-`- README.md                 # Project documentation
+|- README.md                 # Main project documentation
+`- README1.md                # Development README draft
 ```
 
-### Structure Notes
+---
 
-* The root-level `*.php` files are the main runtime entry points for users and APIs.
-* The `admin/` folder contains a separate administrative interface for configuration and maintenance.
-* Frontend behavior is split into focused modules in `assets/js/` (grid, dashboard, calendar, export, etc.).
-* Shared backend building blocks live in `includes/` to avoid duplicate DB/API logic.
-* Reusable view scaffolding is centralized in `templates/template.php`.
+## Getting Started
 
-### Quick Start (60-Second Setup)
+### Prerequisites
 
-1. Clone the repository to your server (PHP > 8.0 and PostgreSQL required).
+- PHP 8.0+
+- PostgreSQL 14+
+- Web server (Apache or Nginx) or PHP built-in server
+- Git
 
+### 1. Clone the repository
 
-git clone [https://github.com/wrobeltomasz/open-sparrow.git](https://github.com/wrobeltomasz/open-sparrow.git)
+```bash
+git clone https://github.com/wrobeltomasz/open-sparrow.git
+cd open-sparrow
+```
 
+### 2. Install dependencies
 
-2. Open your project URL in the browser pointing to the `/admin` directory (e.g., `http://localhost/open-sparrow/admin`).
-3. Log in using the default password: **`admin`** (We highly recommend changing this in the *Security* tab later).
-4. Navigate to the **Database** tab, enter your PostgreSQL credentials, and click **Save File**.
-5. Navigate to the **System Health** tab and click the **"Initialize System Tables"** button. The system will automatically create the `app` schema and the required core user/log tables.
-6. Done! Go to the **Schema** tab, click "Sync DB Tables," and start building your CRM visually!
+There is no dependency install step required for the current repository state.
 
-### License
+### 3. Set up environment variables (.env example)
+
+OpenSparrow can read PostgreSQL environment variables:
+
+```dotenv
+PGHOST=127.0.0.1
+PGPORT=5432
+PGDATABASE=opensparrow
+PGUSER=postgres
+PGPASSWORD=postgres
+```
+
+Important: there is no `.env` loader in the current codebase. Define these variables in your server or shell environment, or use the admin UI Database tab.
+
+### 4. Configure database connection from Admin
+
+Open the admin panel:
+
+- http://localhost/open-sparrow/admin
+
+Log in with default credentials:
+
+- Username: admin
+- Password: admin
+
+Then go to the Database tab:
+
+1. Enter host, port, database, username, and password.
+2. Save configuration.
+
+The settings are stored in `includes/database.json`.
+
+### 5. Run database migrations (system initialization)
+
+In Admin -> System Health, click Initialize System Tables.
+
+This creates required tables in schema `app`, including:
+
+- `app.users`
+- `app.users_log`
+- `app.users_notifications`
+
+This is the migration-equivalent step for the current project.
+
+### 6. Start the development server
+
+Option A (recommended): serve through Apache/Nginx and open:
+
+- http://localhost/open-sparrow/
+
+Option B (quick local):
+
+```bash
+php -S localhost:8000
+```
+
+Then open:
+
+- http://localhost:8000/admin
+
+### 7. Start building your app
+
+After setup:
+
+1. Open the Schema tab and sync existing tables.
+2. Configure views and field behavior.
+3. Use `index.php`, `dashboard.php`, and `calendar.php` as your runtime entry points.
+
+---
+
+## Contributing
+
+Contributions are welcome. Please follow [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+---
+
+## License
 
 This project is licensed under the **GNU Lesser General Public License v3.0 (LGPL v3)**.
-You are permitted to use this platform freely in both open-source and closed-source commercial projects. Any modifications made to the core OpenSparrow files must be released under the same open-source license. See the `LICENSE` file for full details.
+You may use OpenSparrow in open-source and closed-source commercial projects.
+If you modify core OpenSparrow files, those modifications must remain under the same license.
+See [LICENCE](LICENCE) for full details.
