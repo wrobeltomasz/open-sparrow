@@ -154,10 +154,10 @@ async function loadConfigFile(fileName) {
 function addNewItem() {
     let newIndex = 0;
     if (currentFile === 'dashboard') {
-        currentConfig.widgets.push({ id: "widget_" + Date.now(), type: "kpi_card", title: "New Widget", table: "", query: { type: "count", column: "id" }, icon: "📊", color: "#3b82f6", display_columns: [] });
+        currentConfig.widgets.push({ id: "widget_" + Date.now(), type: "kpi_card", title: "New Widget", table: "", query: { type: "count", column: "id" }, icon: "", color: "#3b82f6", display_columns: [] });
         newIndex = currentConfig.widgets.length - 1;
     } else if (currentFile === 'calendar') {
-        currentConfig.sources.push({ table: "", date_column: "", title_column: "", color: "#3b82f6", notify_before_days: 0, user_id_field: "", url_template: "" });
+        currentConfig.sources.push({ table: "", date_column: "", title_column: "", color: "#3b82f6", notify_before_days: 0, user_id_column: "", url_template: "" });
         newIndex = currentConfig.sources.length - 1;
     }
     
@@ -188,10 +188,10 @@ function renderSidebar() {
         if (actionDiv) actionDiv.innerHTML = ''; 
 
         const li = document.createElement('li');
-        let title = "⚙️ Settings";
-        if (currentFile === 'health') title = "⚙️ View Diagnostics";
-        if (currentFile === 'docs') title = "📖 Read Documentation";
-        if (currentFile === 'users') title = "👥 System Users";
+        let title = "Settings";
+        if (currentFile === 'health') title = "View Diagnostics";
+        if (currentFile === 'docs') title = "Read Documentation";
+        if (currentFile === 'users') title = "System Users";
         
         li.textContent = title; 
         li.style.fontWeight = 'bold'; 
@@ -212,7 +212,7 @@ function renderSidebar() {
 
     if (currentFile === 'schema') {
         const btnSync = document.createElement('button');
-        btnSync.className = 'btn-add'; btnSync.style.width = '100%'; btnSync.innerHTML = '🔄 Sync DB Tables';
+        btnSync.className = 'btn-add'; btnSync.style.width = '100%'; btnSync.innerHTML = 'Sync DB Tables';
         btnSync.onclick = () => {
             const schemaName = prompt("Enter database schema name to sync:", "public");
             if (schemaName) syncSchemaTables(currentConfig, schemaName, 
@@ -229,12 +229,12 @@ function renderSidebar() {
 
     const btnClear = document.createElement('button');
     btnClear.className = 'btn-remove'; btnClear.style.width = '100%'; btnClear.style.marginTop = '10px'; btnClear.style.float = 'none';
-    btnClear.innerHTML = '⚠️ Clear Entire Config'; btnClear.onclick = clearConfig;
+    btnClear.innerHTML = 'Clear Entire Config'; btnClear.onclick = clearConfig;
     actionDiv.appendChild(btnClear);
 
     if (currentFile === 'dashboard' || currentFile === 'calendar') {
         const layoutLi = document.createElement('li');
-        layoutLi.textContent = "⚙️ Global Settings"; layoutLi.style.fontWeight = 'bold'; layoutLi.style.borderBottom = '2px solid var(--accent)';
+        layoutLi.textContent = "Global Settings"; layoutLi.style.fontWeight = 'bold'; layoutLi.style.borderBottom = '2px solid var(--accent)';
         if (currentItemKey === 'LAYOUT') layoutLi.classList.add('active');
         layoutLi.onclick = () => {
             currentItemKey = 'LAYOUT';
@@ -261,7 +261,7 @@ function renderSidebar() {
 
         const controls = document.createElement('div');
         const btnUp = document.createElement('button');
-        btnUp.innerHTML = '⬆️'; btnUp.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; padding:0 2px;';
+        btnUp.innerHTML = '^'; btnUp.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; padding:0 2px;';
         if (index === 0) { btnUp.disabled = true; btnUp.style.opacity = '0.3'; btnUp.style.cursor = 'default'; }
         btnUp.onclick = (e) => {
             e.stopPropagation(); 
@@ -273,7 +273,7 @@ function renderSidebar() {
         };
 
         const btnDown = document.createElement('button');
-        btnDown.innerHTML = '⬇️'; btnDown.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; padding:0 2px;';
+        btnDown.innerHTML = 'v'; btnDown.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; padding:0 2px;';
         if (index === keys.length - 1) { btnDown.disabled = true; btnDown.style.opacity = '0.3'; btnDown.style.cursor = 'default'; }
         btnDown.onclick = (e) => {
             e.stopPropagation();
@@ -297,7 +297,8 @@ function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    if (['health', 'docs', 'users'].includes(String(key).toLowerCase())) {
+    // FIX: Show/hide save button based on currentFile instead of key
+    if (['health', 'docs', 'users'].includes(currentFile)) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -328,7 +329,7 @@ function renderEditor(key, itemData, isArray) {
     headerDiv.appendChild(title);
     
     const btnDelete = document.createElement('button');
-    btnDelete.className = 'btn-remove'; btnDelete.textContent = '🗑️ Delete this item';
+    btnDelete.className = 'btn-remove'; btnDelete.textContent = 'Delete this item';
     btnDelete.onclick = () => {
         if (confirm('Are you sure?')) {
             if (currentFile === 'dashboard') currentConfig.widgets.splice(key, 1);
