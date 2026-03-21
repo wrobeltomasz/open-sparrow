@@ -3,7 +3,6 @@ services:
     build: .
     volumes:
       - .:/var/www/html
-      - config_data:/var/www/html/includes
     depends_on:
       - db
 
@@ -35,4 +34,3 @@ services:
 
 volumes:
   pgdata:
-  config_data:
