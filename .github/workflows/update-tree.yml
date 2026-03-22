@@ -19,12 +19,38 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Generate Directory Tree
-        uses: Zen-Liu/directory-tree-action@v1
-        with:
+      - name: Generate and Update Tree
+        run: |
 
-          exclude: '.git|.github|vendor|node_modules'
-          output: 'README.md'
+          sudo apt-get install -y tree
+          
+          tree -I '.git|.github|vendor|node_modules|assets/img' -a --noreport > tree_output.txt       
+
+          python3 -c "
+          import os
+          start_marker = ''
+          end_marker = ''
+          
+          with open('README.md', 'r') as f:
+              readme = f.read()
+              
+          with open('tree_output.txt', 'r') as f:
+              tree_content = f.read()
+          
+          if start_marker in readme and end_marker in readme:
+
+              new_tree_section = f'{start_marker}\n```text\n{tree_content}```\n{end_marker}'
+              
+              import re
+              pattern = re.compile(f'{start_marker}.*?{end_marker}', re.DOTALL)
+              new_readme = pattern.sub(new_tree_section, readme)
+              
+              with open('README.md', 'w') as f:
+                  f.write(new_readme)
+          else:
+              print('Error: No markers found in README.md')
+              exit(1)
+          "
 
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
