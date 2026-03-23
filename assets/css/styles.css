@@ -159,6 +159,14 @@ header select option {
   border-color: white;
 }
 
+.header-username {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-right: 12px;
+    vertical-align: middle;
+}
+
 /* ===== NAVIGATION ===== */
 nav {
   background: var(--panel);

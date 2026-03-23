@@ -63,7 +63,9 @@
         </div>
 
         <a href="/admin/index.php" title="Admin" style="text-decoration: none; font-size: 20px; margin-right: 15px; vertical-align: middle; display: inline-block; transition: opacity 0.2s;">⚙️</a>
-
+        <?php if (isset($_SESSION['username'])): ?>
+    <span class="header-username"><?= htmlspecialchars($_SESSION['username']) ?></span>
+<?php endif; ?>
         <button onclick="window.location.href='logout.php'" class="btn-logout">
             Logout
         </button>
