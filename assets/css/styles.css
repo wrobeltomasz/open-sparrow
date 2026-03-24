@@ -142,6 +142,15 @@ header select option {
   gap: 15px; 
 }
 
+.header-username {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  font-weight: 500;
+  margin-right: 8px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .btn-logout {
   background: transparent;
   border: 1px solid rgba(255,255,255,0.4);
