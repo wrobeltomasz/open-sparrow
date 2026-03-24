@@ -167,7 +167,7 @@ if ($action === 'health') {
             $db_error = '';
             pg_close($conn);
         }
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $db_error = $e->getMessage();
     }
 
@@ -285,6 +285,77 @@ if ($action === 'list_icons') {
     }
     header('Content-Type: application/json');
     echo json_encode(['status' => 'success', 'icons' => array_values(array_unique($icons))]);
+    exit;
+}
+
+// Return total rows for the dashboard main table with optional WHERE clause
+if ($action === 'dashboard_main_table_count') {
+    header('Content-Type: application/json');
+    try {
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = db_connect();
+
+        $tableName = trim($_GET['table'] ?? '');
+        $schemaName = trim($_GET['schema_name'] ?? 'public');
+        $whereClause = trim($_GET['where'] ?? '');
+
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $tableName)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'error' => 'Invalid table name.']);
+            exit;
+        }
+
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $schemaName)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'error' => 'Invalid schema name.']);
+            exit;
+        }
+
+        if ($whereClause !== '') {
+            $hasSqlComment = str_contains($whereClause, '--') || str_contains($whereClause, '/*') || str_contains($whereClause, '*/');
+            $hasDangerousKeyword = preg_match('/\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE)\b/i', $whereClause) === 1;
+            $hasInvalidChars = preg_match('/^[a-zA-Z0-9_\s\(\)\.=!<>",\'\-\+:%\/]+$/', $whereClause) !== 1;
+            $hasSemicolon = str_contains($whereClause, ';');
+
+            if ($hasSqlComment || $hasDangerousKeyword || $hasInvalidChars || $hasSemicolon) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'error' => 'Invalid WHERE clause.']);
+                exit;
+            }
+        }
+
+        $tableCheckSql = "SELECT 1 FROM information_schema.tables WHERE table_schema = $1 AND table_name = $2 LIMIT 1";
+        $tableCheckRes = @pg_query_params($conn, $tableCheckSql, [$schemaName, $tableName]);
+        if (!$tableCheckRes || pg_num_rows($tableCheckRes) === 0) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'error' => 'Table not found.']);
+            exit;
+        }
+
+        $safeSchema = pg_escape_identifier($conn, $schemaName);
+        $safeTable = pg_escape_identifier($conn, $tableName);
+        $sql = "SELECT COUNT(*) AS total_rows FROM $safeSchema.$safeTable";
+        if ($whereClause !== '') {
+            $sql .= " WHERE $whereClause";
+        }
+
+        $res = @pg_query($conn, $sql);
+        if (!$res) {
+            throw new Exception(pg_last_error($conn));
+        }
+
+        $row = pg_fetch_assoc($res);
+        echo json_encode([
+            'status' => 'success',
+            'schema' => $schemaName,
+            'table' => $tableName,
+            'where' => $whereClause,
+            'total_rows' => (int)($row['total_rows'] ?? 0)
+        ]);
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    }
     exit;
 }
 
