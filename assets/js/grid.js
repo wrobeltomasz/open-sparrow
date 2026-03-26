@@ -513,6 +513,13 @@ export function setFilteredData(rows) {
   filteredData = rows;
 }
 
+// Reset filtered data to full dataset and re-render
+export async function resetFilters(schema) {
+  filteredData = fullData.slice();
+  sortState = { column: null, asc: true };
+  await renderGrid(schema);
+}
+
 // Initialize export button event listener
 document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('exportCsv');

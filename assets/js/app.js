@@ -1,4 +1,4 @@
-import { buildMenu, loadTable, renderGrid, getState, setFilteredData } from './grid.js';
+import { buildMenu, loadTable, renderGrid, getState, setFilteredData, resetFilters } from './grid.js';
 import { debugLog } from './debug.js';
 import { setupPagination } from './pagination.js';
 
@@ -7,6 +7,7 @@ const gridTitleEl = document.getElementById('gridTitle');
 const addRowBtn = document.getElementById('addRow');
 const searchEl = document.getElementById('globalSearch');
 const columnFilterEl = document.getElementById('columnFilter');
+const clearFiltersBtn = document.getElementById('clearFilters');
 
 // Helper to render HTML for menu icons
 function renderIconHtml(iconVal, fallbackPath) {
@@ -138,7 +139,10 @@ function renderBooleanFilters() {
             select.dataset.column = colName;
             
             // Link directly to unified applySearch function
-            select.addEventListener('change', applySearch);
+            select.addEventListener('change', () => {
+                updateClearFiltersVisibility();
+                applySearch();
+            });
             filterBar.appendChild(select);
         }
     }
@@ -148,6 +152,7 @@ function renderBooleanFilters() {
 document.addEventListener("tableLoaded", () => {
     populateColumnFilter();
     renderBooleanFilters();
+    clearFiltersBtn.style.display = 'none';
 });
 
 // Global text search and boolean filtering combined
@@ -198,10 +203,33 @@ async function applySearch() {
     debugLog("Search Applied", { query: q, results: rows.length });
 }
 
+// Show the Reset button only when a filter is active
+function updateClearFiltersVisibility() {
+    const hasText = searchEl.value !== '';
+    const hasColumn = columnFilterEl.value !== '';
+    const hasBool = [...document.querySelectorAll('.boolean-filter')].some(s => s.value !== '');
+    clearFiltersBtn.style.display = (hasText || hasColumn || hasBool) ? 'inline-block' : 'none';
+}
+
+// Clear all filter inputs and reset the grid
+clearFiltersBtn.addEventListener('click', async () => {
+    searchEl.value = '';
+    columnFilterEl.value = '';
+    document.querySelectorAll('.boolean-filter').forEach(s => s.value = '');
+    clearFiltersBtn.style.display = 'none';
+    await resetFilters(schema);
+});
+
 let searchTimeout;
 searchEl.addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(applySearch, 300);
+    searchTimeout = setTimeout(() => {
+        updateClearFiltersVisibility();
+        applySearch();
+    }, 300);
 });
 
-columnFilterEl.addEventListener('change', applySearch);
+columnFilterEl.addEventListener('change', () => {
+    updateClearFiltersVisibility();
+    applySearch();
+});

@@ -23,6 +23,8 @@
 
     <div id="filterBar" style="display: flex; gap: 10px;"></div>
 
+    <button id="clearFilters" title="Clear all filters" style="display:none;">Clear Filters</button>
+
     <div class="header-user-menu">
         <div class="notifications-wrapper" style="position: relative; cursor: pointer; display: inline-block; margin-right: 15px; vertical-align: middle;">
             <span style="font-size: 20px;">🔔</span>
