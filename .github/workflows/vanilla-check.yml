@@ -1,0 +1,31 @@
+name: Vanilla Code Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-for-frameworks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for forbidden libraries
+        run: |
+          FORBIDDEN="bootstrap|tailwind|jquery|bulma|foundation|react|vue|angular|materialize|uikit|semantic|svelte|ember|alpine|lodash|underscore|axios|moment|popper"
+          
+          echo "Scanning assets and templates for forbidden frameworks..."
+          
+          if grep -Ei "$FORBIDDEN" -r . --exclude-dir={.git,vendor,node_modules}; then
+            echo "--------------------------------------------------------"
+            echo "ERROR: Forbidden library detected!"
+            echo "This project strictly follows a Vanilla (no-framework) policy."
+            echo "Please use native Web APIs (fetch, Intl, CSS Grid/Flexbox)."
+            echo "--------------------------------------------------------"
+            exit 1
+          else
+            echo "Clean code! No unauthorized libraries found."
+          fi
