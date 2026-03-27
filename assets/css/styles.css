@@ -686,3 +686,10 @@ footer {
     color: #ffffff;
     text-decoration: none;
 }
+
+.calendar-cell.today {
+    background-color: var(--accent-light);
+    border: 2px solid var(--accent);
+    border-radius: var(--radius);
+    font-weight: 600;
+}

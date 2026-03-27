@@ -110,6 +110,13 @@ function renderCalendar() {
         dateNum.className = 'calendar-date-num';
         dateNum.textContent = i;
         cell.appendChild(dateNum);
+		
+		const todayDate = new Date();
+        if (i === todayDate.getDate() && 
+            currentMonth === todayDate.getMonth() && 
+            currentYear === todayDate.getFullYear()) {
+            cell.classList.add('today');
+        }
 
         const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         
