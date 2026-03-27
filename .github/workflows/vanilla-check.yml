@@ -19,9 +19,14 @@ jobs:
           
           echo "Scanning assets and templates for forbidden frameworks..."
           
-          if grep -Eiw "$FORBIDDEN" -r . --exclude-dir={.git,vendor,node_modules}; then
-            echo "ERROR: Forbidden library detected!"
+          if grep -Eiw "$FORBIDDEN" -r assets templates admin includes ./*.php \
+             --exclude-dir={.git,vendor,node_modules,.github} \
+             --exclude={README.md,COPYING,LICENCE,Dockerfile,docker-compose.yml}; then
+            echo "--------------------------------------------------------"
+            echo "ERROR: Forbidden library detected in application code!"
+            echo "Please ensure you are using Vanilla JS/CSS."
+            echo "--------------------------------------------------------"
             exit 1
           else
-            echo "Clean code! No unauthorized libraries found."
+            echo "Clean code! No unauthorized libraries found in app folders."
           fi
