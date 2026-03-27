@@ -181,7 +181,7 @@
                             // Poprawiona zawartość - tylko tytuł i link
                             li.innerHTML = `
                                 <div style="font-size:14px; margin-bottom: 6px;">${n.title}</div>
-                                ${n.link ? `<a href="${n.link}" style="font-size:13px; color:#007ACC; text-decoration:none; font-weight:bold;">Przejdź do rekordu ➔</a>` : ''}
+                                ${n.link ? `<a href="${n.link}" style="font-size:13px; color:#007ACC; text-decoration:none; font-weight:bold;">Go to the notification ➔</a>` : ''}
                             `;
                             
                             if (n.link && n.is_read !== 't' && n.is_read !== true) {
