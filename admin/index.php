@@ -106,6 +106,7 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
             <button class="admin-tab active" data-file="schema">Schema</button>
             <button class="admin-tab" data-file="dashboard">Dashboard</button>
             <button class="admin-tab" data-file="calendar">Calendar</button>
+            <button class="admin-tab" data-file="workflows">Workflows</button>
             <button class="admin-tab" data-file="database">Database</button>
             <button class="admin-tab" data-file="security">Security</button>
             <button class="admin-tab" data-file="users">Users</button>
@@ -120,8 +121,8 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
             </label>
             
             <div style="display: flex; gap: 5px; margin-right: 15px; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 15px;">
-                <button id="btnExport" class="btn-logout" style="background: #10b981; border-color: #10b981;" title="Download ZIP Backup">📥 Export</button>
-                <button id="btnImport" class="btn-logout" style="background: #f59e0b; border-color: #f59e0b;" title="Upload ZIP Backup">📤 Import</button>
+                <button id="btnExport" class="btn-logout" style="background: #10b981; border-color: #10b981;" title="Download ZIP Backup">Export</button>
+                <button id="btnImport" class="btn-logout" style="background: #f59e0b; border-color: #f59e0b;" title="Upload ZIP Backup">Import</button>
                 <input type="file" id="importFileInput" accept=".zip" style="display: none;">
             </div>
 

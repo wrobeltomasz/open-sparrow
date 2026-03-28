@@ -197,7 +197,7 @@ if ($action === 'export') {
     $zipFile = sys_get_temp_dir() . '/sparrow_config_' . time() . '.zip';
     if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
         $includesDir = __DIR__ . '/../includes/';
-        $filesToBackup = ['schema.json', 'dashboard.json', 'calendar.json', 'database.json', 'security.json'];
+        $filesToBackup = ['schema.json', 'dashboard.json', 'calendar.json', 'database.json', 'security.json', 'workflows.json'];
         foreach ($filesToBackup as $f) {
             if (file_exists($includesDir . $f)) {
                 $zip->addFile($includesDir . $f, $f);
@@ -289,7 +289,7 @@ if ($action === 'list_icons') {
 }
 
 // Allowed config files for read and write operations
-$allowedFiles = ['schema', 'dashboard', 'calendar', 'database', 'security'];
+$allowedFiles = ['schema', 'dashboard', 'calendar', 'database', 'security', 'workflows'];
 // Get content of a JSON config file
 if ($action === 'get' && in_array($file, $allowedFiles, true)) {
     $filePath = __DIR__ . '/../includes/' . $file . '.json';

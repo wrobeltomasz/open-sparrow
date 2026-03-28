@@ -21,16 +21,34 @@ if ($schemaJson === false) {
     exit;
 }
 $schema = json_decode($schemaJson, true, 512, JSON_THROW_ON_ERROR);
+
 // Connect to DB and load helpers
 require __DIR__ . '/includes/db.php';
 $conn = db_connect();
 require __DIR__ . '/includes/api_helpers.php';
+
 $method = $_SERVER['REQUEST_METHOD'];
 header('Content-Type: application/json; charset=utf-8');
+
 try {
-// GET: SCHEMA DATA (Added to prevent 403 Forbidden for frontend)
+    // GET: SCHEMA DATA (Added to prevent 403 Forbidden for frontend)
     if ($method === 'GET' && ($_GET['api'] ?? '') === 'schema') {
         echo $schemaJson;
+        exit;
+    }
+
+    // GET: WORKFLOWS DATA
+    if ($method === 'GET' && ($_GET['api'] ?? '') === 'workflows') {
+        $wfPath = __DIR__ . '/includes/workflows.json';
+        if (!file_exists($wfPath)) {
+            echo json_encode(['menu_name' => 'Workflows', 'workflows' => []]);
+            exit;
+        }
+
+        $wfJson = file_get_contents($wfPath);
+        $workflows = json_decode($wfJson, true, 512, JSON_THROW_ON_ERROR);
+
+        echo json_encode($workflows);
         exit;
     }
 
@@ -44,13 +62,15 @@ try {
 
         $dashJson = file_get_contents($dashPath);
         $dashboard = json_decode($dashJson, true, 512, JSON_THROW_ON_ERROR);
-// Include menu config so frontend can build the sidebar
+
+        // Include menu config so frontend can build the sidebar
         $response = [
             'menu_name' => $dashboard['menu_name'] ?? 'Dashboard',
             'menu_icon' => $dashboard['menu_icon'] ?? '',
             'layout' => $dashboard['layout'] ?? [],
             'widgets' => []
         ];
+
         foreach ($dashboard['widgets'] ?? [] as $widget) {
             $table = $widget['table'] ?? '';
             if (!$table) {
@@ -66,6 +86,7 @@ try {
             $schemaName = $tableCfg['schema'] ?? 'public';
             $qType = $widget['query']['type'] ?? 'list';
             $data = null;
+
             if ($qType === 'count') {
                 $col = $widget['query']['column'] ?? id_column();
                 if (isset($tableCfg['columns'][$col]) || $col === id_column()) {
@@ -101,7 +122,7 @@ try {
                     );
                     $res = pg_query($conn, $sql);
                     if ($res) {
-                                    $data = [];
+                        $data = [];
                         while ($r = pg_fetch_assoc($res)) {
                             $r['value'] = is_numeric($r['value']) ? (float)$r['value'] : $r['value'];
                             $data[] = $r;
@@ -116,28 +137,28 @@ try {
                 $displayCols = $widget['display_columns'] ?? [id_column()];
                 $validCols = array_filter($displayCols, fn($c) => isset($tableCfg['columns'][$c]) || $c === id_column());
                 if (empty($validCols)) {
-                        $validCols = [id_column()];
+                    $validCols = [id_column()];
                 }
 
                 $selectSql = implode(', ', array_map('pg_ident', $validCols));
 
                 if (isset($tableCfg['columns'][$orderBy]) || $orderBy === id_column()) {
-                            $sql = sprintf(
-                                'SELECT %s FROM "%s"."%s" ORDER BY %s %s LIMIT %d',
-                                $selectSql,
-                                $schemaName,
-                                $table,
-                                pg_ident($orderBy),
-                                $dir,
-                                $limit
-                            );
-                                    $res = pg_query($conn, $sql);
+                    $sql = sprintf(
+                        'SELECT %s FROM "%s"."%s" ORDER BY %s %s LIMIT %d',
+                        $selectSql,
+                        $schemaName,
+                        $table,
+                        pg_ident($orderBy),
+                        $dir,
+                        $limit
+                    );
+                    $res = pg_query($conn, $sql);
                     if ($res) {
                         $data = [];
                         while ($r = pg_fetch_assoc($res)) {
-                                    $data[] = $r;
+                            $data[] = $r;
                         }
-                                        pg_free_result($res);
+                        pg_free_result($res);
                     }
                 }
             }
@@ -161,6 +182,7 @@ try {
         $calJson = file_get_contents($calPath);
         $calendar = json_decode($calJson, true, 512, JSON_THROW_ON_ERROR);
         $events = [];
+
         foreach ($calendar['sources'] ?? [] as $src) {
             $table = $src['table'] ?? '';
             if (!$table) {
@@ -178,20 +200,22 @@ try {
             $titleCol = $src['title_column'] ?? $idCol;
             $dateCol = $src['date_column'] ?? '';
             $color = $src['color'] ?? '#3b82f6';
+
             if (isset($tableCfg['columns'][$dateCol])) {
-            // Fetch all columns just like in the grid
-                        $cols = column_list($tableCfg);
+                // Fetch all columns just like in the grid
+                $cols = column_list($tableCfg);
                 $selectCols = array_values(array_unique(array_merge([$idCol], $cols)));
                 $selectSql = implode(', ', array_map(fn($c) => pg_ident($c), $selectCols));
 
-                        $sql = sprintf(
-                            'SELECT %s FROM "%s"."%s" WHERE %s IS NOT NULL',
-                            $selectSql,
-                            $schemaName,
-                            $table,
-                            pg_ident($dateCol)
-                        );
+                $sql = sprintf(
+                    'SELECT %s FROM "%s"."%s" WHERE %s IS NOT NULL',
+                    $selectSql,
+                    $schemaName,
+                    $table,
+                    pg_ident($dateCol)
+                );
                 $res = pg_query($conn, $sql);
+
                 if ($res) {
                     $rows = [];
                     while ($r = pg_fetch_assoc($res)) {
@@ -233,11 +257,13 @@ try {
         $cols = column_list($tableCfg);
         $selectCols = array_values(array_unique(array_merge([$idCol], $cols)));
         $selectSql = implode(', ', array_map(fn($c) => pg_ident($c), $selectCols));
-// Dynamic filtering support (for drill-down)
+
+        // Dynamic filtering support (for drill-down)
         $filterCol = $_GET['filter_col'] ?? '';
         $filterVal = $_GET['filter_val'] ?? '';
         $whereSql = '';
         $params = [];
+
         if ($filterCol !== '' && $filterVal !== '') {
             $whereSql = sprintf(' WHERE %s = $1', pg_ident($filterCol));
             $params[] = $filterVal;
@@ -251,6 +277,7 @@ try {
             $whereSql,
             pg_ident($idCol)
         );
+
         if (empty($params)) {
             $res = pg_query($conn, $sql);
         } else {
@@ -269,6 +296,7 @@ try {
         }
         pg_free_result($res);
         $rows = map_fk_display($schema, $tableCfg, $rows);
+
         echo json_encode([
             'columns' => $selectCols,
             'rows' => $rows,
@@ -287,7 +315,8 @@ try {
         $tableCfg = safe_table($schema, $table);
         $schemaName = $tableCfg['schema'] ?? 'public';
         $idCol = id_column();
-// PATCH: UPDATE SINGLE CELL
+
+        // PATCH: UPDATE SINGLE CELL
         if ($method === 'PATCH' && isset($body['id'], $body['column'], $body['value'])) {
             $col = $body['column'];
             if (!isset($tableCfg['columns'][$col])) {
@@ -305,6 +334,7 @@ try {
             $colType = strtolower($tableCfg['columns'][$col]['type'] ?? '');
             $cast = '';
             $val = $body['value'];
+
             if (str_contains($colType, 'bool')) {
                 $val = normalize_boolean($val);
                 $cast = '::boolean';
@@ -320,6 +350,7 @@ try {
                 $cast,
                 pg_ident($idCol)
             );
+
             $res = pg_query_params($conn, $sql, [$val, $body['id']]);
             if (!$res) {
                 http_response_code(422);
@@ -339,6 +370,7 @@ try {
             $vals = [];
             $ph   = [];
             $i    = 1;
+
             foreach ($tableCfg['columns'] as $colName => $colCfg) {
                 if ($colName === $idCol) {
                     continue;
@@ -346,6 +378,7 @@ try {
 
                 $type = strtolower($colCfg['type'] ?? '');
                 $val = $body['data'][$colName] ?? null;
+
                 if (str_contains($type, 'bool')) {
                     $val = normalize_boolean($val);
                 } elseif ($val === '') {
@@ -394,7 +427,8 @@ try {
             $row = pg_fetch_assoc($res);
             pg_free_result($res);
             $newId = $row[$idCol] ?? null;
-// Log insert
+
+            // Log insert
             if ($newId !== null) {
                 log_user_action($conn, (int)$_SESSION['user_id'], 'INSERT', $table, (int)$newId);
             }
@@ -411,6 +445,7 @@ try {
                 $table,
                 pg_ident($idCol)
             );
+
             $res = pg_query_params($conn, $sql, [$body['id']]);
             if (!$res) {
                 http_response_code(422);
@@ -424,6 +459,7 @@ try {
             exit;
         }
     }
+
 } catch (Throwable $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);

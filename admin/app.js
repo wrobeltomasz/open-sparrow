@@ -8,6 +8,7 @@ import { renderSecurityEditor } from './security.js';
 import { renderHealthDashboard } from './health.js';  
 import { renderDocumentation } from './docs.js';
 import { renderUsersEditor } from './users.js';
+import { renderWorkflowsEditor } from './workflows.js';
 
 let currentConfig = null;
 let currentFile = 'schema'; 
@@ -136,6 +137,9 @@ async function loadConfigFile(fileName) {
         } else if (fileName === 'calendar') {
             if (!currentConfig.sources || !Array.isArray(currentConfig.sources)) currentConfig.sources = [];
             if (!currentConfig.menu_name) currentConfig.menu_name = 'Calendar';
+        } else if (fileName === 'workflows') {
+            if (!currentConfig.workflows || !Array.isArray(currentConfig.workflows)) currentConfig.workflows = [];
+            if (!currentConfig.menu_name) currentConfig.menu_name = 'Workflows';
         } else if (fileName === 'database') {
             if (!currentConfig.host) currentConfig = { host: 'localhost', port: '5432', dbname: '', user: 'postgres', password: '' };
         } else if (fileName === 'security') {
@@ -159,12 +163,15 @@ function addNewItem() {
     } else if (currentFile === 'calendar') {
         currentConfig.sources.push({ table: "", date_column: "", title_column: "", color: "#3b82f6", notify_before_days: 0, user_id_column: "", url_template: "" });
         newIndex = currentConfig.sources.length - 1;
+    } else if (currentFile === 'workflows') {
+        currentConfig.workflows.push({ id: "wf_" + Date.now(), title: "New Workflow", icon: "", steps: [] });
+        newIndex = currentConfig.workflows.length - 1;
     }
     
     currentItemKey = newIndex;
     renderSidebar();
     
-    const items = currentFile === 'dashboard' ? currentConfig.widgets : currentConfig.sources;
+    const items = currentFile === 'dashboard' ? currentConfig.widgets : currentFile === 'workflows' ? currentConfig.workflows : currentConfig.sources;
     renderEditor(newIndex, items[newIndex], true);
 }
 
@@ -173,6 +180,7 @@ function clearConfig() {
         if (currentFile === 'schema') currentConfig = { tables: {} };
         else if (currentFile === 'dashboard') currentConfig = { layout: { columns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }, widgets: [], menu_name: 'Dashboard' };
         else if (currentFile === 'calendar') currentConfig = { sources: [], menu_name: 'Calendar' };
+        else if (currentFile === 'workflows') currentConfig = { workflows: [], menu_name: 'Workflows' };
         
         renderSidebar();
         workspaceEl.innerHTML = `<h2>Configuration cleared. Click "Save File" to apply!</h2>`;
@@ -201,7 +209,7 @@ function renderSidebar() {
         return; 
     }
 
-    document.getElementById('sidebarTitle').textContent = currentFile === 'schema' ? 'Tables' : currentFile === 'dashboard' ? 'Widgets' : 'Sources';
+    document.getElementById('sidebarTitle').textContent = currentFile === 'schema' ? 'Tables' : currentFile === 'dashboard' ? 'Widgets' : currentFile === 'workflows' ? 'Workflows' : 'Sources';
     
     let actionDiv = document.getElementById('sidebarActions');
     if (!actionDiv) {
@@ -222,7 +230,8 @@ function renderSidebar() {
         actionDiv.appendChild(btnSync);
     } else {
         const btnAdd = document.createElement('button');
-        btnAdd.className = 'btn-add'; btnAdd.style.width = '100%'; btnAdd.innerHTML = currentFile === 'dashboard' ? '+ Add New Widget' : '+ Add New Source';
+        btnAdd.className = 'btn-add'; btnAdd.style.width = '100%'; 
+        btnAdd.innerHTML = currentFile === 'dashboard' ? '+ Add New Widget' : currentFile === 'workflows' ? '+ Add New Workflow' : '+ Add New Source';
         btnAdd.onclick = addNewItem;
         actionDiv.appendChild(btnAdd);
     }
@@ -232,7 +241,7 @@ function renderSidebar() {
     btnClear.innerHTML = 'Clear Entire Config'; btnClear.onclick = clearConfig;
     actionDiv.appendChild(btnClear);
 
-    if (currentFile === 'dashboard' || currentFile === 'calendar') {
+    if (currentFile === 'dashboard' || currentFile === 'calendar' || currentFile === 'workflows') {
         const layoutLi = document.createElement('li');
         layoutLi.textContent = "Global Settings"; layoutLi.style.fontWeight = 'bold'; layoutLi.style.borderBottom = '2px solid var(--accent)';
         if (currentItemKey === 'LAYOUT') layoutLi.classList.add('active');
@@ -246,7 +255,7 @@ function renderSidebar() {
 
     if (!currentConfig) return;
 
-    let itemsToIterate = currentFile === 'schema' ? (currentConfig.tables || {}) : currentFile === 'dashboard' ? (currentConfig.widgets || []) : (currentConfig.sources || []);
+    let itemsToIterate = currentFile === 'schema' ? (currentConfig.tables || {}) : currentFile === 'dashboard' ? (currentConfig.widgets || []) : currentFile === 'workflows' ? (currentConfig.workflows || []) : (currentConfig.sources || []);
     const isArray = Array.isArray(itemsToIterate);
     const keys = isArray ? itemsToIterate.map((_, i) => i) : Object.keys(itemsToIterate);
 
@@ -256,7 +265,7 @@ function renderSidebar() {
         li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.alignItems = 'center';
 
         const textSpan = document.createElement('span');
-        textSpan.textContent = currentFile === 'schema' ? (item.display_name || key) : currentFile === 'dashboard' ? (item.title || `Widget ${key}`) : (item.table || `Source ${key}`);
+        textSpan.textContent = currentFile === 'schema' ? (item.display_name || key) : currentFile === 'dashboard' ? (item.title || `Widget ${key}`) : currentFile === 'workflows' ? (item.title || `Workflow ${key}`) : (item.table || `Source ${key}`);
         li.appendChild(textSpan);
 
         const controls = document.createElement('div');
@@ -310,14 +319,24 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'docs') return renderDocumentation(ctx);
     if (currentFile === 'users') return renderUsersEditor(ctx);
 
-    if (key === 'LAYOUT' && currentFile === 'dashboard') return renderDashboardLayout(ctx);
-    if (key === 'LAYOUT' && currentFile === 'calendar') {
-        workspaceEl.innerHTML = `<h3>Calendar Global Settings</h3>`;
-        workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Calendar', v => currentConfig.menu_name = v));
-        workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
-            if (v && v.trim() !== '') currentConfig.menu_icon = v; else delete currentConfig.menu_icon;
-        }));
-        return;
+    if (key === 'LAYOUT') {
+        if (currentFile === 'dashboard') return renderDashboardLayout(ctx);
+        if (currentFile === 'calendar') {
+            workspaceEl.innerHTML = `<h3>Calendar Global Settings</h3>`;
+            workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Calendar', v => currentConfig.menu_name = v));
+            workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
+                if (v && v.trim() !== '') currentConfig.menu_icon = v; else delete currentConfig.menu_icon;
+            }));
+            return;
+        }
+        if (currentFile === 'workflows') {
+            workspaceEl.innerHTML = `<h3>Workflows Global Settings</h3>`;
+            workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Workflows', v => currentConfig.menu_name = v));
+            workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
+                if (v && v.trim() !== '') currentConfig.menu_icon = v; else delete currentConfig.menu_icon;
+            }));
+            return;
+        }
     }
     
     if (currentFile === 'schema') return renderSchemaEditor(key, itemData, ctx);
@@ -333,6 +352,7 @@ function renderEditor(key, itemData, isArray) {
     btnDelete.onclick = () => {
         if (confirm('Are you sure?')) {
             if (currentFile === 'dashboard') currentConfig.widgets.splice(key, 1);
+            else if (currentFile === 'workflows') currentConfig.workflows.splice(key, 1);
             else currentConfig.sources.splice(key, 1);
             currentItemKey = null; 
             workspaceEl.innerHTML = '<h2>Item deleted. Save file to apply.</h2>';
@@ -344,6 +364,7 @@ function renderEditor(key, itemData, isArray) {
 
     if (currentFile === 'dashboard') renderDashboardEditor(key, itemData, isArray, ctx);
     else if (currentFile === 'calendar') renderCalendarEditor(key, itemData, isArray, ctx);
+    else if (currentFile === 'workflows') renderWorkflowsEditor(key, itemData, isArray, ctx);
 }
 
 btnSave.addEventListener('click', async () => {

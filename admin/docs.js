@@ -55,13 +55,14 @@ export function renderDocumentation(ctx) {
                 <li><strong>URL Templates:</strong> Define clickable links for calendar events (e.g., redirecting to an edit page).</li>
             </ul>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">5. System Health & Backups</h3>
-            <p>Ensure your system is running smoothly and data is safe.</p>
+            <h3 style="color: #2563eb; margin-top: 30px;">5. Workflows Builder</h3>
+            <p>The <strong>Workflows</strong> tab enables you to construct multi-step wizards, guiding users through complex data entry processes across multiple related tables.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Initialize System Tables:</strong> Found in the Health tab, this critical feature builds the base <code>app.users</code>, <code>app.users_log</code>, and <code>app.users_notifications</code> tables. It must be executed on a fresh installation.</li>
-                <li><strong>Database & Security:</strong> Manage your PostgreSQL connection credentials and change the master admin password used to access this configuration panel.</li>
-                <li><strong>System Diagnostics:</strong> Performs live checks on your PHP version, ZIP extensions, directory write permissions, and database connectivity.</li>
-                <li><strong>Export / Import Config:</strong> Use the top navigation buttons to download (Export) or upload (Import) a ZIP archive containing all your JSON settings. This is highly recommended for creating backups or migrating your setup to a production server.</li>
+                <li><strong>Global Settings:</strong> Click on the root "workflows.json" item to set the main menu name and menu icon for the frontend.</li>
+                <li><strong>Workflow Details:</strong> Each workflow requires a Title, a Short Description, and an Icon to be beautifully displayed as a premium card in the frontend grid.</li>
+                <li><strong>Steps Setup:</strong> Add sequential steps and select a Target Table for each form. You can also provide a dedicated description for each individual step.</li>
+                <li><strong>Relational Linking (Foreign Keys):</strong> Link child records to parent records effortlessly. Select the Foreign Key column in the current step and map it to a previously completed step ID to automatically establish relationships.</li>
+                <li><strong>Multiple Records:</strong> Use the "Allow adding multiple records" toggle to let users submit multiple entries in a single step (e.g., adding multiple employees to a company) before proceeding to the next stage.</li>
             </ul>
 
             <h3 style="color: #2563eb; margin-top: 30px;">6. Users Management</h3>
@@ -69,6 +70,21 @@ export function renderDocumentation(ctx) {
             <ul style="padding-left: 20px;">
                 <li><strong>Create Users:</strong> Add new frontend user accounts by providing a username and a secure password (which is heavily hashed in the database).</li>
                 <li><strong>Active Status Toggle:</strong> You can instantly revoke or restore a user's login access by toggling their "Active / Inactive" status, without permanently deleting their historical records from the database.</li>
+            </ul>
+
+            <h3 style="color: #2563eb; margin-top: 30px;">7. Database & Security</h3>
+            <p>Manage your core connection and authentication settings.</p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Database Configuration:</strong> Update your PostgreSQL host, port, database name, username, and password. Changes applied here overwrite the environment configurations instantly.</li>
+                <li><strong>Security:</strong> Change the master password used to access this Sparrow Admin Panel. Ensure you use a strong password to protect your configuration environment.</li>
+            </ul>
+
+            <h3 style="color: #2563eb; margin-top: 30px;">8. System Health & Backups</h3>
+            <p>Ensure your system is running smoothly and data is safe.</p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Initialize System Tables:</strong> Found in the Health tab, this critical feature builds the base <code>app.users</code>, <code>app.users_log</code>, and <code>app.users_notifications</code> tables. It must be executed on a fresh installation.</li>
+                <li><strong>System Diagnostics:</strong> Performs live checks on your PHP version, ZIP extensions, directory write permissions, and database connectivity.</li>
+                <li><strong>Export / Import Config:</strong> Use the top navigation buttons to download (Export) or upload (Import) a ZIP archive containing all your JSON settings. This is highly recommended for creating backups or migrating your setup to a production server.</li>
             </ul>
         </div>
     `;

@@ -1,6 +1,7 @@
 import { buildMenu, loadTable, renderGrid, getState, setFilteredData, resetFilters } from './grid.js';
 import { debugLog } from './debug.js';
 import { setupPagination } from './pagination.js';
+import { initWorkflows } from './workflows.js';
 
 const menuEl = document.getElementById('menu');
 const gridTitleEl = document.getElementById('gridTitle');
@@ -82,6 +83,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             menuEl.prepend(dashLink);
         }
         
+        // Initialize workflows module
+        const gridContainerEl = document.getElementById('grid');
+        if (gridContainerEl) {
+            initWorkflows(navList, gridContainerEl, gridTitleEl);
+        }
+
         // Load initial table data
         loadTable(schema, firstTableName, gridTitleEl, addRowBtn);
         setupPagination(schema);
