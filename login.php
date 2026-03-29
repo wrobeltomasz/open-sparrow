@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
             // Regenerate session ID to prevent session fixation attacks
             session_regenerate_id(true);
 
-			$_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             // Log login action
             log_user_action($conn, $user['id'], 'LOGIN');

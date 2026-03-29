@@ -26,7 +26,8 @@
     <button id="clearFilters" title="Clear all filters" style="display:none;">Clear Filters</button>
 
     <div class="header-user-menu">
-        <div class="notifications-wrapper" style="position: relative; cursor: pointer; display: inline-block; margin-right: 15px; vertical-align: middle;">
+        <div class="notifications-wrapper" 
+             style="position: relative; cursor: pointer; display: inline-block; margin-right: 15px; vertical-align: middle;">
             <span style="font-size: 20px;">🔔</span>
             <span id="notif-badge" style="
                 display: none;
@@ -57,17 +58,22 @@
                 text-align: left;
                 border-radius: 4px;
             ">
-                <div style="padding: 12px; background: #f8f9fa; font-weight: bold; border-bottom: 1px solid #ddd; border-radius: 4px 4px 0 0;">
+                <div style="padding: 12px; background: #f8f9fa; font-weight: bold; 
+                            border-bottom: 1px solid #ddd; border-radius: 4px 4px 0 0;">
                     Notifications
                 </div>
                 <ul id="notif-list" style="list-style: none; margin: 0; padding: 0;"></ul>
             </div>
         </div>
 
-        <a href="/admin/index.php" title="Admin" style="text-decoration: none; font-size: 20px; margin-right: 15px; vertical-align: middle; display: inline-block; transition: opacity 0.2s;">⚙️</a>
-        <?php if (isset($_SESSION['username'])): ?>
-    <span class="header-username"><?= htmlspecialchars($_SESSION['username']) ?></span>
-<?php endif; ?>
+        <a href="/admin/index.php" title="Admin" 
+           style="text-decoration: none; font-size: 20px; margin-right: 15px; 
+                  vertical-align: middle; display: inline-block; transition: opacity 0.2s;">⚙️</a>
+        
+        <?php if (isset($_SESSION['username'])) : ?>
+            <span class="header-username"><?= htmlspecialchars($_SESSION['username']) ?></span>
+        <?php endif; ?>
+        
         <button onclick="window.location.href='logout.php'" class="btn-logout">
             Logout
         </button>
@@ -178,15 +184,22 @@
                             const li = document.createElement('li');
                             li.style.padding = '12px 15px';
                             li.style.borderBottom = '1px solid #eee';
-                            li.style.background = (n.is_read === 't' || n.is_read === true) ? '#fff' : '#f0f4ff'; 
                             
-                            // Poprawiona zawartość - tylko tytuł i link
+                            const isRead = (n.is_read === 't' || n.is_read === true);
+                            li.style.background = isRead ? '#fff' : '#f0f4ff'; 
+                            
+                            // Poprawiona zawartość - tylko tytuł i link (rozbite by nie przekraczać limitu linii)
+                            const linkHtml = n.link 
+                                ? `<a href="${n.link}" style="font-size:13px; color:#007ACC; ` + 
+                                  `text-decoration:none; font-weight:bold;">Go to the notification ➔</a>` 
+                                : '';
+
                             li.innerHTML = `
                                 <div style="font-size:14px; margin-bottom: 6px;">${n.title}</div>
-                                ${n.link ? `<a href="${n.link}" style="font-size:13px; color:#007ACC; text-decoration:none; font-weight:bold;">Go to the notification ➔</a>` : ''}
+                                ${linkHtml}
                             `;
                             
-                            if (n.link && n.is_read !== 't' && n.is_read !== true) {
+                            if (n.link && !isRead) {
                                 li.querySelector('a').addEventListener('click', async (ev) => {
                                     await fetch('api_notifications.php?action=mark_read', {
                                         method: 'POST',
@@ -199,7 +212,8 @@
                             notifList.appendChild(li);
                         });
                     } else {
-                        notifList.innerHTML = '<li style="padding:15px; text-align:center; color:#777;">No new notifications</li>';
+                        const emptyMsg = '<li style="padding:15px; text-align:center; color:#777;">No new notifications</li>';
+                        notifList.innerHTML = emptyMsg;
                     }
                 }
             });
@@ -216,7 +230,9 @@
     });
 </script>
 
-<script type="module" src="assets/js/app.js?v=<?php echo filemtime('assets/js/app.js'); ?>"></script>
+<script type="module" 
+        src="assets/js/app.js?v=<?php echo filemtime('assets/js/app.js'); ?>">
+</script>
 
 </body>
 </html>
