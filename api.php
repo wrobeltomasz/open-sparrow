@@ -135,12 +135,12 @@ try {
                 $orderBy = $widget['query']['order_by'] ?? id_column();
                 $dir = strtoupper($widget['query']['dir'] ?? 'DESC') === 'ASC' ? 'ASC' : 'DESC';
                 $displayCols = $widget['display_columns'] ?? [id_column()];
-                
+
                 $validCols = array_filter(
                     $displayCols,
                     fn($c) => isset($tableCfg['columns'][$c]) || $c === id_column()
                 );
-                
+
                 if (empty($validCols)) {
                     $validCols = [id_column()];
                 }
