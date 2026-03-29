@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    $sql = 'SELECT id, password_hash FROM "app"."users" WHERE username = $1';
+    $sql = 'SELECT id, username, password_hash FROM "app"."users" WHERE username = $1';
     $res = pg_query_params($conn, $sql, [$username]);
 
     if (!$res) {
@@ -51,8 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
             // Regenerate session ID to prevent session fixation attacks
             session_regenerate_id(true);
 
-            $_SESSION['user_id'] = $user['id'];
-
+         
+            $_SESSION['username'] = $user['username'];
             // Log login action
             log_user_action($conn, $user['id'], 'LOGIN');
 
