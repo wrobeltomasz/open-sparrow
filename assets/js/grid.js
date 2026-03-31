@@ -2,7 +2,6 @@ import { debugLog } from './debug.js';
 import { onCellBlur, onInputChange, deleteRow, addRow, attachCellEvents } from './grid_actions.js';
 import { setupPagination, getPageRows } from './pagination.js';
 import { exportCSV } from './export_csv.js';
-import { renderForeignKeyCell } from './grid_fk.js';
 
 const fkCache = {};
 
@@ -166,7 +165,7 @@ export async function renderGrid(schema) {
 
     // Add sort indicator
     if (sortState.column === col) {
-      th.textContent += sortState.asc ? ' ▲' : ' ▼';
+      th.textContent += sortState.asc ? ' (Asc)' : ' (Desc)';
     }
 
     headRow.appendChild(th);
@@ -279,9 +278,76 @@ export async function renderGrid(schema) {
 
       const fkCfg = schema.tables[currentTable].foreign_keys?.[col];
 
+      // Handle Foreign Key rendering with datalist for searchability
       if (fkCfg) {
-        const fkTd = await renderForeignKeyCell(schema, row, col, currentTable);
-        tr.appendChild(fkTd);
+        const td = document.createElement('td');
+        const input = document.createElement('input');
+        
+        // Use type search to add native clear button (X) in browsers
+        input.type = 'search'; 
+        
+        const dlId = `fk_${currentTable}_${col}_${row['id']}`;
+        
+        input.setAttribute('list', dlId);
+        input.dataset.column = col;
+        input.dataset.id = row['id'];
+
+        if (colCfg.readonly) {
+            input.disabled = true;
+        }
+
+        const datalist = document.createElement('datalist');
+        datalist.id = dlId;
+
+        const refTable = fkCfg.reference_table;
+        const refCol = fkCfg.reference_column || 'id';
+        
+        // Safely parse display_column to array
+        const dispCols = Array.isArray(fkCfg.display_column) ? fkCfg.display_column : [fkCfg.display_column || 'id'];
+
+        let currentDisplay = "";
+
+        if (fkCache[refTable]) {
+          const refData = await fkCache[refTable];
+          refData.forEach(r => {
+            const option = document.createElement('option');
+            const displayValue = dispCols.map(c => r[c + '__display'] ?? r[c] ?? '').join(' - ') || r[refCol];
+            
+            option.value = displayValue;
+            
+            // Hide the real database ID in a hidden data attribute
+            option.dataset.realId = r[refCol]; 
+
+            if (String(r[refCol]) === String(row[col])) {
+              currentDisplay = displayValue;
+            }
+
+            datalist.appendChild(option);
+          });
+        }
+
+        input.value = currentDisplay;
+
+        // Select all text on click/focus so typing immediately overrides it
+        input.addEventListener('focus', () => {
+            input.select();
+        });
+
+        // Revert to the last valid name upon leaving the cell to prevent confusion
+        input.addEventListener('blur', () => {
+          const isValid = Array.from(datalist.options).some(o => o.value === input.value);
+          
+          if (!isValid && input.value !== "") {
+            input.value = currentDisplay; 
+          } else if (isValid) {
+            currentDisplay = input.value;
+          }
+        });
+
+        attachCellEvents(input);
+        td.appendChild(input);
+        td.appendChild(datalist);
+        tr.appendChild(td);
         continue;
       }
 
@@ -323,6 +389,10 @@ export async function renderGrid(schema) {
 
         applyEnumColor(value);
 
+        if (colCfg.readonly) {
+            select.disabled = true;
+        }
+
         select.addEventListener('change', (e) => {
             applyEnumColor(e.target.value);
         });
@@ -338,6 +408,10 @@ export async function renderGrid(schema) {
         input.dataset.column = col;
         input.dataset.id = row['id'];
 
+        if (colCfg.readonly) {
+            input.disabled = true;
+        }
+
         attachCellEvents(input);
         td.appendChild(input);
       }
@@ -349,13 +423,20 @@ export async function renderGrid(schema) {
         input.dataset.column = col;
         input.dataset.id = row['id'];
 
+        if (colCfg.readonly) {
+            input.disabled = true;
+        }
+
         attachCellEvents(input);
         td.appendChild(input);
       }
       // Render editable text cell
       else {
-        td.contentEditable = 'true';
-        td.classList.add('editable');
+        if (!colCfg.readonly) {
+            td.contentEditable = 'true';
+            td.classList.add('editable');
+        }
+        
         td.dataset.column = col;
         td.dataset.id = row['id'];
         

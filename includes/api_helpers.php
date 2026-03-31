@@ -1,10 +1,9 @@
 <?php
 
-// --- Helper functions for API ---
+// Helper functions for API
 
 function safe_table(array $schema, string $table): array
 {
-
     if (!isset($schema['tables'][$table])) {
         throw new RuntimeException("Unknown table: {$table}");
     }
@@ -13,31 +12,26 @@ function safe_table(array $schema, string $table): array
 
 function column_list(array $tableCfg): array
 {
-
     return array_keys($tableCfg['columns'] ?? []);
 }
 
 function id_column(): string
 {
-
     return 'id';
 }
 
 function pg_ident(string $name): string
 {
-
     return '"' . str_replace('"', '""', $name) . '"';
 }
 
 function to_display_name(array $tableCfg): string
 {
-
     return $tableCfg['display_name'] ?? ($tableCfg['name'] ?? 'Unknown');
 }
 
 function map_fk_display(array $schema, array $tableCfg, array $rows): array
 {
-
     if (empty($rows) || !isset($tableCfg['foreign_keys'])) {
         return $rows;
     }
@@ -59,18 +53,38 @@ function map_fk_display(array $schema, array $tableCfg, array $rows): array
         $refSchema = $refTable['schema'] ?? 'public';
         $refName   = $fkCfg['reference_table'];
         $refColId  = $fkCfg['reference_column'] ?? 'id';
-        $refDisp   = $fkCfg['display_column'] ?? $refColId;
+        
+        // Handle array of display columns dynamically
+        $refDispRaw = $fkCfg['display_column'] ?? [$refColId];
+        if (!is_array($refDispRaw)) {
+            $refDispRaw = [$refDispRaw];
+        }
+        if (empty($refDispRaw)) {
+            $refDispRaw = [$refColId];
+        }
+        
+        // Escape all columns and merge them using CONCAT_WS for PostgreSQL
+        $escapedDispCols = array_map('pg_ident', $refDispRaw);
+        if (count($escapedDispCols) > 1) {
+            $dispSql = "CONCAT_WS(' - ', " . implode(', ', $escapedDispCols) . ")";
+        } else {
+            $dispSql = $escapedDispCols[0];
+        }
+
         $escapedVals = array_map(fn($v) => pg_escape_literal($conn, (string)$v), $fkValues);
         $inClause = implode(', ', $escapedVals);
+        
+        // Build the safe SQL query with concatenated display columns
         $sql = sprintf(
             'SELECT %s AS id, %s AS disp FROM %s.%s WHERE %s IN (%s)',
             pg_ident($refColId),
-            pg_ident($refDisp),
+            $dispSql,
             pg_ident($refSchema),
             pg_ident($refName),
             pg_ident($refColId),
             $inClause
         );
+        
         $map = [];
         $res = pg_query($conn, $sql);
         if ($res) {
@@ -93,14 +107,12 @@ function map_fk_display(array $schema, array $tableCfg, array $rows): array
 
 function normalize_boolean($val): string
 {
-
     $truthy = ['true', '1', 1, true, 't', 'T', 'TRUE'];
     return in_array($val, $truthy, true) ? 'TRUE' : 'FALSE';
 }
 
 function type_min_value(string $type)
 {
-
     $t = strtolower($type);
     if (str_contains($t, 'bool')) {
         return 'FALSE';
@@ -118,7 +130,6 @@ function type_min_value(string $type)
 // Log action to db
 function log_user_action($conn, int $userId, string $action, ?string $targetTable = null, ?int $recordId = null): void
 {
-
     $sql = 'INSERT INTO "app"."users_log" (user_id, action, target_table, record_id) VALUES ($1, $2, $3, $4)';
     @pg_query_params($conn, $sql, [$userId, $action, $targetTable, $recordId]);
 }

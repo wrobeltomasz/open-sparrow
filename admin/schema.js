@@ -37,7 +37,7 @@ export async function syncSchemaTables(currentConfig, schemaName, onSuccess, onE
 export function renderSchemaEditor(tableName, tableData, ctx) {
     const { workspaceEl, getTableOptions, renderEditor } = ctx;
     
-    // SECURE: Escape table name to prevent XSS
+    // Escape table name to prevent XSS
     workspaceEl.innerHTML = `<h3>Table Properties: ${escapeHtml(tableName)}</h3>`;
 
     if (!tableData.columns || Array.isArray(tableData.columns)) tableData.columns = {};
@@ -47,7 +47,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
     const btnSyncCols = document.createElement('button');
     btnSyncCols.className = 'btn-add';
     btnSyncCols.style.background = '#007ACC';
-    btnSyncCols.innerHTML = '🔍 Sync Columns from DB';
+    btnSyncCols.innerHTML = 'Sync Columns from DB';
     
     // Fetch and sync columns from database
     btnSyncCols.onclick = async () => {
@@ -147,9 +147,9 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         const moveControls = document.createElement('div');
         
         const btnUp = document.createElement('button');
-        btnUp.innerHTML = '⬆️'; 
+        btnUp.innerHTML = 'Up'; 
         btnUp.title = 'Move Up';
-        btnUp.style.cssText = 'background:none; border:none; cursor:pointer; font-size:16px; margin-right:5px;';
+        btnUp.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; margin-right:10px; text-decoration: underline;';
         if (index === 0) { btnUp.disabled = true; btnUp.style.opacity = '0.3'; btnUp.style.cursor = 'default'; }
         btnUp.onclick = () => {
             tableData.columns = moveObjectKey(tableData.columns, colName, -1);
@@ -157,9 +157,9 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         };
 
         const btnDown = document.createElement('button');
-        btnDown.innerHTML = '⬇️'; 
+        btnDown.innerHTML = 'Down'; 
         btnDown.title = 'Move Down';
-        btnDown.style.cssText = 'background:none; border:none; cursor:pointer; font-size:16px;';
+        btnDown.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; text-decoration: underline;';
         if (index === colKeys.length - 1) { btnDown.disabled = true; btnDown.style.opacity = '0.3'; btnDown.style.cursor = 'default'; }
         btnDown.onclick = () => {
             tableData.columns = moveObjectKey(tableData.columns, colName, 1);
@@ -197,7 +197,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
             colorsContainer.style.marginBottom = '15px';
             
             const colorsTitle = document.createElement('h5');
-            colorsTitle.textContent = '🎨 Enum Colors (Optional)';
+            colorsTitle.textContent = 'Enum Colors (Optional)';
             colorsTitle.style.marginTop = '0';
             colorsTitle.style.marginBottom = '10px';
             colorsContainer.appendChild(colorsTitle);
@@ -217,7 +217,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
 
         const fkData = tableData.foreign_keys[colName] || {};
         block.appendChild(createSelectInput('fk_ref', 'Foreign Key Reference Table', getTableOptions(), fkData.reference_table || '', (val) => {
-            if (val) tableData.foreign_keys[colName] = { reference_table: val, reference_column: fkData.reference_column || 'id', display_column: fkData.display_column || 'name' };
+            if (val) tableData.foreign_keys[colName] = { reference_table: val, reference_column: fkData.reference_column || 'id', display_column: fkData.display_column || ['name'] };
             else delete tableData.foreign_keys[colName];
             renderEditor(tableName, tableData, false); 
         }));
@@ -227,7 +227,18 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
             const fkContainer = document.createElement('div');
             fkContainer.style.marginLeft = '20px'; fkContainer.style.paddingLeft = '10px'; fkContainer.style.borderLeft = '2px solid var(--accent)'; fkContainer.style.marginBottom = '15px';
             fkContainer.appendChild(createTextInput('fk_ref_col', 'Reference Column (e.g., id)', tableData.foreign_keys[colName].reference_column, (val) => tableData.foreign_keys[colName].reference_column = val));
-            fkContainer.appendChild(createTextInput('fk_disp_col', 'Display Column (e.g., name)', tableData.foreign_keys[colName].display_column, (val) => tableData.foreign_keys[colName].display_column = val));
+            
+            const fkDispData = tableData.foreign_keys[colName].display_column;
+            const fkDispStr = Array.isArray(fkDispData) ? fkDispData.join(', ') : (fkDispData || '');
+            
+            fkContainer.appendChild(createTextInput('fk_disp_col', 'Display Columns (Comma separated, e.g., first_name, last_name)', fkDispStr, (val) => {
+                if(val) {
+                    tableData.foreign_keys[colName].display_column = val.split(',').map(s => s.trim()).filter(s => s !== '');
+                } else {
+                    tableData.foreign_keys[colName].display_column = [];
+                }
+            }));
+            
             block.appendChild(fkContainer);
         }
         
@@ -265,8 +276,8 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
             h4.style.margin = '0';
             
             const btnDel = document.createElement('button');
-            btnDel.textContent = '🗑️ Delete';
-            btnDel.style.cssText = 'background:none; border:none; color:red; cursor:pointer; font-weight:bold;';
+            btnDel.textContent = 'Delete';
+            btnDel.style.cssText = 'background:none; border:none; color:red; cursor:pointer; font-weight:bold; text-decoration: underline;';
             btnDel.onclick = () => {
                 tableData.subtables.splice(index, 1);
                 renderSubtables();
