@@ -687,6 +687,18 @@ footer {
     text-decoration: none;
 }
 
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
+
 .calendar-cell.today {
     background-color: var(--accent-light);
     border: 2px solid var(--accent);
