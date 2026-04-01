@@ -53,7 +53,7 @@ function map_fk_display(array $schema, array $tableCfg, array $rows): array
         $refSchema = $refTable['schema'] ?? 'public';
         $refName   = $fkCfg['reference_table'];
         $refColId  = $fkCfg['reference_column'] ?? 'id';
-        
+
         // Handle array of display columns dynamically
         $refDispRaw = $fkCfg['display_column'] ?? [$refColId];
         if (!is_array($refDispRaw)) {
@@ -62,7 +62,7 @@ function map_fk_display(array $schema, array $tableCfg, array $rows): array
         if (empty($refDispRaw)) {
             $refDispRaw = [$refColId];
         }
-        
+
         // Escape all columns and merge them using CONCAT_WS for PostgreSQL
         $escapedDispCols = array_map('pg_ident', $refDispRaw);
         if (count($escapedDispCols) > 1) {
@@ -73,7 +73,7 @@ function map_fk_display(array $schema, array $tableCfg, array $rows): array
 
         $escapedVals = array_map(fn($v) => pg_escape_literal($conn, (string)$v), $fkValues);
         $inClause = implode(', ', $escapedVals);
-        
+
         // Build the safe SQL query with concatenated display columns
         $sql = sprintf(
             'SELECT %s AS id, %s AS disp FROM %s.%s WHERE %s IN (%s)',
@@ -84,7 +84,7 @@ function map_fk_display(array $schema, array $tableCfg, array $rows): array
             pg_ident($refColId),
             $inClause
         );
-        
+
         $map = [];
         $res = pg_query($conn, $sql);
         if ($res) {

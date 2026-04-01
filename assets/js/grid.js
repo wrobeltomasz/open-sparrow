@@ -165,7 +165,7 @@ export async function renderGrid(schema) {
 
     // Add sort indicator
     if (sortState.column === col) {
-      th.textContent += sortState.asc ? ' (Asc)' : ' (Desc)';
+      th.textContent += sortState.asc ? ' ↑' : ' ↓';
     }
 
     headRow.appendChild(th);
