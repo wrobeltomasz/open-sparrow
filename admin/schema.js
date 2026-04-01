@@ -37,8 +37,40 @@ export async function syncSchemaTables(currentConfig, schemaName, onSuccess, onE
 export function renderSchemaEditor(tableName, tableData, ctx) {
     const { workspaceEl, getTableOptions, renderEditor } = ctx;
     
-    // Escape table name to prevent XSS
-    workspaceEl.innerHTML = `<h3>Table Properties: ${escapeHtml(tableName)}</h3>`;
+    workspaceEl.innerHTML = '';
+
+    // Create header with title and delete button
+    const headerContainer = document.createElement('div');
+    headerContainer.style.display = 'flex';
+    headerContainer.style.justifyContent = 'space-between';
+    headerContainer.style.alignItems = 'center';
+    headerContainer.style.marginBottom = '20px';
+
+    const titleEl = document.createElement('h3');
+    titleEl.innerHTML = `Table Properties: ${escapeHtml(tableName)}`;
+    titleEl.style.margin = '0';
+
+    const btnDeleteTable = document.createElement('button');
+    btnDeleteTable.textContent = 'Delete Table';
+    btnDeleteTable.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 12px; cursor: pointer; font-weight: bold; border-radius: 4px;';
+    btnDeleteTable.onclick = () => {
+        if (confirm('Are you sure you want to remove this table from the configuration?')) {
+            if (ctx.currentConfig && ctx.currentConfig.tables) {
+                delete ctx.currentConfig.tables[tableName];
+            }
+            workspaceEl.innerHTML = '<h3 style="color: #ef4444;">Table removed from configuration. Please click "Save File" to apply changes.</h3>';
+            
+            if (typeof ctx.renderSidebar === 'function') {
+                ctx.renderSidebar();
+            } else {
+                alert('Table removed. Please save the file and refresh the page to update the sidebar.');
+            }
+        }
+    };
+
+    headerContainer.appendChild(titleEl);
+    headerContainer.appendChild(btnDeleteTable);
+    workspaceEl.appendChild(headerContainer);
 
     if (!tableData.columns || Array.isArray(tableData.columns)) tableData.columns = {};
     if (!tableData.foreign_keys || Array.isArray(tableData.foreign_keys)) tableData.foreign_keys = {};
