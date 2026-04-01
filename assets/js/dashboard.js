@@ -26,7 +26,7 @@ async function initDashboard() {
             const widgetEl = document.createElement('div');
             widgetEl.className = 'dash-widget';
             
-            if (widget.type !== 'kpi_card') {
+            if (widget.type !== 'kpi_card' && widget.type !== 'stat_card') {
                 const title = document.createElement('h3');
                 title.textContent = widget.title;
                 title.className = 'dash-title';
@@ -36,6 +36,9 @@ async function initDashboard() {
             switch (widget.type) {
                 case 'kpi_card':
                     widgetEl.appendChild(renderKPICard(widget));
+                    break;
+                case 'stat_card':
+                    widgetEl.appendChild(renderStatCard(widget));
                     break;
                 case 'bar_chart':
                     widgetEl.appendChild(renderBarChart(widget));
@@ -97,6 +100,46 @@ function renderKPICard(widget) {
 
     wrapper.appendChild(info);
     wrapper.appendChild(iconContainer);
+    return wrapper;
+}
+
+// Render a simple statistics card showing a total count
+function renderStatCard(widget) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'stat-card';
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.alignItems = 'center';
+    wrapper.style.justifyContent = 'center';
+    wrapper.style.padding = '20px';
+    wrapper.style.borderRadius = '8px';
+    wrapper.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+    
+    if (widget.color) {
+        wrapper.style.backgroundColor = widget.color;
+        wrapper.style.color = '#ffffff';
+    } else {
+        wrapper.style.backgroundColor = '#ffffff';
+        wrapper.style.color = '#333333';
+    }
+
+    const value = document.createElement('div');
+    value.className = 'stat-value';
+    value.textContent = widget.data ?? 0;
+    value.style.fontSize = '2.5rem';
+    value.style.fontWeight = 'bold';
+    value.style.marginBottom = '5px';
+
+    const title = document.createElement('div');
+    title.className = 'stat-title';
+    title.textContent = widget.title;
+    title.style.fontSize = '0.9rem';
+    title.style.textTransform = 'uppercase';
+    title.style.letterSpacing = '1px';
+
+    wrapper.appendChild(value);
+    wrapper.appendChild(title);
+
     return wrapper;
 }
 

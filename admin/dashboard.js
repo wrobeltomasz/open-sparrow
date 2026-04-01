@@ -3,6 +3,7 @@ import { createTextInput, createSelectInput, createColorInput, createDatalistInp
 
 export const WIDGET_TYPES = [
     { value: 'kpi_card', label: 'KPI Card' },
+    { value: 'stat_card', label: 'Stat Card (Row Count)' },
     { value: 'bar_chart', label: 'Bar Chart' },
     { value: 'list', label: 'Data List' }
 ];
@@ -63,19 +64,23 @@ export function renderDashboardEditor(key, itemData, isArray, ctx) {
         q.type = q.type || 'count'; q.column = q.column || 'id';
         queryBlock.appendChild(createSelectInput('q_type', 'Aggregation Function', [{value:'count',label:'Count'}, {value:'sum',label:'Sum'}, {value:'avg',label:'Average'}], q.type, v => q.type = v));
         queryBlock.appendChild(createSelectInput('q_col', 'Target Column', colOptions, q.column, v => q.column = v));
-        workspaceEl.appendChild(queryBlock);
+    } else if (itemData.type === 'stat_card') {
+        q.type = 'count'; 
+        q.column = q.column || 'id';
     } else if (itemData.type === 'bar_chart') {
         q.type = 'group_by'; 
         queryBlock.appendChild(createSelectInput('q_group', 'Group By Column (X-Axis)', colOptions, q.group_column || '', v => q.group_column = v));
         queryBlock.appendChild(createSelectInput('q_agg_col', 'Aggregation Column (Y-Axis)', colOptions, q.agg_column || 'id', v => q.agg_column = v));
         queryBlock.appendChild(createSelectInput('q_agg_type', 'Aggregation Function', [{value:'count',label:'Count'}, {value:'sum',label:'Sum'}], q.agg_type || 'count', v => q.agg_type = v));
-        workspaceEl.appendChild(queryBlock);
     } else if (itemData.type === 'list') {
         queryBlock.appendChild(createTextInput('q_limit', 'Limit Rows', q.limit || 5, v => q.limit = parseInt(v) || 5));
         queryBlock.appendChild(createSelectInput('q_order', 'Order By Column', colOptions, q.order_by || 'id', v => q.order_by = v));
         queryBlock.appendChild(createSelectInput('q_dir', 'Order Direction', [{value:'DESC',label:'Descending'}, {value:'ASC',label:'Ascending'}], q.dir || 'DESC', v => q.dir = v));
-        workspaceEl.appendChild(queryBlock);
     }
+
+    // Add general WHERE clause for all widget types
+    queryBlock.appendChild(createTextInput('q_where', 'WHERE Clause (Optional SQL, e.g. status = 1)', q.where || '', v => q.where = v));
+    workspaceEl.appendChild(queryBlock);
 
     workspaceEl.appendChild(createIconPicker('icon', 'Icon Path or Emoji', itemData.icon || '', v => {
         if (v && v.trim() !== '') itemData.icon = v;

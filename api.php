@@ -87,20 +87,29 @@ try {
             $qType = $widget['query']['type'] ?? 'list';
             $data = null;
 
+            // Extract custom WHERE clause for widget
+            $customWhere = trim($widget['query']['where'] ?? '');
+            $sqlWhere = $customWhere !== '' ? ' WHERE ' . $customWhere : '';
+
             if ($qType === 'count') {
                 $col = $widget['query']['column'] ?? id_column();
                 if (isset($tableCfg['columns'][$col]) || $col === id_column()) {
                     $sql = sprintf(
-                        'SELECT COUNT(%s) AS count FROM "%s"."%s"',
+                        'SELECT COUNT(%s) AS count FROM "%s"."%s"%s',
                         pg_ident($col),
                         $schemaName,
-                        $table
+                        $table,
+                        $sqlWhere
                     );
-                    $res = pg_query($conn, $sql);
+                    
+                    // Supress warnings with @ to prevent HTML breaking JSON response
+                    $res = @pg_query($conn, $sql);
                     if ($res) {
                         $row = pg_fetch_assoc($res);
                         $data = (int)($row['count'] ?? 0);
                         pg_free_result($res);
+                    } else {
+                        $widget['sql_error'] = pg_last_error($conn);
                     }
                 }
             } elseif ($qType === 'group_by') {
@@ -112,15 +121,17 @@ try {
 
                 if (isset($tableCfg['columns'][$grpCol])) {
                     $sql = sprintf(
-                        'SELECT %s AS label, %s(%s) AS value FROM "%s"."%s" GROUP BY %s ORDER BY value DESC',
+                        'SELECT %s AS label, %s(%s) AS value FROM "%s"."%s"%s GROUP BY %s ORDER BY value DESC',
                         pg_ident($grpCol),
                         $aggType,
                         pg_ident($aggCol),
                         $schemaName,
                         $table,
+                        $sqlWhere,
                         pg_ident($grpCol)
                     );
-                    $res = pg_query($conn, $sql);
+                    
+                    $res = @pg_query($conn, $sql);
                     if ($res) {
                         $data = [];
                         while ($r = pg_fetch_assoc($res)) {
@@ -128,6 +139,8 @@ try {
                             $data[] = $r;
                         }
                         pg_free_result($res);
+                    } else {
+                        $widget['sql_error'] = pg_last_error($conn);
                     }
                 }
             } else {
@@ -149,21 +162,25 @@ try {
 
                 if (isset($tableCfg['columns'][$orderBy]) || $orderBy === id_column()) {
                     $sql = sprintf(
-                        'SELECT %s FROM "%s"."%s" ORDER BY %s %s LIMIT %d',
+                        'SELECT %s FROM "%s"."%s"%s ORDER BY %s %s LIMIT %d',
                         $selectSql,
                         $schemaName,
                         $table,
+                        $sqlWhere,
                         pg_ident($orderBy),
                         $dir,
                         $limit
                     );
-                    $res = pg_query($conn, $sql);
+                    
+                    $res = @pg_query($conn, $sql);
                     if ($res) {
                         $data = [];
                         while ($r = pg_fetch_assoc($res)) {
                             $data[] = $r;
                         }
                         pg_free_result($res);
+                    } else {
+                        $widget['sql_error'] = pg_last_error($conn);
                     }
                 }
             }
@@ -207,7 +224,6 @@ try {
             $color = $src['color'] ?? '#3b82f6';
 
             if (isset($tableCfg['columns'][$dateCol])) {
-                // Fetch all columns just like in the grid
                 $cols = column_list($tableCfg);
                 $selectCols = array_values(array_unique(array_merge([$idCol], $cols)));
                 $selectSql = implode(', ', array_map(fn($c) => pg_ident($c), $selectCols));
@@ -219,7 +235,7 @@ try {
                     $table,
                     pg_ident($dateCol)
                 );
-                $res = pg_query($conn, $sql);
+                $res = @pg_query($conn, $sql);
 
                 if ($res) {
                     $rows = [];
@@ -227,7 +243,7 @@ try {
                         $rows[] = $r;
                     }
                     pg_free_result($res);
-                    // Resolve foreign keys (FK -> Display Name)
+                    
                     $rows = map_fk_display($schema, $tableCfg, $rows);
                     foreach ($rows as $r) {
                         $events[] = [
@@ -237,14 +253,13 @@ try {
                             'date' => substr($r[$dateCol], 0, 10),
                             'color' => $color,
                             'icon' => $src['icon'] ?? null,
-                            'rowData' => $r // Pass the ENTIRE row to JavaScript
+                            'rowData' => $r
                         ];
                     }
                 }
             }
         }
 
-        // Include menu config so frontend can build the sidebar
         echo json_encode([
             'menu_name' => $calendar['menu_name'] ?? 'Calendar',
             'menu_icon' => $calendar['menu_icon'] ?? '',
@@ -263,7 +278,6 @@ try {
         $selectCols = array_values(array_unique(array_merge([$idCol], $cols)));
         $selectSql = implode(', ', array_map(fn($c) => pg_ident($c), $selectCols));
 
-        // Dynamic filtering support (for drill-down)
         $filterCol = $_GET['filter_col'] ?? '';
         $filterVal = $_GET['filter_val'] ?? '';
         $whereSql = '';
@@ -284,9 +298,9 @@ try {
         );
 
         if (empty($params)) {
-            $res = pg_query($conn, $sql);
+            $res = @pg_query($conn, $sql);
         } else {
-            $res = pg_query_params($conn, $sql, $params);
+            $res = @pg_query_params($conn, $sql, $params);
         }
 
         if (!$res) {
@@ -356,14 +370,13 @@ try {
                 pg_ident($idCol)
             );
 
-            $res = pg_query_params($conn, $sql, [$val, $body['id']]);
+            $res = @pg_query_params($conn, $sql, [$val, $body['id']]);
             if (!$res) {
                 http_response_code(422);
                 echo json_encode(['error' => pg_last_error($conn)]);
                 exit;
             }
 
-            // Log inline update
             log_user_action($conn, (int)$_SESSION['user_id'], 'UPDATE', $table, (int)$body['id']);
             echo json_encode(['ok' => true]);
             exit;
@@ -410,7 +423,7 @@ try {
                     $table,
                     pg_ident($idCol)
                 );
-                $res = pg_query($conn, $sql);
+                $res = @pg_query($conn, $sql);
             } else {
                 $sql = sprintf(
                     'INSERT INTO "%s"."%s" (%s) VALUES (%s) RETURNING %s',
@@ -420,7 +433,7 @@ try {
                     implode(', ', $ph),
                     pg_ident($idCol)
                 );
-                $res = pg_query_params($conn, $sql, $vals);
+                $res = @pg_query_params($conn, $sql, $vals);
             }
 
             if (!$res) {
@@ -433,7 +446,6 @@ try {
             pg_free_result($res);
             $newId = $row[$idCol] ?? null;
 
-            // Log insert
             if ($newId !== null) {
                 log_user_action($conn, (int)$_SESSION['user_id'], 'INSERT', $table, (int)$newId);
             }
@@ -451,14 +463,13 @@ try {
                 pg_ident($idCol)
             );
 
-            $res = pg_query_params($conn, $sql, [$body['id']]);
+            $res = @pg_query_params($conn, $sql, [$body['id']]);
             if (!$res) {
                 http_response_code(422);
                 echo json_encode(['error' => pg_last_error($conn)]);
                 exit;
             }
 
-            // Log delete
             log_user_action($conn, (int)$_SESSION['user_id'], 'DELETE', $table, (int)$body['id']);
             echo json_encode(['ok' => true]);
             exit;
