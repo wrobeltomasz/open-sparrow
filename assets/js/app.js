@@ -265,7 +265,22 @@ function handleColumnFilterChange() {
     else if (type.includes('bool')) {
         const select = document.createElement('select');
         const displayName = colCfg.display_name || col;
-        select.innerHTML = `<option value="">${displayName}: All</option><option value="true">Yes</option><option value="false">No</option>`;
+
+        const optAll = document.createElement('option');
+        optAll.value = '';
+        optAll.textContent = `${displayName}: All`;
+        select.appendChild(optAll);
+
+        const optTrue = document.createElement('option');
+        optTrue.value = 'true';
+        optTrue.textContent = 'Yes';
+        select.appendChild(optTrue);
+
+        const optFalse = document.createElement('option');
+        optFalse.value = 'false';
+        optFalse.textContent = 'No';
+        select.appendChild(optFalse);
+
         if (existingFilter.val) select.value = existingFilter.val;
         
         select.addEventListener('change', () => { 
