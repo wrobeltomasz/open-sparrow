@@ -108,13 +108,21 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
                 data.columns.forEach(col => {
                     if (!tableData.columns[col.column_name]) {
                         
-                        // Check safely if enum_values is a real array
                         const isEnum = Array.isArray(col.enum_values);
                         const isNotNull = col.is_nullable === 'NO'; 
                         
-                        let typeName = col.data_type;
-                        if (isEnum || String(typeName).toUpperCase() === 'USER-DEFINED') {
-                            typeName = 'enum';
+                        // Extremely robust mapping catching different backend array keys
+                        const rawType = String(col.data_type || col.type || col.udt_name || col.datatype || '').toLowerCase();
+                        let mappedType = 'text';
+                        
+                        if (isEnum || rawType === 'user-defined' || rawType.includes('enum')) {
+                            mappedType = 'enum';
+                        } else if (/int|num|float|double|real|serial|dec/i.test(rawType)) {
+                            mappedType = 'number';
+                        } else if (/bool/i.test(rawType)) {
+                            mappedType = 'boolean';
+                        } else if (/date|time|timestamp/i.test(rawType)) {
+                            mappedType = 'date';
                         }
 
                         // Make ID readonly by default
@@ -122,7 +130,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
 
                         tableData.columns[col.column_name] = {
                             display_name: col.column_name.replace(/_/g, ' ').toUpperCase(),
-                            type: typeName,
+                            type: mappedType,
                             show_in_grid: true, 
                             show_in_edit: true, 
                             not_null: isNotNull,
@@ -156,6 +164,15 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
     colsTitle.textContent = 'Columns Configuration';
     colsTitle.style.marginTop = '30px';
     workspaceEl.appendChild(colsTitle);
+
+    // Standard field types allowed in the application
+    const dataTypeOptions = [
+        { value: 'text', label: 'Text' },
+        { value: 'number', label: 'Number' },
+        { value: 'boolean', label: 'Boolean' },
+        { value: 'date', label: 'Date' },
+        { value: 'enum', label: 'Enum' }
+    ];
 
     const colKeys = Object.keys(tableData.columns);
     colKeys.forEach((colName, index) => {
@@ -205,7 +222,22 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         block.appendChild(headerDiv);
 
         block.appendChild(createTextInput('display_name', 'Display Name', colCfg.display_name, (val) => colCfg.display_name = val));
-        block.appendChild(createTextInput('type', 'Data Type', colCfg.type, (val) => colCfg.type = val));
+        
+        // Clean up any rogue legacy DB types just in case they slipped through earlier
+        let currentType = String(colCfg.type || 'text').toLowerCase();
+        if (!['text', 'number', 'boolean', 'date', 'enum'].includes(currentType)) {
+            if (/int|num|float|double|real|serial|dec/i.test(currentType)) currentType = 'number';
+            else if (/bool/i.test(currentType)) currentType = 'boolean';
+            else if (/date|time|timestamp/i.test(currentType)) currentType = 'date';
+            else currentType = 'text';
+            colCfg.type = currentType;
+        }
+
+        // Dropdown instead of input field for clean type selection
+        block.appendChild(createSelectInput('type', 'Data Type', dataTypeOptions, currentType, (val) => {
+            colCfg.type = val;
+            renderEditor(tableName, tableData, false); 
+        }));
         
         const optsStr = colCfg.options ? colCfg.options.join(', ') : '';
         block.appendChild(createTextInput('options', 'Enum Options (Comma separated)', optsStr, (val) => {
