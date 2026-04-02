@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST" class="editor-form">
             <?php foreach ($tableCfg['columns'] as $colName => $colCfg) : ?>
                 <?php
-                // Pomijamy klucz główny i pola tylko do odczytu przy tworzeniu
+                // Skip primary key and readonly fields during create
                 if ($colName === $idCol || !empty($colCfg['readonly'])) {
                     continue;
                 }
@@ -151,20 +151,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <?php
                         $fkCfg = $tableCfg['foreign_keys'][$colName];
                         $refTable = $fkCfg['reference_table'];
+                        $refSchema = $schema['tables'][$refTable]['schema'] ?? 'public';
                         $refPk = $fkCfg['reference_column'] ?? 'id';
-                        $refDisplay = $fkCfg['display_column'] ?? $refPk;
+                        
+                        // Handle array or string display columns safely
+                        $refDisplayArr = is_array($fkCfg['display_column'] ?? null) ? $fkCfg['display_column'] : [$fkCfg['display_column'] ?? $refPk];
+                        $refColsSql = implode(', ', array_map('pg_ident', $refDisplayArr));
+                        $orderColSql = pg_ident($refDisplayArr[0]);
 
-                        $refSql = sprintf('SELECT %s, %s FROM "app"."%s" ORDER BY %s ASC', pg_ident($refPk), pg_ident($refDisplay), $refTable, pg_ident($refDisplay));
+                        $refSql = sprintf('SELECT %s, %s FROM "%s"."%s" ORDER BY %s ASC', pg_ident($refPk), $refColsSql, $refSchema, $refTable, $orderColSql);
                         $refRes = pg_query($conn, $refSql);
                         ?>
                         <select <?php echo $nameAttr; ?> <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                             <option value="">-- Select --</option>
                             <?php if ($refRes) :
                                 while ($refRow = pg_fetch_assoc($refRes)) : ?>
-                                                                    <?php $selected = ($prefillVal == $refRow[$refPk]) ? 'selected' : ''; ?>
-                                <option value="<?php echo htmlspecialchars((string)$refRow[$refPk]); ?>" <?php echo $selected; ?>>
-                                                                    <?php echo htmlspecialchars((string)$refRow[$refDisplay]); ?>
-                                </option>
+                                    <?php 
+                                    $selected = ($prefillVal == $refRow[$refPk]) ? 'selected' : ''; 
+                                    
+                                    // Concatenate multiple columns for display if needed
+                                    $displayParts = [];
+                                    foreach ($refDisplayArr as $dc) {
+                                        if (isset($refRow[$dc]) && $refRow[$dc] !== '') {
+                                            $displayParts[] = $refRow[$dc];
+                                        }
+                                    }
+                                    $displayString = implode(' - ', $displayParts) ?: $refRow[$refPk];
+                                    ?>
+                                    <option value="<?php echo htmlspecialchars((string)$refRow[$refPk]); ?>" <?php echo $selected; ?>>
+                                        <?php echo htmlspecialchars($displayString); ?>
+                                    </option>
                                 <?php endwhile;
                             endif; ?>
                         </select>

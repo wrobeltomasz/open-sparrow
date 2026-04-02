@@ -185,18 +185,34 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
                         <?php
                         $fkCfg = $tableCfg['foreign_keys'][$colName];
                         $refTable = $fkCfg['reference_table'];
+                        $refSchema = $schema['tables'][$refTable]['schema'] ?? 'public';
                         $refPk = $fkCfg['reference_column'] ?? 'id';
-                        $refDisplay = $fkCfg['display_column'] ?? $refPk;
+                        
+                        // Handle array or string display columns safely
+                        $refDisplayArr = is_array($fkCfg['display_column'] ?? null) ? $fkCfg['display_column'] : [$fkCfg['display_column'] ?? $refPk];
+                        $refColsSql = implode(', ', array_map('pg_ident', $refDisplayArr));
+                        $orderColSql = pg_ident($refDisplayArr[0]);
 
-                        $refSql = sprintf('SELECT %s, %s FROM "app"."%s" ORDER BY %s ASC', pg_ident($refPk), pg_ident($refDisplay), $refTable, pg_ident($refDisplay));
+                        $refSql = sprintf('SELECT %s, %s FROM "%s"."%s" ORDER BY %s ASC', pg_ident($refPk), $refColsSql, $refSchema, $refTable, $orderColSql);
                         $refRes = pg_query($conn, $refSql);
                         ?>
                         <select name="<?php echo $colName; ?>" <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> style="width: 100%; padding: 8px;">
                             <option value="">-- Select --</option>
                             <?php while ($refRow = pg_fetch_assoc($refRes)) : ?>
-                                <?php $selected = ((string)$val === (string)$refRow[$refPk]) ? 'selected' : ''; ?>
+                                <?php 
+                                $selected = ((string)$val === (string)$refRow[$refPk]) ? 'selected' : ''; 
+                                
+                                // Concatenate multiple columns for display if needed
+                                $displayParts = [];
+                                foreach ($refDisplayArr as $dc) {
+                                    if (isset($refRow[$dc]) && $refRow[$dc] !== '') {
+                                        $displayParts[] = $refRow[$dc];
+                                    }
+                                }
+                                $displayString = implode(' - ', $displayParts) ?: $refRow[$refPk];
+                                ?>
                                 <option value="<?php echo htmlspecialchars((string)$refRow[$refPk]); ?>" <?php echo $selected; ?>>
-                                    <?php echo htmlspecialchars((string)$refRow[$refDisplay]); ?>
+                                    <?php echo htmlspecialchars($displayString); ?>
                                 </option>
                             <?php endwhile; ?>
                         </select>

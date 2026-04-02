@@ -9,6 +9,13 @@ const addRowBtn = document.getElementById('addRow');
 const searchEl = document.getElementById('globalSearch');
 const columnFilterEl = document.getElementById('columnFilter');
 const clearFiltersBtn = document.getElementById('clearFilters');
+let searchTimeout;
+
+// Store cumulative active filters globally
+let activeFilters = {
+    search: '',
+    columns: {}
+};
 
 // Helper to render HTML for menu icons
 function renderIconHtml(iconVal, fallbackPath) {
@@ -24,9 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof schema !== 'undefined' && Object.keys(schema.tables).length > 0) {
         const firstTableName = Object.keys(schema.tables)[0];
         
-        // Build main system menu
         buildMenu(schema, menuEl, gridTitleEl, addRowBtn);
-
         const navList = menuEl.querySelector('ul') || menuEl;
         
         let dashName = 'Dashboard';
@@ -34,7 +39,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let calName = 'Calendar';
         let calIconHtml = renderIconHtml('', 'assets/icons/calendar.png');
 
-        // Fetch Dashboard config safely through API to avoid 403 Forbidden
         try {
             const dashRes = await fetch('api.php?api=dashboard&v=' + Date.now());
             if (dashRes.ok) {
@@ -42,11 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (dashCfg.menu_name) dashName = dashCfg.menu_name;
                 dashIconHtml = renderIconHtml(dashCfg.menu_icon, 'assets/icons/dashboard.png');
             }
-        } catch(e) { 
-            console.warn('Could not load dashboard config for menu', e); 
-        }
+        } catch(e) { console.warn('Could not load dashboard config', e); }
 
-        // Fetch Calendar config safely through API to avoid 403 Forbidden
         try {
             const calRes = await fetch('api.php?api=calendar&v=' + Date.now());
             if (calRes.ok) {
@@ -54,25 +55,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (calCfg.menu_name) calName = calCfg.menu_name;
                 calIconHtml = renderIconHtml(calCfg.menu_icon, 'assets/icons/calendar.png');
             }
-        } catch(e) { 
-            console.warn('Could not load calendar config for menu', e); 
-        }
+        } catch(e) { console.warn('Could not load calendar config', e); }
 
-        // Setup Dashboard link element
         const dashItem = document.createElement('li');
         const dashLink = document.createElement('a');
         dashLink.href = 'dashboard.php';
         dashLink.className = 'custom-nav-link';
         dashLink.innerHTML = `${dashIconHtml} <span style="vertical-align:middle;">${dashName}</span>`;
 
-        // Setup Calendar link element
         const calItem = document.createElement('li');
         const calLink = document.createElement('a');
         calLink.href = 'calendar.php';
         calLink.className = 'custom-nav-link';
         calLink.innerHTML = `${calIconHtml} <span style="vertical-align:middle;">${calName}</span>`;
 
-        // Inject created links into DOM
         if (navList.tagName === 'UL') {
             dashItem.appendChild(dashLink);
             calItem.appendChild(calLink);
@@ -83,13 +79,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             menuEl.prepend(dashLink);
         }
         
-        // Initialize workflows module
-        const gridContainerEl = document.getElementById('grid');
-        if (gridContainerEl) {
-            initWorkflows(navList, gridContainerEl, gridTitleEl);
+        // Dynamically create a container for Active Filter Pills
+        const gridSection = document.getElementById('gridSection');
+        if (gridSection) {
+            const pillsContainer = document.createElement('div');
+            pillsContainer.id = 'filterPills';
+            pillsContainer.style.cssText = 'display: none; gap: 8px; flex-wrap: wrap; padding: 0 1.25rem; background: var(--panel); border-bottom: 1px solid var(--border-light);';
+            gridTitleEl.after(pillsContainer);
         }
 
-        // Load initial table data
+        const gridContainerEl = document.getElementById('grid');
+        if (gridContainerEl) { initWorkflows(navList, gridContainerEl, gridTitleEl); }
+        
         loadTable(schema, firstTableName, gridTitleEl, addRowBtn);
         setupPagination(schema);
     }
@@ -98,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Populate column filter dropdown dynamically
 function populateColumnFilter() {
     const { displayedColumns, currentTable } = getState();
-    columnFilterEl.innerHTML = `<option value="">All columns</option>`;
+    columnFilterEl.innerHTML = `<option value="">Select column to filter...</option>`;
     
     displayedColumns.forEach(col => {
         const opt = document.createElement("option");
@@ -120,85 +121,285 @@ function populateColumnFilter() {
     });
 }
 
-// Generate dropdown filters for boolean columns
-function renderBooleanFilters() {
-    const filterBar = document.getElementById('filterBar');
-    if (!filterBar) return;
-    filterBar.innerHTML = ''; 
-
-    const { currentTable } = getState();
-    if (!currentTable || !schema.tables[currentTable]) return;
-
-    const columns = schema.tables[currentTable].columns;
-    
-    for (const [colName, colCfg] of Object.entries(columns)) {
-        if ((colCfg.type || '').toLowerCase().includes('bool')) {
-            const select = document.createElement('select');
-            
-            const displayName = colCfg.display_name || colName;
-            select.innerHTML = `
-                <option value="">${displayName}: All</option>
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-            `;
-            
-            select.className = 'boolean-filter';
-            select.dataset.column = colName;
-            
-            // Link directly to unified applySearch function
-            select.addEventListener('change', () => {
-                updateClearFiltersVisibility();
-                applySearch();
-            });
-            filterBar.appendChild(select);
-        }
+// Update the global activeFilters state
+function updateColumnFilterState(col, type, data) {
+    if (!data || data.empty) {
+        delete activeFilters.columns[col];
+    } else {
+        activeFilters.columns[col] = { type, ...data };
     }
 }
 
-// Triggered when a new table is fully loaded
+// Render dynamic filters based on column type and populate with existing state
+function handleColumnFilterChange() {
+    const { currentTable, fullData } = getState();
+    const col = columnFilterEl.value;
+    const filterBar = document.getElementById('filterBar');
+    
+    filterBar.innerHTML = '';
+    if (!col || !currentTable || !schema.tables[currentTable]) return;
+
+    const colCfg = schema.tables[currentTable].columns[col] || {};
+    const type = (colCfg.type || '').toLowerCase();
+    const isFK = schema.tables[currentTable].foreign_keys && schema.tables[currentTable].foreign_keys[col];
+
+    // Retrieve existing filter state for the selected column to pre-fill inputs
+    const existingFilter = activeFilters.columns[col] || {};
+
+    if (isFK || type === 'enum') {
+        const select = document.createElement('select');
+        select.id = 'dictFilter';
+        const displayName = colCfg.display_name || col;
+        select.innerHTML = `<option value="">${displayName}: All</option>`;
+        
+        let options = [];
+        if (type === 'enum' && Array.isArray(colCfg.options)) {
+            options = colCfg.options.map(opt => ({ val: opt, label: opt }));
+        } else {
+            const uniqueVals = new Map();
+            fullData.forEach(row => {
+                const val = row[col];
+                const label = row[col + '__display'] || val;
+                if (val !== null && val !== undefined && val !== '') {
+                    uniqueVals.set(val, label);
+                }
+            });
+            options = Array.from(uniqueVals.entries()).map(([val, label]) => ({ val, label }));
+        }
+        
+        options.sort((a, b) => String(a.label).localeCompare(String(b.label)));
+        options.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.val;
+            o.textContent = opt.label;
+            if (existingFilter.val === String(opt.val)) o.selected = true;
+            select.appendChild(o);
+        });
+        
+        select.addEventListener('change', () => { 
+            const selectedText = select.options[select.selectedIndex].text;
+            updateColumnFilterState(col, 'dict', { val: select.value, label: selectedText, empty: select.value === '' });
+            applySearch(); 
+        });
+        filterBar.appendChild(select);
+    }
+    else if (type.includes('date')) {
+        const dateContainer = document.createElement('div');
+        dateContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+
+        const spanFrom = document.createElement('span');
+        spanFrom.textContent = 'From:';
+        spanFrom.style.cssText = 'font-size: 13px; color: #ffffff;';
+
+        const inputFrom = document.createElement('input');
+        inputFrom.type = 'date';
+        inputFrom.className = 'date-filter';
+        if (existingFilter.from) inputFrom.value = existingFilter.from;
+
+        const spanTo = document.createElement('span');
+        spanTo.textContent = 'To:';
+        spanTo.style.cssText = 'font-size: 13px; color: #ffffff;';
+
+        const inputTo = document.createElement('input');
+        inputTo.type = 'date';
+        inputTo.className = 'date-filter';
+        if (existingFilter.to) inputTo.value = existingFilter.to;
+
+        const updateDateState = () => {
+            const fromVal = inputFrom.value;
+            const toVal = inputTo.value;
+            updateColumnFilterState(col, 'date', { from: fromVal, to: toVal, empty: !fromVal && !toVal });
+            applySearch();
+        };
+
+        inputFrom.addEventListener('change', updateDateState);
+        inputTo.addEventListener('change', updateDateState);
+
+        dateContainer.appendChild(spanFrom);
+        dateContainer.appendChild(inputFrom);
+        dateContainer.appendChild(spanTo);
+        dateContainer.appendChild(inputTo);
+        filterBar.appendChild(dateContainer);
+    } 
+    else if (type.includes('int') || type.includes('dec') || type.includes('num') || type.includes('float')) {
+        const numContainer = document.createElement('div');
+        numContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+
+        const spanMin = document.createElement('span');
+        spanMin.textContent = 'Min:';
+        spanMin.style.cssText = 'font-size: 13px; color: #ffffff;';
+
+        const inputMin = document.createElement('input');
+        inputMin.type = 'number';
+        inputMin.className = 'date-filter'; 
+        if (existingFilter.min !== undefined && existingFilter.min !== null) inputMin.value = existingFilter.min;
+
+        const spanMax = document.createElement('span');
+        spanMax.textContent = 'Max:';
+        spanMax.style.cssText = 'font-size: 13px; color: #ffffff;';
+
+        const inputMax = document.createElement('input');
+        inputMax.type = 'number';
+        inputMax.className = 'date-filter'; 
+        if (existingFilter.max !== undefined && existingFilter.max !== null) inputMax.value = existingFilter.max;
+
+        const updateNumState = () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const minVal = inputMin.value !== '' ? parseFloat(inputMin.value) : null;
+                const maxVal = inputMax.value !== '' ? parseFloat(inputMax.value) : null;
+                updateColumnFilterState(col, 'num', { min: minVal, max: maxVal, empty: minVal === null && maxVal === null });
+                applySearch();
+            }, 300);
+        };
+
+        inputMin.addEventListener('input', updateNumState);
+        inputMax.addEventListener('input', updateNumState);
+
+        numContainer.appendChild(spanMin);
+        numContainer.appendChild(inputMin);
+        numContainer.appendChild(spanMax);
+        numContainer.appendChild(inputMax);
+        filterBar.appendChild(numContainer);
+    }
+    else if (type.includes('bool')) {
+        const select = document.createElement('select');
+        const displayName = colCfg.display_name || col;
+        select.innerHTML = `<option value="">${displayName}: All</option><option value="true">Yes</option><option value="false">No</option>`;
+        if (existingFilter.val) select.value = existingFilter.val;
+        
+        select.addEventListener('change', () => { 
+            updateColumnFilterState(col, 'bool', { val: select.value, empty: select.value === '' });
+            applySearch(); 
+        });
+        filterBar.appendChild(select);
+    }
+}
+
+// Render active filters as removable pills
+function renderFilterPills() {
+    const pillsContainer = document.getElementById('filterPills');
+    if (!pillsContainer) return;
+
+    pillsContainer.innerHTML = '';
+    let hasPills = false;
+    const { currentTable } = getState();
+
+    // Reusable function to render a single pill
+    const createPill = (label, onRemove) => {
+        hasPills = true;
+        const pill = document.createElement('div');
+        pill.style.cssText = 'background: var(--accent-light); color: var(--accent-dark); border: 1px solid var(--accent-mid); border-radius: 12px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; margin-top: 10px; margin-bottom: 10px;';
+        
+        const textSpan = document.createElement('span');
+        textSpan.textContent = label;
+        
+        const closeBtn = document.createElement('span');
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = 'cursor: pointer; color: var(--danger); font-size: 16px; font-weight: bold; line-height: 1; padding-left: 4px;';
+        closeBtn.title = "Remove filter";
+        
+        closeBtn.onclick = () => {
+            onRemove();
+            handleColumnFilterChange();
+            applySearch();
+        };
+
+        pill.appendChild(textSpan);
+        pill.appendChild(closeBtn);
+        pillsContainer.appendChild(pill);
+    };
+
+    // Render global text search pill
+    if (activeFilters.search) {
+        createPill(`Search: "${activeFilters.search}"`, () => {
+            activeFilters.search = '';
+            searchEl.value = '';
+        });
+    }
+
+    // Render cumulative column pills
+    if (currentTable && schema.tables[currentTable]) {
+        for (const [col, filter] of Object.entries(activeFilters.columns)) {
+            const colCfg = schema.tables[currentTable].columns[col] || {};
+            const colName = colCfg.display_name || col;
+
+            if (filter.type === 'dict') {
+                createPill(`${colName}: ${filter.label}`, () => delete activeFilters.columns[col]);
+            } 
+            else if (filter.type === 'bool') {
+                createPill(`${colName}: ${filter.val === 'true' ? 'Yes' : 'No'}`, () => delete activeFilters.columns[col]);
+            } 
+            else if (filter.type === 'date') {
+                let label = `${colName}: `;
+                if (filter.from && filter.to) label += `${filter.from} to ${filter.to}`;
+                else if (filter.from) label += `From ${filter.from}`;
+                else if (filter.to) label += `Up to ${filter.to}`;
+                createPill(label, () => delete activeFilters.columns[col]);
+            } 
+            else if (filter.type === 'num') {
+                let label = `${colName}: `;
+                if (filter.min !== null && filter.max !== null) label += `${filter.min} - ${filter.max}`;
+                else if (filter.min !== null) label += `Min ${filter.min}`;
+                else if (filter.max !== null) label += `Max ${filter.max}`;
+                createPill(label, () => delete activeFilters.columns[col]);
+            }
+        }
+    }
+
+    pillsContainer.style.display = hasPills ? 'flex' : 'none';
+}
+
+// Event triggered when a table finishes rendering initially
 document.addEventListener("tableLoaded", () => {
+    // Reset active filters on table change
+    activeFilters = { search: '', columns: {} };
+    searchEl.value = '';
+    
     populateColumnFilter();
-    renderBooleanFilters();
-    clearFiltersBtn.style.display = 'none';
+    handleColumnFilterChange();
+    renderFilterPills();
+    updateClearFiltersVisibility();
 });
 
-// Global text search and boolean filtering combined
+// Evaluate all stacked filters against the row data
 async function applySearch() {
     const { fullData, displayedColumns } = getState();
-    const q = searchEl.value.toLowerCase();
-    const selectedColumn = columnFilterEl.value; 
-
-    // Find all active boolean filters
-    const boolSelects = document.querySelectorAll('.boolean-filter');
-    const activeBoolFilters = [];
-    boolSelects.forEach(sel => {
-        if (sel.value !== '') {
-            activeBoolFilters.push({ col: sel.dataset.column, val: sel.value === 'true' });
-        }
-    });
+    const q = activeFilters.search.toLowerCase();
 
     let rows = fullData.filter(row => {
-        // Validate boolean filters first
-        for (const filter of activeBoolFilters) {
-            const rowVal = row[filter.col];
-            const rowBool = (rowVal === true || rowVal === 't' || rowVal === 'true' || rowVal === 1);
-            if (rowBool !== filter.val) return false;
+        // Iterate through all stored column filters
+        for (const [col, filter] of Object.entries(activeFilters.columns)) {
+            if (filter.type === 'dict') {
+                if (String(row[col]) !== String(filter.val)) return false;
+            }
+            else if (filter.type === 'bool') {
+                const rowBool = (row[col] === true || row[col] === 't' || row[col] === 'true' || row[col] === 1);
+                const targetBool = (filter.val === 'true');
+                if (rowBool !== targetBool) return false;
+            }
+            else if (filter.type === 'date') {
+                const rawDateStr = (row[col] ?? '').toString().substring(0, 10);
+                if (!rawDateStr) return false; 
+                if (filter.from && rawDateStr < filter.from) return false;
+                if (filter.to && rawDateStr > filter.to) return false;
+            }
+            else if (filter.type === 'num') {
+                const rawNum = parseFloat(row[col]);
+                if (isNaN(rawNum)) return false; 
+                if (filter.min !== null && rawNum < filter.min) return false;
+                if (filter.max !== null && rawNum > filter.max) return false;
+            }
         }
 
-        // Validate text search second
+        // Global text search across all visible columns
         if (q) {
-            if (selectedColumn) {
-                const raw = (row[selectedColumn] ?? '').toString().toLowerCase();
-                const display = (row[selectedColumn + '__display'] ?? '').toString().toLowerCase();
-                if (!raw.includes(q) && !display.includes(q)) return false;
-            } else {
-                const matchesText = displayedColumns.some(col => {
-                    const raw = (row[col] ?? '').toString().toLowerCase();
-                    const display = (row[col + '__display'] ?? '').toString().toLowerCase();
-                    return raw.includes(q) || display.includes(q);
-                });
-                if (!matchesText) return false;
-            }
+            const matchesText = displayedColumns.some(colName => {
+                const raw = (row[colName] ?? '').toString().toLowerCase();
+                const display = (row[colName + '__display'] ?? '').toString().toLowerCase();
+                return raw.includes(q) || display.includes(q);
+            });
+            if (!matchesText) return false;
         }
 
         return true;
@@ -206,37 +407,41 @@ async function applySearch() {
 
     setFilteredData(rows);
     await renderGrid(schema);
-
-    debugLog("Search Applied", { query: q, results: rows.length });
+    renderFilterPills();
+    updateClearFiltersVisibility();
+    debugLog("Search Applied", { activeFilters, results: rows.length });
 }
 
-// Show the Reset button only when a filter is active
+// Show the global Reset button only when any filter exists
 function updateClearFiltersVisibility() {
-    const hasText = searchEl.value !== '';
-    const hasColumn = columnFilterEl.value !== '';
-    const hasBool = [...document.querySelectorAll('.boolean-filter')].some(s => s.value !== '');
-    clearFiltersBtn.style.display = (hasText || hasColumn || hasBool) ? 'inline-block' : 'none';
+    const hasSearch = activeFilters.search !== '';
+    const hasColumns = Object.keys(activeFilters.columns).length > 0;
+    clearFiltersBtn.style.display = (hasSearch || hasColumns) ? 'inline-block' : 'none';
 }
 
-// Clear all filter inputs and reset the grid
+// Completely clear the filter state globally
 clearFiltersBtn.addEventListener('click', async () => {
+    activeFilters = { search: '', columns: {} };
     searchEl.value = '';
     columnFilterEl.value = '';
-    document.querySelectorAll('.boolean-filter').forEach(s => s.value = '');
-    clearFiltersBtn.style.display = 'none';
+    
+    handleColumnFilterChange();
+    renderFilterPills();
+    updateClearFiltersVisibility();
+    
     await resetFilters(schema);
 });
 
-let searchTimeout;
+// Sync the search input with the filter state
 searchEl.addEventListener('input', () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        updateClearFiltersVisibility();
+        activeFilters.search = searchEl.value;
         applySearch();
     }, 300);
 });
 
+// React to dropdown column change
 columnFilterEl.addEventListener('change', () => {
-    updateClearFiltersVisibility();
-    applySearch();
+    handleColumnFilterChange();
 });

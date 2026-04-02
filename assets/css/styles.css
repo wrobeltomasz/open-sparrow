@@ -1,5 +1,4 @@
 :root {
-
   --bg:           #F4F7F9; 
   --panel:        #ffffff;
   
@@ -54,7 +53,7 @@ header {
   gap: 1rem;
   padding: 0 1.25rem;
   height: var(--header-h);
-  background: var(--accent-dark); /* Solidny, ciemny granat zamiast krzykliwego gradientu */
+  background: var(--accent-dark);
   box-shadow: 0 2px 8px rgba(0, 51, 102, 0.25);
   position: sticky;
   top: 0;
@@ -88,9 +87,10 @@ header h1 {
   white-space: nowrap;
 }
 
-header input {
+/* SEARCH BAR */
+header #globalSearch {
   flex: 1;
-  max-width: 380px;
+  max-width: 220px; /* Zmniejszona szerokość z 380px na 220px */
   padding: 0.45rem 0.85rem;
   border-radius: var(--radius);
   border: 1px solid rgba(255,255,255,.25);
@@ -100,16 +100,17 @@ header input {
   transition: background var(--transition), border-color var(--transition);
 }
 
-header input::placeholder { 
+header #globalSearch::placeholder { 
   color: rgba(255,255,255,.55); 
 }
 
-header input:focus {
+header #globalSearch:focus {
   outline: none;
   background: rgba(255,255,255,.22);
   border-color: rgba(255,255,255,.8);
 }
 
+/* COLUMN FILTER DROPDOWN */
 header select {
   padding: 0.42rem 2rem 0.42rem 0.75rem;
   border-radius: var(--radius);
@@ -135,6 +136,49 @@ header select option {
   color: #fff; 
 }
 
+/* DATE FILTERS IN HEADER */
+#dateFiltersContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px !important;
+}
+
+#dateFiltersContainer span {
+  color: #ffffff !important; /* Nadpisuje ciemny kolor tekstowy ustawiony przez JS */
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+header input.date-filter {
+  flex: 0 0 auto;
+  width: 125px; /* Stała, krótka szerokość dla kalendarzy */
+  padding: 0.42rem 0.65rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+header input.date-filter::-webkit-calendar-picker-indicator {
+  filter: invert(1); /* Odwraca kolor ikony kalendarzyka na biały */
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+header input.date-filter::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+header input.date-filter:focus {
+  outline: none;
+  background: rgba(255,255,255,.22);
+  border-color: rgba(255,255,255,.8);
+}
+
+/* USER MENU */
 .header-user-menu {
   margin-left: auto;
   display: flex;
@@ -240,6 +284,7 @@ main { padding: 1.25rem; }
   padding: 0;
   box-shadow: var(--shadow-md);
   overflow: hidden; 
+  position: relative; /* Wymagane dla loadera */
 }
 
 #gridTitle {
@@ -712,4 +757,71 @@ footer {
     border: 2px solid var(--accent);
     border-radius: var(--radius);
     font-weight: 600;
+}
+
+/* GRID LOADER (Spinner Overlay) */
+.grid-loader-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(244, 247, 249, 0.7);
+    backdrop-filter: blur(2px);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    border-radius: var(--radius-lg);
+}
+
+.grid-loader-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-light);
+    border-top: 4px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+/* =========================================
+   COLUMN RESIZE AND DRAG & DROP
+========================================= */
+th { 
+    position: relative; 
+    user-select: none; /* Prevents text highlighting when dragging */
+}
+
+.col-resizer { 
+    position: absolute; 
+    top: 0; 
+    right: 0; 
+    bottom: 0; 
+    width: 6px; 
+    cursor: col-resize; 
+    z-index: 10; 
+    transition: background-color 0.2s;
+}
+
+.col-resizer:hover, 
+.col-resizer:active { 
+    background-color: var(--accent); 
+}
+
+th.dragging { 
+    opacity: 0.4; 
+    background-color: var(--accent-light) !important;
+}
+
+th.drag-over { 
+    border-left: 3px solid #F59E0B !important; /* Orange line indicates drop position */
 }
