@@ -1,5 +1,6 @@
 <div align="center">
-  <img src="assets/img/logo-blue.png" alt="OpenSparrow banner" width="220" />
+ 
+![Banner](https://github.com/user-attachments/assets/5a1e24e3-f916-4222-aa1a-502b5e8988d6)
 
   <h1>OpenSparrow</h1>
 
