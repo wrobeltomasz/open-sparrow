@@ -25,7 +25,9 @@ export function renderDocumentation(ctx) {
             <p>The <strong>Schema</strong> tab is the core of your CRM. It maps directly to your database tables and defines how they are displayed in the frontend Grid.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Sync DB Tables:</strong> Click this button to automatically fetch all tables and columns from your connected database.</li>
-                <li><strong>Display Names:</strong> Rename how tables and columns appear in the UI without changing the actual database structure.</li>
+                <li><strong>Smart Type Mapping:</strong> When syncing columns, the system automatically reads native PostgreSQL data types (e.g., int4, varchar, boolean) and maps them to clean frontend types (Text, Number, Date, Boolean, Enum). You can manually adjust these using the provided dropdown lists.</li>
+                <li><strong>Remove Tables:</strong> You can safely remove a table from your JSON configuration using the red "Delete Table" button without dropping the actual table from the PostgreSQL database.</li>
+                <li><strong>Foreign Keys Search & Display:</strong> You can assign multiple display columns to a foreign key (e.g., <code>first_name, last_name</code>). In the frontend grid, these render as advanced searchable input fields, making it easy to find relations among thousands of records.</li>
                 <li><strong>Visibility & Ordering:</strong> Toggle which columns are visible in the grid and use Up/Down arrows to reorder them.</li>
             </ul>
 
@@ -33,7 +35,6 @@ export function renderDocumentation(ctx) {
             <p>The <strong>+ Add Subtable</strong> feature allows you to display related child records directly within the parent record's detail view (e.g., viewing all "Invoices" under a specific "Client" profile).</p>
             <ul style="padding-left: 20px;">
                 <li>Click <strong>+ Add Subtable</strong> in the Schema editor of your parent table.</li>
-                <li><strong>Subtable ID:</strong> A unique internal identifier (e.g., <code>client_invoices</code>).</li>
                 <li><strong>Target Table:</strong> The child table you want to display (e.g., <code>invoices</code>).</li>
                 <li><strong>Foreign Key Column:</strong> The column in the child table that references the parent table's <code>id</code> (e.g., <code>client_id</code>).</li>
             </ul>
@@ -42,9 +43,19 @@ export function renderDocumentation(ctx) {
             <p>The <strong>Dashboard</strong> tab allows you to create dynamic analytical views using data from your database.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Global Settings:</strong> Define the main layout grid (using CSS properties like <code>repeat(auto-fit, minmax(300px, 1fr))</code>).</li>
-                <li><strong>KPI Cards:</strong> Small widgets to display single aggregate numbers (Count, Sum, Average).</li>
+                <li><strong>Stat Cards:</strong> Simple metric widgets displaying the total row count of a selected table.</li>
+                <li><strong>KPI Cards:</strong> Small widgets to display single aggregate numbers based on specific columns (Count, Sum, Average).</li>
                 <li><strong>Bar Charts:</strong> Visual widgets grouping data by X-Axis and aggregating on Y-Axis.</li>
                 <li><strong>Data Lists:</strong> Top-N lists displaying recent or specific records directly on the dashboard.</li>
+            </ul>
+            
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Advanced Filtering (WHERE Clause)</h4>
+            <p>You can apply custom SQL filtering to any dashboard widget to restrict the data it processes. Simply enter a valid PostgreSQL condition in the <strong>WHERE Clause</strong> field.</p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Do not include the word "WHERE".</strong> Just write the condition.</li>
+                <li><strong>Examples:</strong> <code>status = 'pending'</code> or <code>price > 100 AND is_active = true</code>.</li>
+                <li>Use single quotes for strings (e.g., <code>role = 'admin'</code>).</li>
+                <li>This allows you to create specific widgets like "Total Pending Orders" or "Top Customers from the UK".</li>
             </ul>
 
             <h3 style="color: #2563eb; margin-top: 30px;">4. Calendar Module</h3>
@@ -52,7 +63,7 @@ export function renderDocumentation(ctx) {
             <ul style="padding-left: 20px;">
                 <li><strong>Data Sources:</strong> You can overlay multiple tables on a single calendar. Select the source table, the target Date column, and the Title column.</li>
                 <li><strong>Color Coding:</strong> Assign different colors to different data sources to easily distinguish events.</li>
-                <li><strong>URL Templates:</strong> Define clickable links for calendar events (e.g., redirecting to an edit page).</li>
+                <li><strong>Row Data Context:</strong> The entire database row is passed to the calendar event, allowing for complex click interactions or dynamic modals.</li>
             </ul>
 
             <h3 style="color: #2563eb; margin-top: 30px;">5. Workflows Builder</h3>
