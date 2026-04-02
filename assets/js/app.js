@@ -484,7 +484,7 @@ searchEl.addEventListener('input', () => {
     }, 300);
 });
 
-// React to dropdown column change
+// Dropdown column change
 columnFilterEl.addEventListener('change', () => {
     handleColumnFilterChange();
 });
