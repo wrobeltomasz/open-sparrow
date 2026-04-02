@@ -17,13 +17,20 @@ let activeFilters = {
     columns: {}
 };
 
-// Helper to render HTML for menu icons
-function renderIconHtml(iconVal, fallbackPath) {
+// Helper to safely render DOM elements for menu icons (prevents XSS)
+function renderIconElement(iconVal, fallbackPath) {
     const icon = iconVal || fallbackPath;
     if (icon.includes('/') || icon.includes('.')) {
-        return `<img src="${icon}" alt="" style="width:20px; height:20px; vertical-align:middle; margin-right:8px;">`;
+        const img = document.createElement('img');
+        img.src = icon;
+        img.alt = '';
+        img.style.cssText = 'width:20px; height:20px; vertical-align:middle; margin-right:8px;';
+        return img;
     }
-    return `<span style="font-size:1.2em; margin-right:8px; vertical-align:middle;">${icon}</span>`;
+    const span = document.createElement('span');
+    span.style.cssText = 'font-size:1.2em; margin-right:8px; vertical-align:middle;';
+    span.textContent = icon;
+    return span;
 }
 
 // Initialize application on DOM load
@@ -35,16 +42,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const navList = menuEl.querySelector('ul') || menuEl;
         
         let dashName = 'Dashboard';
-        let dashIconHtml = renderIconHtml('', 'assets/icons/dashboard.png');
+        let dashIconEl = renderIconElement('', 'assets/icons/dashboard.png');
         let calName = 'Calendar';
-        let calIconHtml = renderIconHtml('', 'assets/icons/calendar.png');
+        let calIconEl = renderIconElement('', 'assets/icons/calendar.png');
 
         try {
             const dashRes = await fetch('api.php?api=dashboard&v=' + Date.now());
             if (dashRes.ok) {
                 const dashCfg = await dashRes.json();
                 if (dashCfg.menu_name) dashName = dashCfg.menu_name;
-                dashIconHtml = renderIconHtml(dashCfg.menu_icon, 'assets/icons/dashboard.png');
+                dashIconEl = renderIconElement(dashCfg.menu_icon, 'assets/icons/dashboard.png');
             }
         } catch(e) { console.warn('Could not load dashboard config', e); }
 
@@ -53,25 +60,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (calRes.ok) {
                 const calCfg = await calRes.json();
                 if (calCfg.menu_name) calName = calCfg.menu_name;
-                calIconHtml = renderIconHtml(calCfg.menu_icon, 'assets/icons/calendar.png');
+                calIconEl = renderIconElement(calCfg.menu_icon, 'assets/icons/calendar.png');
             }
         } catch(e) { console.warn('Could not load calendar config', e); }
 
+        // Dashboard Item (Safe DOM construction)
         const dashItem = document.createElement('li');
         const dashLink = document.createElement('a');
         dashLink.href = 'dashboard.php';
         dashLink.className = 'custom-nav-link';
-        dashLink.innerHTML = `${dashIconHtml} <span style="vertical-align:middle;">${dashName}</span>`;
+        dashLink.appendChild(dashIconEl);
+        const dashSpan = document.createElement('span');
+        dashSpan.style.verticalAlign = 'middle';
+        dashSpan.textContent = dashName;
+        dashLink.appendChild(dashSpan);
+        dashItem.appendChild(dashLink);
 
+        // Calendar Item (Safe DOM construction)
         const calItem = document.createElement('li');
         const calLink = document.createElement('a');
         calLink.href = 'calendar.php';
         calLink.className = 'custom-nav-link';
-        calLink.innerHTML = `${calIconHtml} <span style="vertical-align:middle;">${calName}</span>`;
+        calLink.appendChild(calIconEl);
+        const calSpan = document.createElement('span');
+        calSpan.style.verticalAlign = 'middle';
+        calSpan.textContent = calName;
+        calLink.appendChild(calSpan);
+        calItem.appendChild(calLink);
 
         if (navList.tagName === 'UL') {
-            dashItem.appendChild(dashLink);
-            calItem.appendChild(calLink);
             navList.prepend(calItem);
             navList.prepend(dashItem);
         } else {
@@ -99,7 +116,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Populate column filter dropdown dynamically
 function populateColumnFilter() {
     const { displayedColumns, currentTable } = getState();
-    columnFilterEl.innerHTML = `<option value="">Select column to filter...</option>`;
+    
+    // Safely clear and add default option
+    columnFilterEl.innerHTML = '';
+    const defaultOpt = document.createElement("option");
+    defaultOpt.value = "";
+    defaultOpt.textContent = "Select column to filter...";
+    columnFilterEl.appendChild(defaultOpt);
     
     displayedColumns.forEach(col => {
         const opt = document.createElement("option");
@@ -150,7 +173,12 @@ function handleColumnFilterChange() {
         const select = document.createElement('select');
         select.id = 'dictFilter';
         const displayName = colCfg.display_name || col;
-        select.innerHTML = `<option value="">${displayName}: All</option>`;
+        
+        // Safely add default option
+        const optAll = document.createElement('option');
+        optAll.value = '';
+        optAll.textContent = `${displayName}: All`;
+        select.appendChild(optAll);
         
         let options = [];
         if (type === 'enum' && Array.isArray(colCfg.options)) {
@@ -265,7 +293,22 @@ function handleColumnFilterChange() {
     else if (type.includes('bool')) {
         const select = document.createElement('select');
         const displayName = colCfg.display_name || col;
-        select.innerHTML = `<option value="">${displayName}: All</option><option value="true">Yes</option><option value="false">No</option>`;
+
+        const optAll = document.createElement('option');
+        optAll.value = '';
+        optAll.textContent = `${displayName}: All`;
+        select.appendChild(optAll);
+
+        const optTrue = document.createElement('option');
+        optTrue.value = 'true';
+        optTrue.textContent = 'Yes';
+        select.appendChild(optTrue);
+
+        const optFalse = document.createElement('option');
+        optFalse.value = 'false';
+        optFalse.textContent = 'No';
+        select.appendChild(optFalse);
+
         if (existingFilter.val) select.value = existingFilter.val;
         
         select.addEventListener('change', () => { 
@@ -295,7 +338,7 @@ function renderFilterPills() {
         textSpan.textContent = label;
         
         const closeBtn = document.createElement('span');
-        closeBtn.innerHTML = '×';
+        closeBtn.textContent = '×';
         closeBtn.style.cssText = 'cursor: pointer; color: var(--danger); font-size: 16px; font-weight: bold; line-height: 1; padding-left: 4px;';
         closeBtn.title = "Remove filter";
         
