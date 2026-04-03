@@ -109,6 +109,12 @@ We aim to keep the code clean and consistent.
 If linters are introduced (e.g., PHP_CodeSniffer, Prettier), please follow them.  
 Until then, match the existing code style in the project.  
 
+## Contributing
+
+Before your PR can be merged, you must sign our [Contributor License Agreement](CLA.md). 
+This is handled automatically via a bot comment in your PR. 
+You only need to do this once.
+
 ---
 
 ## Contribution Tips
