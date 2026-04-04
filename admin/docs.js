@@ -6,23 +6,23 @@ export function renderDocumentation(ctx) {
     workspaceEl.innerHTML = `
         <div style="max-width: 900px; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #334155; line-height: 1.6; margin-bottom: 40px;">
             <h2 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; color: #0f172a;">
-                Sparrow CRM - Admin Panel Documentation
+                Sparrow OpenSparrow - Admin Panel Documentation
             </h2>
             <p style="font-size: 15px; color: #64748b; margin-bottom: 30px;">
-                Welcome to the Sparrow CRM Administration Panel. This tool allows you to configure your frontend application, manage database connections, and build dynamic dashboards without writing a single line of code.
+                This tool allows you to configure your frontend application, manage database connections, and build dynamic dashboards without writing a single line of code.
             </p>
 
             <h3 style="color: #2563eb; margin-top: 30px;">1. Technical Requirements & Database Structure</h3>
-            <p>Before configuring the CRM, ensure your PostgreSQL database meets these core requirements for the system to function correctly:</p>
+            <p>Before configuring the OpenSparrow, ensure your PostgreSQL database meets these core requirements for the system to function correctly:</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Primary Keys (Mandatory):</strong> Every table <strong>must</strong> have a primary key column named <code>id</code> (typically defined as SERIAL or BIGSERIAL). The CRM relies on this exact column name to edit, delete, and view specific records.</li>
+                <li><strong>Primary Keys (Mandatory):</strong> Every table <strong>must</strong> have a primary key column named <code>id</code> (typically defined as SERIAL or BIGSERIAL). The OpenSparrow relies on this exact column name to edit, delete, and view specific records.</li>
                 <li><strong>Foreign Keys (Relationships):</strong> To link tables (e.g., assigning a Contact to a Company), use standard PostgreSQL foreign keys. The UI will automatically detect them. The recommended naming convention is <code>table_name_id</code> (e.g., <code>company_id</code>).</li>
-                <li><strong>ENUM Types:</strong> Custom PostgreSQL ENUM types are fully supported. The CRM will automatically detect them and render them as dropdown <code>&lt;select&gt;</code> menus in the frontend forms.</li>
+                <li><strong>ENUM Types:</strong> Custom PostgreSQL ENUM types are fully supported. The OpenSparrow will automatically detect them and render them as dropdown <code>&lt;select&gt;</code> menus in the frontend forms.</li>
                 <li><strong>Boolean Types:</strong> Boolean columns (true/false) will automatically render as switch toggles in edit forms and dropdown filters in the data grids.</li>
             </ul>
 
 			<h3 style="color: #2563eb; margin-top: 30px;">2. Schema & Grid Configuration</h3>
-            <p>The <strong>Schema</strong> tab is the core of your CRM. It maps directly to your database tables and defines how they are displayed in the frontend Grid.</p>
+            <p>The <strong>Schema</strong> tab is the core of your OpenSparrow. It maps directly to your database tables and defines how they are displayed in the frontend Grid.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Add New Tables:</strong> Use the "+ Add Table" button to dynamically create new physical tables in your PostgreSQL database. You will be prompted to specify the database schema and table name. The system automatically creates the mandatory 'id' primary key.</li>
                 <li><strong>Add New Columns:</strong> Inside a table's configuration, click the "+ Add Column" button to append a new physical column directly to the database. You can specify the column name and its native SQL data type (e.g., varchar(255), boolean, int4).</li>
@@ -79,7 +79,7 @@ export function renderDocumentation(ctx) {
             </ul>
 
             <h3 style="color: #2563eb; margin-top: 30px;">6. Users Management</h3>
-            <p>The <strong>Users</strong> tab is dedicated to managing access to the frontend CRM interface.</p>
+            <p>The <strong>Users</strong> tab is dedicated to managing access to the frontend OpenSparrow interface.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Create Users:</strong> Add new frontend user accounts by providing a username and a secure password (which is heavily hashed in the database).</li>
                 <li><strong>Active Status Toggle:</strong> You can instantly revoke or restore a user's login access by toggling their "Active / Inactive" status, without permanently deleting their historical records from the database.</li>
