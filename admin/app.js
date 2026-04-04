@@ -1,6 +1,6 @@
 // admin/app.js
 import { moveArrayItem, moveObjectKey, createTextInput, createIconPicker } from './ui.js';
-import { syncSchemaTables, renderSchemaEditor } from './schema.js';
+import { syncSchemaTables, renderSchemaEditor, createAddTableButton } from './schema.js';
 import { renderDashboardLayout, renderDashboardEditor, initDashboardUI } from './dashboard.js';
 import { renderCalendarEditor } from './calendar.js';
 import { renderDatabaseEditor } from './database.js'; 
@@ -210,6 +210,27 @@ function renderSidebar() {
     }
 
     document.getElementById('sidebarTitle').textContent = currentFile === 'schema' ? 'Tables' : currentFile === 'dashboard' ? 'Widgets' : currentFile === 'workflows' ? 'Workflows' : 'Sources';
+	
+	// Remove existing button to prevent duplicates when sidebar re-renders
+	const existingBtn = document.getElementById('addTableBtn');
+	if (existingBtn) existingBtn.remove();
+
+	// Append the button only if the active tab is 'schema'
+	if (currentFile === 'schema') {
+		const btnAddTable = createAddTableButton(currentConfig, 'app', (newTableName) => {
+			alert('Table created successfully. Please click "Save File" to apply.');
+			// Refresh sidebar to show the new table
+			if (typeof renderSidebar === 'function') renderSidebar(); 
+		}, (err) => {
+			alert(err);
+		});
+		
+		// Style and attach the button next to the title
+		btnAddTable.id = 'addTableBtn';
+		btnAddTable.style.fontSize = '12px';
+		btnAddTable.style.float = 'right';
+		sidebarTitle.appendChild(btnAddTable);
+	}
     
     let actionDiv = document.getElementById('sidebarActions');
     if (!actionDiv) {

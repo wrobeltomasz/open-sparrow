@@ -7,6 +7,73 @@ function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
+// Function to generate the Add Table button and handle its logic
+export function createAddTableButton(currentConfig, defaultSchema, onSuccess, onError) {
+    const btnAddTable = document.createElement('button');
+    btnAddTable.type = 'button';
+    btnAddTable.className = 'btn-add';
+    btnAddTable.textContent = '+ Add Table';
+    btnAddTable.style.background = '#10b981';
+    btnAddTable.style.marginLeft = '10px';
+
+    btnAddTable.onclick = async (e) => {
+        e.preventDefault();
+        
+        const tableName = prompt('Enter new table name (lowercase, no spaces):');
+        if (!tableName) return;
+
+        // Force proper formatting
+        const formattedName = tableName.toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+        // Prevent duplicates
+        if (currentConfig.tables && currentConfig.tables[formattedName]) {
+            alert('Table already exists in configuration.');
+            return;
+        }
+
+        // Prompt user for schema name using the provided default
+        const schemaInput = prompt('Enter database schema name:', defaultSchema || 'public');
+        if (!schemaInput) return;
+        
+        // Format schema name safely
+        const formattedSchema = schemaInput.toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+        try {
+            const response = await fetch('api.php?action=create_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                },
+                // Send formatted schema and table name
+                body: JSON.stringify({ schema: formattedSchema, table: formattedName })
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                if (!currentConfig.tables) currentConfig.tables = {};
+                
+                // Initialize basic table structure in memory with the chosen schema
+                currentConfig.tables[formattedName] = {
+                    display_name: formattedName.replace(/_/g, ' ').toUpperCase(),
+                    schema: formattedSchema,
+                    columns: {
+                        id: { display_name: 'ID', type: 'integer', not_null: true }
+                    }
+                };
+                onSuccess(formattedName);
+            } else {
+                onError(result.error || 'Failed to create table.');
+            }
+        } catch (err) {
+            console.error(err);
+            onError('Network error occurred.');
+        }
+    };
+
+    return btnAddTable;
+}
+
 // Sync tables from database
 export async function syncSchemaTables(currentConfig, schemaName, onSuccess, onError) {
     try {
@@ -51,6 +118,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
     titleEl.style.margin = '0';
 
     const btnDeleteTable = document.createElement('button');
+    btnDeleteTable.type = 'button';
     btnDeleteTable.textContent = 'Delete Table';
     btnDeleteTable.style.cssText = 'background: #ef4444; color: white; border: none; padding: 6px 12px; cursor: pointer; font-weight: bold; border-radius: 4px;';
     btnDeleteTable.onclick = () => {
@@ -77,6 +145,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
     if (!tableData.subtables || !Array.isArray(tableData.subtables)) tableData.subtables = [];
 
     const btnSyncCols = document.createElement('button');
+    btnSyncCols.type = 'button';
     btnSyncCols.className = 'btn-add';
     btnSyncCols.style.background = '#007ACC';
     btnSyncCols.innerHTML = 'Sync Columns from DB';
@@ -153,6 +222,63 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
     };
     workspaceEl.appendChild(btnSyncCols);
 
+    // New code for dynamic column addition
+    const btnAddCol = document.createElement('button');
+    btnAddCol.type = 'button';
+    btnAddCol.className = 'btn-add';
+    btnAddCol.textContent = '+ Add Column';
+    btnAddCol.style.background = '#3b82f6';
+    btnAddCol.style.marginLeft = '10px';
+
+    btnAddCol.onclick = async (e) => {
+        e.preventDefault();
+        
+        const colName = prompt('Enter new column name (lowercase, no spaces):');
+        if (!colName) return;
+
+        // Force proper formatting
+        const formattedColName = colName.toLowerCase().replace(/[^a-z0-9_]/g, '');
+
+        // Prevent duplicates
+        if (tableData.columns && tableData.columns[formattedColName]) {
+            alert('Column already exists.');
+            return;
+        }
+
+        const colType = prompt('Enter data type (e.g., varchar(255), int4, boolean):', 'varchar(255)');
+        if (!colType) return;
+
+        try {
+            const response = await fetch('api.php?action=add_column', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                },
+                // Pass schema context accurately to backend
+                body: JSON.stringify({ schema: tableData.schema || 'public', table: tableName, column: formattedColName, type: colType })
+            });
+
+            const result = await response.json();
+            if (result.status === 'success') {
+                // Update configuration object in memory
+                tableData.columns[formattedColName] = {
+                    display_name: formattedColName.replace(/_/g, ' ').charAt(0).toUpperCase() + formattedColName.replace(/_/g, ' ').slice(1),
+                    type: 'text'
+                };
+                
+                // Re-render the schema editor view
+                renderEditor(tableName, tableData, false);
+            } else {
+                alert('Error adding column: ' + result.error);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Network error occurred.');
+        }
+    };
+    workspaceEl.appendChild(btnAddCol);
+
     workspaceEl.appendChild(createTextInput('display_name', 'Display Name', tableData.display_name, (val) => tableData.display_name = val));
     workspaceEl.appendChild(createTextInput('schema', 'Database Schema', tableData.schema || 'app', (val) => tableData.schema = val));
     
@@ -196,6 +322,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         const moveControls = document.createElement('div');
         
         const btnUp = document.createElement('button');
+        btnUp.type = 'button';
         btnUp.innerHTML = 'Up'; 
         btnUp.title = 'Move Up';
         btnUp.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; margin-right:10px; text-decoration: underline;';
@@ -206,6 +333,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         };
 
         const btnDown = document.createElement('button');
+        btnDown.type = 'button';
         btnDown.innerHTML = 'Down'; 
         btnDown.title = 'Move Down';
         btnDown.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; text-decoration: underline;';
@@ -340,6 +468,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
             h4.style.margin = '0';
             
             const btnDel = document.createElement('button');
+            btnDel.type = 'button';
             btnDel.textContent = 'Delete';
             btnDel.style.cssText = 'background:none; border:none; color:red; cursor:pointer; font-weight:bold; text-decoration: underline;';
             btnDel.onclick = () => {
@@ -368,6 +497,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         });
 
         const btnAddSub = document.createElement('button');
+        btnAddSub.type = 'button';
         btnAddSub.className = 'btn-add';
         btnAddSub.style.background = '#4CAF50';
         btnAddSub.textContent = '+ Add Subtable';

@@ -21,9 +21,11 @@ export function renderDocumentation(ctx) {
                 <li><strong>Boolean Types:</strong> Boolean columns (true/false) will automatically render as switch toggles in edit forms and dropdown filters in the data grids.</li>
             </ul>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">2. Schema & Grid Configuration</h3>
+			<h3 style="color: #2563eb; margin-top: 30px;">2. Schema & Grid Configuration</h3>
             <p>The <strong>Schema</strong> tab is the core of your CRM. It maps directly to your database tables and defines how they are displayed in the frontend Grid.</p>
             <ul style="padding-left: 20px;">
+                <li><strong>Add New Tables:</strong> Use the "+ Add Table" button to dynamically create new physical tables in your PostgreSQL database. You will be prompted to specify the database schema and table name. The system automatically creates the mandatory 'id' primary key.</li>
+                <li><strong>Add New Columns:</strong> Inside a table's configuration, click the "+ Add Column" button to append a new physical column directly to the database. You can specify the column name and its native SQL data type (e.g., varchar(255), boolean, int4).</li>
                 <li><strong>Sync DB Tables:</strong> Click this button to automatically fetch all tables and columns from your connected database.</li>
                 <li><strong>Smart Type Mapping:</strong> When syncing columns, the system automatically reads native PostgreSQL data types (e.g., int4, varchar, boolean) and maps them to clean frontend types (Text, Number, Date, Boolean, Enum). You can manually adjust these using the provided dropdown lists.</li>
                 <li><strong>Remove Tables:</strong> You can safely remove a table from your JSON configuration using the red "Delete Table" button without dropping the actual table from the PostgreSQL database.</li>

@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Ensure state-changing actions use POST method to prevent CSRF via GET
-$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle'];
+$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'create_table', 'add_column'];
 if (in_array($action, $postActions, true) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Content-Type: application/json');
     http_response_code(405);
@@ -148,6 +148,88 @@ if ($action === 'users_toggle') {
         if (!$res) {
             throw new Exception(pg_last_error($conn));
         }
+        echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// Handle table creation
+if ($action === 'create_table') {
+    header('Content-Type: application/json');
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    // Sanitize schema and table variables
+    $schemaName = preg_replace('/[^a-z0-9_]/', '', strtolower($input['schema'] ?? 'public'));
+    $tableName = preg_replace('/[^a-z0-9_]/', '', strtolower($input['table'] ?? ''));
+
+    if (empty($tableName) || empty($schemaName)) {
+        echo json_encode(['status' => 'error', 'error' => 'Invalid schema or table name.']);
+        exit;
+    }
+
+    try {
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = db_connect();
+        
+        // Prepare schema-prefixed identifiers
+        $safeSchema = pg_escape_identifier($conn, $schemaName);
+        $safeTable = pg_escape_identifier($conn, $tableName);
+
+        // Execute table creation query
+        $sql = "CREATE TABLE " . $safeSchema . "." . $safeTable . " (id serial4 NOT NULL PRIMARY KEY)";
+        $res = @pg_query($conn, $sql);
+
+        if (!$res) {
+            throw new Exception(pg_last_error($conn));
+        }
+
+        echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+if ($action === 'add_column') {
+    header('Content-Type: application/json');
+    $input = json_decode(file_get_contents('php://input'), true);
+    
+    // Strict input sanitization
+    $schemaName = preg_replace('/[^a-z0-9_]/', '', strtolower($input['schema'] ?? 'public'));
+    $tableName = preg_replace('/[^a-z0-9_]/', '', strtolower($input['table'] ?? ''));
+    $colName = preg_replace('/[^a-z0-9_]/', '', strtolower($input['column'] ?? ''));
+    $colType = $input['type'] ?? 'varchar(255)';
+
+    if (empty($tableName) || empty($colName) || empty($schemaName)) {
+        echo json_encode(['status' => 'error', 'error' => 'Invalid schema, table or column name.']);
+        exit;
+    }
+
+    try {
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = db_connect();
+        
+        // Escape parameters properly
+        $safeSchema = pg_escape_identifier($conn, $schemaName);
+        $safeTable = pg_escape_identifier($conn, $tableName);
+        $safeCol = pg_escape_identifier($conn, $colName);
+
+        // Allow predefined data types only
+        $allowedTypes = ['varchar(255)', 'int4', 'int8', 'boolean', 'text', 'date', 'timestamp'];
+        if (!in_array($colType, $allowedTypes, true)) {
+            throw new Exception('Invalid data type provided.');
+        }
+
+        // Alter table using explicit schema syntax
+        $sql = "ALTER TABLE " . $safeSchema . "." . $safeTable . " ADD COLUMN " . $safeCol . " " . $colType;
+        $res = @pg_query($conn, $sql);
+
+        if (!$res) {
+            throw new Exception(pg_last_error($conn));
+        }
+
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
