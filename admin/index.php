@@ -69,8 +69,8 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
     </head>
     <body>
         <div class="login-card">
-            <h2>Sparrow Admin</h2>
-            <p style="font-size:13px; color:#666; margin-bottom:15px;">Default password: <strong>admin</strong></p>
+            <h2>OpenSparrow Admin</h2>
+            <p style="font-size:13px; color:#777; margin-bottom:15px;">Default password: <strong>admin</strong></p>
             <?php if (isset($login_error)) {
                 echo "<div class='error'>" . htmlspecialchars($login_error, ENT_QUOTES) . "</div>";
             } ?>
@@ -95,40 +95,61 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
     <link rel="stylesheet" href="../assets/css/styles.css">
     <link rel="stylesheet" href="style.css?v=<?php echo @filemtime('style.css'); ?>">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <style>
+        /* Shared styles for Header Dropdowns (System & Configuration) */
+        .config-dropdown { position: relative; display: inline-block; margin-right: 15px; padding-right: 15px; border-right: 1px solid rgba(255,255,255,0.2); }
+        .config-dropdown-content { display: none; position: absolute; right: 15px; top: 100%; margin-top: 5px; background-color: #ffffff; min-width: 180px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 4px; z-index: 100; overflow: hidden; border: 1px solid #e2e8f0; }
+        .config-dropdown-content button { width: 100%; text-align: left; padding: 10px 15px; border: none; background: transparent; color: #334155; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; font-weight: normal; }
+        .config-dropdown-content button:hover { background-color: #f8fafc; color: #3b82f6; }
+        .config-dropdown-content button:last-child { border-bottom: none; }
+        .config-dropdown.active .config-dropdown-content { display: block; }
+    </style>
 </head>
 <body>
     <header>
-        <div class="brand-logo">
-            <h1>Sparrow Admin</h1>
-        </div>
-        
+    <a href="/" class="brand-logo">
+        <img src="../assets/img/logo-blue.png" alt="Sparrow Logo" />
+    </a>
+    
         <div class="admin-header-tabs">
             <button class="admin-tab active" data-file="schema">Schema</button>
             <button class="admin-tab" data-file="dashboard">Dashboard</button>
             <button class="admin-tab" data-file="calendar">Calendar</button>
             <button class="admin-tab" data-file="workflows">Workflows</button>
-            <button class="admin-tab" data-file="database">Database</button>
-            <button class="admin-tab" data-file="security">Security</button>
-            <button class="admin-tab" data-file="users">Users</button>
-            <button class="admin-tab" data-file="health" style="font-weight: bold; color: #fbbf24;">System Health</button>
-            <button class="admin-tab" data-file="docs">Docs</button>
         </div>
 
         <div class="header-user-menu">
             <label style="color: white; margin-right: 15px; font-size: 11px; display: flex; align-items: center; gap: 4px; cursor: pointer; opacity: 0.8;">
                 <input type="checkbox" id="debugToggle" style="cursor: pointer; accent-color: var(--accent);">
-                Debug
+                Debug FE mode
             </label>
             
-            <div style="display: flex; gap: 5px; margin-right: 15px; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 15px;">
-                <button id="btnExport" class="btn-logout" style="background: #10b981; border-color: #10b981;" title="Download ZIP Backup">Export</button>
-                <button id="btnImport" class="btn-logout" style="background: #f59e0b; border-color: #f59e0b;" title="Upload ZIP Backup">Import</button>
+            <div class="config-dropdown" id="systemDropdownContainer">
+                <button type="button" class="btn-logout" style="background: #64748b; color: white; border-color: #64748b; font-weight: bold;" onclick="document.getElementById('systemDropdownContainer').classList.toggle('active')">System &#9662;</button>
+                <div class="config-dropdown-content">
+                    <button class="admin-tab" data-file="database">Database</button>
+                    <button class="admin-tab" data-file="security">Security</button>
+                    <button class="admin-tab" data-file="users">Users</button>
+                    <button class="admin-tab" data-file="health">System Health</button>
+                </div>
+            </div>
+
+            <div class="config-dropdown" id="configDropdownContainer">
+                <button type="button" class="btn-logout" style="background: var(--accent); color: white; border-color: var(--accent); font-weight: bold;" onclick="document.getElementById('configDropdownContainer').classList.toggle('active')">Configuration</button>
+                <div class="config-dropdown-content">
+                    <button id="btnSave" type="button">Save config</button>
+                    <button id="btnExport" type="button">Export config files</button>
+                    <button id="btnImport" type="button">Import config files</button>
+                </div>
                 <input type="file" id="importFileInput" accept=".zip" style="display: none;">
             </div>
 
-            <button id="btnSave" class="btn-logout" style="background: var(--accent); color: white; border-color: var(--accent); font-weight: bold;">Save File</button>
+            <button class="admin-tab" data-file="docs" title="Admin panel documentation" style="background: transparent; border: none; cursor: pointer; padding: 0; margin-right: 15px; display: flex; align-items: center;" onmouseover="this.querySelector('img').style.opacity='1'" onmouseout="this.querySelector('img').style.opacity='0.8'">
+                <img src="../assets/icons/book_3s.png" alt="Docs" style="width: 24px; height: 24px; opacity: 0.8; pointer-events: none;">
+            </button>
+            
             <button onclick="window.location.href='index.php?logout=1'" class="btn-logout" style="background: #ef4444; border-color: #ef4444;">Logout</button>
-            <button onclick="window.location.href='../index.php'" class="btn-logout">Exit</button>
         </div>
     </header>
 
@@ -145,5 +166,19 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
     </main>
 
     <script type="module" src="app.js?v=<?php echo @filemtime('app.js'); ?>"></script>
+    <script>
+        // Close the dropdowns when clicking outside of them
+        window.addEventListener('click', function(e) {
+            const configDropdown = document.getElementById('configDropdownContainer');
+            if (configDropdown && !configDropdown.contains(e.target)) {
+                configDropdown.classList.remove('active');
+            }
+            
+            const systemDropdown = document.getElementById('systemDropdownContainer');
+            if (systemDropdown && !systemDropdown.contains(e.target)) {
+                systemDropdown.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>
