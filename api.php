@@ -31,7 +31,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // GET: SCHEMA DATA (Added to prevent 403 Forbidden for frontend)
+    // GET: SCHEMA DATA
     if ($method === 'GET' && ($_GET['api'] ?? '') === 'schema') {
         echo $schemaJson;
         exit;
@@ -89,7 +89,37 @@ try {
 
             // Extract custom WHERE clause for widget
             $customWhere = trim($widget['query']['where'] ?? '');
-            $sqlWhere = $customWhere !== '' ? ' WHERE ' . $customWhere : '';
+            $sqlWhere = $customWhere !== '' ? ' WHERE (' . $customWhere . ')' : '';
+
+            // Apply Global Date Filter if requested and target matches
+            $dateFilter = $_GET['date_filter'] ?? 'all';
+            $dateTarget = $_GET['date_target'] ?? 'all';
+            $widgetTargetId = $widget['id'] ?? $widget['table'] ?? '';
+            
+            if ($dateFilter !== 'all' && ($dateTarget === 'all' || $dateTarget === $widgetTargetId)) {
+                $dateCol = null;
+                // Find the first column that represents a date or timestamp
+                foreach ($tableCfg['columns'] as $cName => $cCfg) {
+                    $cType = strtolower($cCfg['type'] ?? '');
+                    if (str_contains($cType, 'date') || str_contains($cType, 'time') || str_contains($cType, 'timestamp')) {
+                        $dateCol = $cName;
+                        break;
+                    }
+                }
+
+                if ($dateCol) {
+                    $prefix = $sqlWhere === '' ? ' WHERE ' : ' AND ';
+                    if ($dateFilter === 'today') {
+                        $sqlWhere .= $prefix . pg_ident($dateCol) . " >= CURRENT_DATE";
+                    } elseif ($dateFilter === '7d') {
+                        $sqlWhere .= $prefix . pg_ident($dateCol) . " >= CURRENT_DATE - INTERVAL '7 days'";
+                    } elseif ($dateFilter === '30d') {
+                        $sqlWhere .= $prefix . pg_ident($dateCol) . " >= CURRENT_DATE - INTERVAL '30 days'";
+                    } elseif ($dateFilter === 'this_month') {
+                        $sqlWhere .= $prefix . "DATE_TRUNC('month', " . pg_ident($dateCol) . ") = DATE_TRUNC('month', CURRENT_DATE)";
+                    }
+                }
+            }
 
             if ($qType === 'count') {
                 $col = $widget['query']['column'] ?? id_column();
@@ -102,7 +132,7 @@ try {
                         $sqlWhere
                     );
                     
-                    // Supress warnings with @ to prevent HTML breaking JSON response
+                    // Supress warnings with at symbol to prevent HTML breaking JSON response
                     $res = @pg_query($conn, $sql);
                     if ($res) {
                         $row = pg_fetch_assoc($res);
@@ -280,12 +310,23 @@ try {
 
         $filterCol = $_GET['filter_col'] ?? '';
         $filterVal = $_GET['filter_val'] ?? '';
-        $whereSql = '';
+        $filterWhere = $_GET['filter_where'] ?? '';
+
+        $whereParts = [];
         $params = [];
 
         if ($filterCol !== '' && $filterVal !== '') {
-            $whereSql = sprintf(' WHERE %s = $1', pg_ident($filterCol));
+            $whereParts[] = sprintf('%s = $1', pg_ident($filterCol));
             $params[] = $filterVal;
+        }
+
+        if ($filterWhere !== '') {
+            $whereParts[] = '(' . $filterWhere . ')';
+        }
+
+        $whereSql = '';
+        if (!empty($whereParts)) {
+            $whereSql = ' WHERE ' . implode(' AND ', $whereParts);
         }
 
         $sql = sprintf(

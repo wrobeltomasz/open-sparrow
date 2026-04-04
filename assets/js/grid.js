@@ -9,12 +9,19 @@ let currentTable = null;
 let fullData = [];
 let displayedColumns = [];
 let filteredData = [];
-let unsortedFilteredData = []; // Backup array for the 3rd state (clearing sort)
+// Backup array for the third state of sorting
+let unsortedFilteredData = []; 
 let sortState = { column: null, asc: true };
 
 // Build dynamic menu from schema
 export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
     const ul = document.createElement('ul');
+    
+    // Check parameters to properly highlight active menu item
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTable = urlParams.get('table');
+    const firstTable = Object.keys(schema.tables)[0];
+    const initialTable = (urlTable && schema.tables[urlTable]) ? urlTable : firstTable;
   
     for (const [t, cfg] of Object.entries(schema.tables)) {
         if (cfg.hidden === true) {
@@ -24,6 +31,11 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.href = '#';
+
+        // Add active class if this is the target table
+        if (t === initialTable) {
+            a.classList.add('active');
+        }
 
         // Append icon if it exists
         if (cfg.icon) {
@@ -42,6 +54,9 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
             e.preventDefault();
             menuEl.querySelectorAll('a').forEach(link => link.classList.remove('active'));
             a.classList.add('active');
+            
+            // Clear URL params when clicking menu items manually to reset filters
+            window.history.pushState({}, document.title, window.location.pathname);
             loadTable(schema, t, gridTitleEl, addRowBtn);
         };
 
@@ -54,12 +69,33 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
     debugLog("Menu built", Object.keys(schema.tables));
 }
 
+
+
+
 // Fetch and load table data
 export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
     debugLog("Loading table", table);
 
     try {
-        const res = await fetch(`index.php?api=list&table=${encodeURIComponent(table)}`);
+        const urlParams = new URLSearchParams(window.location.search);
+        const filterCol = urlParams.get('filter_col');
+        const filterVal = urlParams.get('filter_val');
+        // DODANE: Pobieranie parametru filter_where
+        const filterWhere = urlParams.get('filter_where');
+
+        let fetchUrl = `api.php?api=list&table=${encodeURIComponent(table)}`;
+
+        // DODANE: Dodawanie parametrów do zapytania do API
+        if (urlParams.get('table') === table) {
+            if (filterCol && filterVal !== null) {
+                fetchUrl += `&filter_col=${encodeURIComponent(filterCol)}&filter_val=${encodeURIComponent(filterVal)}`;
+            }
+            if (filterWhere) {
+                fetchUrl += `&filter_where=${encodeURIComponent(filterWhere)}`;
+            }
+        }
+
+        const res = await fetch(fetchUrl);
         const data = await res.json();
 
         currentTable = table;
@@ -68,7 +104,7 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
 
         fullData = data.rows || [];
     
-        // Filter out hidden columns and PK - sets the default order
+        // Filter out hidden columns and PK
         displayedColumns = (data.columns || []).filter(c => {
             if (c === 'id') return false;
             const colCfg = schema.tables[table].columns[c] || {};
@@ -76,7 +112,13 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
             return true;
         });
 
-        gridTitleEl.textContent = data.table?.display_name || table;
+        // Set visual indicator for filtered view in the grid title
+        let displayTitle = data.table?.display_name || table;
+        if (urlParams.get('table') === table && filterCol && filterVal !== null) {
+            displayTitle += ` (Filtered by ${filterCol}: ${filterVal})`;
+        }
+        gridTitleEl.textContent = displayTitle;
+
         filteredData = fullData.slice();
         unsortedFilteredData = filteredData.slice(); 
         addRowBtn.disabled = false;
@@ -147,20 +189,20 @@ export async function renderGrid(schema) {
         headRow.appendChild(thExpand);
     }
 
-    // Create table headers with Resize and Drag&Drop features
+    // Create table headers with Resize and Drag and Drop features
     displayedColumns.forEach(col => {
         const th = document.createElement('th');
         const colCfg = schema.tables[currentTable].columns[col] || {};
         th.textContent = colCfg.display_name || col;
         th.dataset.col = col; 
 
-        // 1. Column Sorting Logic
+        // Column Sorting Logic
         th.style.cursor = 'pointer';
         th.addEventListener('click', (e) => {
             // Ignore click if user clicked on the resizer handle
             if (e.target.classList.contains('col-resizer')) return;
 
-            // Handle 3-state sorting: 1. Asc, 2. Desc, 3. Clear
+            // Handle 3-state sorting logic
             if (sortState.column === col) {
                 if (sortState.asc === true) {
                     sortState.asc = false;
@@ -173,7 +215,7 @@ export async function renderGrid(schema) {
                 sortState.asc = true;
             }
 
-            // Restore array to unsorted base before applying new sort or leaving it cleared
+            // Restore array to unsorted base before applying new sort
             filteredData = unsortedFilteredData.slice();
 
             if (sortState.column) {
@@ -188,7 +230,7 @@ export async function renderGrid(schema) {
             th.textContent += sortState.asc ? ' ↑' : ' ↓';
         }
 
-        // 2. Column Resizer Logic
+        // Column Resizer Logic
         const resizer = document.createElement('div');
         resizer.className = 'col-resizer';
         th.appendChild(resizer);
@@ -218,7 +260,7 @@ export async function renderGrid(schema) {
             document.addEventListener('mouseup', onMouseUp);
         });
 
-        // 3. Drag and Drop Column Reordering Logic
+        // Drag and Drop Column Reordering Logic
         th.draggable = true;
         
         th.addEventListener('dragstart', (e) => {
@@ -277,16 +319,16 @@ export async function renderGrid(schema) {
         if (hasSubtables) {
             const tdExpand = document.createElement('td');
             const btnExpand = document.createElement('button');
-            btnExpand.textContent = '▶';
+            btnExpand.textContent = '>';
             btnExpand.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; color:var(--accent); font-weight:bold;';
             
             btnExpand.onclick = async () => {
                 const nextTr = tr.nextElementSibling;
                 if (nextTr && nextTr.classList.contains('drilldown-row')) {
                     nextTr.remove();
-                    btnExpand.textContent = '▶';
+                    btnExpand.textContent = '↪';
                 } else {
-                    btnExpand.textContent = '▼';
+                    btnExpand.textContent = '↩';
                     const ddTr = document.createElement('tr');
                     ddTr.className = 'drilldown-row';
                     const ddTd = document.createElement('td');
@@ -373,7 +415,7 @@ export async function renderGrid(schema) {
                 const td = document.createElement('td');
                 const input = document.createElement('input');
                 
-                // Use type search to add native clear button (X) in browsers
+                // Use type search to add native clear button in browsers
                 input.type = 'search'; 
                 
                 const dlId = `fk_${currentTable}_${col}_${row['id']}`;
@@ -418,12 +460,12 @@ export async function renderGrid(schema) {
 
                 input.value = currentDisplay;
 
-                // Select all text on click/focus so typing immediately overrides it
+                // Select all text on click to allow fast overriding
                 input.addEventListener('focus', () => {
                     input.select();
                 });
 
-                // Revert to the last valid name upon leaving the cell to prevent confusion
+                // Revert to the last valid name upon leaving the cell
                 input.addEventListener('blur', () => {
                     const isValid = Array.from(datalist.options).some(o => o.value === input.value);
                     
@@ -630,7 +672,7 @@ export async function renderGrid(schema) {
     debugLog("Grid rendered", { rows: pageRows.length });
 }
 
-// Custom client-side sorting function
+// Custom client side sorting function
 function sortData() {
     if (!sortState.column) return;
     const col = sortState.column;
@@ -691,7 +733,7 @@ export function setFilteredData(rows) {
     }
 }
 
-// Reset filtered data to full dataset and re-render
+// Reset filtered data to full dataset and re render
 export async function resetFilters(schema) {
     filteredData = fullData.slice();
     unsortedFilteredData = fullData.slice();

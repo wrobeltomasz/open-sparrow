@@ -17,7 +17,7 @@ let activeFilters = {
     columns: {}
 };
 
-// Helper to safely render DOM elements for menu icons (prevents XSS)
+// Helper to safely render DOM elements for menu icons
 function renderIconElement(iconVal, fallbackPath) {
     const icon = iconVal || fallbackPath;
     if (icon.includes('/') || icon.includes('.')) {
@@ -36,8 +36,17 @@ function renderIconElement(iconVal, fallbackPath) {
 // Initialize application on DOM load
 document.addEventListener('DOMContentLoaded', async () => {
     if (typeof schema !== 'undefined' && Object.keys(schema.tables).length > 0) {
-        const firstTableName = Object.keys(schema.tables)[0];
         
+        // Read URL params to check if dashboard redirected us to a specific table
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlTable = urlParams.get('table');
+        
+        // Determine the initial table to load
+        let initialTableName = Object.keys(schema.tables)[0];
+        if (urlTable && schema.tables[urlTable]) {
+            initialTableName = urlTable;
+        }
+
         buildMenu(schema, menuEl, gridTitleEl, addRowBtn);
         const navList = menuEl.querySelector('ul') || menuEl;
         
@@ -64,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch(e) { console.warn('Could not load calendar config', e); }
 
-        // Dashboard Item (Safe DOM construction)
+        // Dashboard Item
         const dashItem = document.createElement('li');
         const dashLink = document.createElement('a');
         dashLink.href = 'dashboard.php';
@@ -76,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         dashLink.appendChild(dashSpan);
         dashItem.appendChild(dashLink);
 
-        // Calendar Item (Safe DOM construction)
+        // Calendar Item
         const calItem = document.createElement('li');
         const calLink = document.createElement('a');
         calLink.href = 'calendar.php';
@@ -108,7 +117,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const gridContainerEl = document.getElementById('grid');
         if (gridContainerEl) { initWorkflows(navList, gridContainerEl, gridTitleEl); }
         
-        loadTable(schema, firstTableName, gridTitleEl, addRowBtn);
+        // Load target table requested by URL
+        loadTable(schema, initialTableName, gridTitleEl, addRowBtn);
         setupPagination(schema);
     }
 });
@@ -117,7 +127,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 function populateColumnFilter() {
     const { displayedColumns, currentTable } = getState();
     
-    // Safely clear and add default option
     columnFilterEl.innerHTML = '';
     const defaultOpt = document.createElement("option");
     defaultOpt.value = "";
@@ -153,7 +162,7 @@ function updateColumnFilterState(col, type, data) {
     }
 }
 
-// Render dynamic filters based on column type and populate with existing state
+// Render dynamic filters based on column type
 function handleColumnFilterChange() {
     const { currentTable, fullData } = getState();
     const col = columnFilterEl.value;
@@ -166,7 +175,6 @@ function handleColumnFilterChange() {
     const type = (colCfg.type || '').toLowerCase();
     const isFK = schema.tables[currentTable].foreign_keys && schema.tables[currentTable].foreign_keys[col];
 
-    // Retrieve existing filter state for the selected column to pre-fill inputs
     const existingFilter = activeFilters.columns[col] || {};
 
     if (isFK || type === 'enum') {
@@ -174,7 +182,6 @@ function handleColumnFilterChange() {
         select.id = 'dictFilter';
         const displayName = colCfg.display_name || col;
         
-        // Safely add default option
         const optAll = document.createElement('option');
         optAll.value = '';
         optAll.textContent = `${displayName}: All`;
@@ -187,133 +194,127 @@ function handleColumnFilterChange() {
             const uniqueVals = new Map();
             fullData.forEach(row => {
                 const val = row[col];
-                const label = row[col + '__display'] || val;
                 if (val !== null && val !== undefined && val !== '') {
-                    uniqueVals.set(val, label);
+                    const label = row[col + '__display'] ?? val;
+                    if (!uniqueVals.has(val)) {
+                        uniqueVals.set(val, label);
+                    }
                 }
             });
-            options = Array.from(uniqueVals.entries()).map(([val, label]) => ({ val, label }));
+            options = Array.from(uniqueVals.entries()).map(([v, l]) => ({ val: v, label: l }));
         }
         
-        options.sort((a, b) => String(a.label).localeCompare(String(b.label)));
-        options.forEach(opt => {
+        options.forEach(oData => {
             const o = document.createElement('option');
-            o.value = opt.val;
-            o.textContent = opt.label;
-            if (existingFilter.val === String(opt.val)) o.selected = true;
+            o.value = oData.val;
+            o.textContent = oData.label;
+            if (existingFilter.val !== undefined && String(existingFilter.val) === String(oData.val)) o.selected = true;
             select.appendChild(o);
         });
         
-        select.addEventListener('change', () => { 
+        select.addEventListener('change', () => {
             const selectedText = select.options[select.selectedIndex].text;
             updateColumnFilterState(col, 'dict', { val: select.value, label: selectedText, empty: select.value === '' });
-            applySearch(); 
+            applySearch();
         });
+        
         filterBar.appendChild(select);
-    }
-    else if (type.includes('date')) {
+    } else if (type.includes('date')) {
         const dateContainer = document.createElement('div');
         dateContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-
+        
         const spanFrom = document.createElement('span');
         spanFrom.textContent = 'From:';
         spanFrom.style.cssText = 'font-size: 13px; color: #ffffff;';
-
         const inputFrom = document.createElement('input');
         inputFrom.type = 'date';
         inputFrom.className = 'date-filter';
         if (existingFilter.from) inputFrom.value = existingFilter.from;
-
+        
         const spanTo = document.createElement('span');
         spanTo.textContent = 'To:';
         spanTo.style.cssText = 'font-size: 13px; color: #ffffff;';
-
         const inputTo = document.createElement('input');
         inputTo.type = 'date';
         inputTo.className = 'date-filter';
         if (existingFilter.to) inputTo.value = existingFilter.to;
-
+        
         const updateDateState = () => {
             const fromVal = inputFrom.value;
             const toVal = inputTo.value;
             updateColumnFilterState(col, 'date', { from: fromVal, to: toVal, empty: !fromVal && !toVal });
             applySearch();
         };
-
+        
         inputFrom.addEventListener('change', updateDateState);
         inputTo.addEventListener('change', updateDateState);
-
+        
         dateContainer.appendChild(spanFrom);
         dateContainer.appendChild(inputFrom);
         dateContainer.appendChild(spanTo);
         dateContainer.appendChild(inputTo);
         filterBar.appendChild(dateContainer);
-    } 
-    else if (type.includes('int') || type.includes('dec') || type.includes('num') || type.includes('float')) {
+    } else if (type.includes('int') || type.includes('dec') || type.includes('num') || type.includes('float')) {
         const numContainer = document.createElement('div');
         numContainer.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-
-        const spanMin = document.createElement('span');
-        spanMin.textContent = 'Min:';
-        spanMin.style.cssText = 'font-size: 13px; color: #ffffff;';
-
-        const inputMin = document.createElement('input');
-        inputMin.type = 'number';
-        inputMin.className = 'date-filter'; 
-        if (existingFilter.min !== undefined && existingFilter.min !== null) inputMin.value = existingFilter.min;
-
-        const spanMax = document.createElement('span');
-        spanMax.textContent = 'Max:';
-        spanMax.style.cssText = 'font-size: 13px; color: #ffffff;';
-
-        const inputMax = document.createElement('input');
-        inputMax.type = 'number';
-        inputMax.className = 'date-filter'; 
-        if (existingFilter.max !== undefined && existingFilter.max !== null) inputMax.value = existingFilter.max;
-
+        
+        const spanFrom = document.createElement('span');
+        spanFrom.textContent = 'Min:';
+        spanFrom.style.cssText = 'font-size: 13px; color: #ffffff;';
+        const inputFrom = document.createElement('input');
+        inputFrom.type = 'number';
+        inputFrom.placeholder = '0';
+        inputFrom.style.cssText = 'padding: 4px; border-radius: 4px; border: 1px solid #ccc; max-width: 80px;';
+        if (existingFilter.min !== undefined) inputFrom.value = existingFilter.min;
+        
+        const spanTo = document.createElement('span');
+        spanTo.textContent = 'Max:';
+        spanTo.style.cssText = 'font-size: 13px; color: #ffffff;';
+        const inputTo = document.createElement('input');
+        inputTo.type = 'number';
+        inputTo.placeholder = '100';
+        inputTo.style.cssText = 'padding: 4px; border-radius: 4px; border: 1px solid #ccc; max-width: 80px;';
+        if (existingFilter.max !== undefined) inputTo.value = existingFilter.max;
+        
         const updateNumState = () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const minVal = inputMin.value !== '' ? parseFloat(inputMin.value) : null;
-                const maxVal = inputMax.value !== '' ? parseFloat(inputMax.value) : null;
-                updateColumnFilterState(col, 'num', { min: minVal, max: maxVal, empty: minVal === null && maxVal === null });
-                applySearch();
-            }, 300);
+            const minVal = inputFrom.value;
+            const maxVal = inputTo.value;
+            updateColumnFilterState(col, 'number', { min: minVal, max: maxVal, empty: minVal === '' && maxVal === '' });
+            applySearch();
         };
-
-        inputMin.addEventListener('input', updateNumState);
-        inputMax.addEventListener('input', updateNumState);
-
-        numContainer.appendChild(spanMin);
-        numContainer.appendChild(inputMin);
-        numContainer.appendChild(spanMax);
-        numContainer.appendChild(inputMax);
+        
+        inputFrom.addEventListener('input', updateNumState);
+        inputTo.addEventListener('input', updateNumState);
+        
+        numContainer.appendChild(spanFrom);
+        numContainer.appendChild(inputFrom);
+        numContainer.appendChild(spanTo);
+        numContainer.appendChild(inputTo);
         filterBar.appendChild(numContainer);
-    }
-    else if (type.includes('bool')) {
+    } else if (type.includes('bool')) {
         const select = document.createElement('select');
-        const displayName = colCfg.display_name || col;
-
+        select.id = 'boolFilter';
+        
         const optAll = document.createElement('option');
         optAll.value = '';
-        optAll.textContent = `${displayName}: All`;
-        select.appendChild(optAll);
-
+        optAll.textContent = 'All';
         const optTrue = document.createElement('option');
         optTrue.value = 'true';
-        optTrue.textContent = 'Yes';
-        select.appendChild(optTrue);
-
+        optTrue.textContent = 'Yes / True';
         const optFalse = document.createElement('option');
         optFalse.value = 'false';
-        optFalse.textContent = 'No';
-        select.appendChild(optFalse);
-
-        if (existingFilter.val) select.value = existingFilter.val;
+        optFalse.textContent = 'No / False';
         
-        select.addEventListener('change', () => { 
-            updateColumnFilterState(col, 'bool', { val: select.value, empty: select.value === '' });
-            applySearch(); 
+        select.appendChild(optAll);
+        select.appendChild(optTrue);
+        select.appendChild(optFalse);
+        
+        if (existingFilter.val !== undefined) select.value = existingFilter.val;
+        
+        select.addEventListener('change', () => {
+            const selectedText = select.options[select.selectedIndex].text;
+            updateColumnFilterState(col, 'bool', { val: select.value, label: selectedText, empty: select.value === '' });
+            applySearch();
         });
         filterBar.appendChild(select);
     }
@@ -323,12 +324,11 @@ function handleColumnFilterChange() {
 function renderFilterPills() {
     const pillsContainer = document.getElementById('filterPills');
     if (!pillsContainer) return;
-
+    
     pillsContainer.innerHTML = '';
     let hasPills = false;
     const { currentTable } = getState();
-
-    // Reusable function to render a single pill
+    
     const createPill = (label, onRemove) => {
         hasPills = true;
         const pill = document.createElement('div');
@@ -341,19 +341,17 @@ function renderFilterPills() {
         closeBtn.textContent = '×';
         closeBtn.style.cssText = 'cursor: pointer; color: var(--danger); font-size: 16px; font-weight: bold; line-height: 1; padding-left: 4px;';
         closeBtn.title = "Remove filter";
-        
         closeBtn.onclick = () => {
             onRemove();
             handleColumnFilterChange();
             applySearch();
         };
-
+        
         pill.appendChild(textSpan);
         pill.appendChild(closeBtn);
         pillsContainer.appendChild(pill);
     };
 
-    // Render global text search pill
     if (activeFilters.search) {
         createPill(`Search: "${activeFilters.search}"`, () => {
             activeFilters.search = '';
@@ -361,84 +359,70 @@ function renderFilterPills() {
         });
     }
 
-    // Render cumulative column pills
-    if (currentTable && schema.tables[currentTable]) {
-        for (const [col, filter] of Object.entries(activeFilters.columns)) {
-            const colCfg = schema.tables[currentTable].columns[col] || {};
-            const colName = colCfg.display_name || col;
+    for (const [col, filter] of Object.entries(activeFilters.columns)) {
+        let colName = col;
+        if (currentTable && schema.tables[currentTable]?.columns[col]?.display_name) {
+            colName = schema.tables[currentTable].columns[col].display_name;
+        }
 
-            if (filter.type === 'dict') {
-                createPill(`${colName}: ${filter.label}`, () => delete activeFilters.columns[col]);
-            } 
-            else if (filter.type === 'bool') {
-                createPill(`${colName}: ${filter.val === 'true' ? 'Yes' : 'No'}`, () => delete activeFilters.columns[col]);
-            } 
-            else if (filter.type === 'date') {
-                let label = `${colName}: `;
-                if (filter.from && filter.to) label += `${filter.from} to ${filter.to}`;
-                else if (filter.from) label += `From ${filter.from}`;
-                else if (filter.to) label += `Up to ${filter.to}`;
-                createPill(label, () => delete activeFilters.columns[col]);
-            } 
-            else if (filter.type === 'num') {
-                let label = `${colName}: `;
-                if (filter.min !== null && filter.max !== null) label += `${filter.min} - ${filter.max}`;
-                else if (filter.min !== null) label += `Min ${filter.min}`;
-                else if (filter.max !== null) label += `Max ${filter.max}`;
-                createPill(label, () => delete activeFilters.columns[col]);
-            }
+        let label = '';
+        if (filter.type === 'dict' || filter.type === 'bool') {
+            label = `${colName}: ${filter.label}`;
+        } else if (filter.type === 'date') {
+            if (filter.from && filter.to) label = `${colName}: ${filter.from} to ${filter.to}`;
+            else if (filter.from) label = `${colName} from ${filter.from}`;
+            else if (filter.to) label = `${colName} to ${filter.to}`;
+        } else if (filter.type === 'number') {
+            if (filter.min && filter.max) label = `${colName}: ${filter.min} - ${filter.max}`;
+            else if (filter.min) label = `${colName} >= ${filter.min}`;
+            else if (filter.max) label = `${colName} <= ${filter.max}`;
+        }
+
+        if (label) {
+            createPill(label, () => {
+                delete activeFilters.columns[col];
+                if (columnFilterEl.value === col) {
+                    const filterBar = document.getElementById('filterBar');
+                    if(filterBar) filterBar.innerHTML = '';
+                    columnFilterEl.value = '';
+                }
+            });
         }
     }
 
     pillsContainer.style.display = hasPills ? 'flex' : 'none';
 }
 
-// Event triggered when a table finishes rendering initially
-document.addEventListener("tableLoaded", () => {
-    // Reset active filters on table change
-    activeFilters = { search: '', columns: {} };
-    searchEl.value = '';
-    
-    populateColumnFilter();
-    handleColumnFilterChange();
-    renderFilterPills();
-    updateClearFiltersVisibility();
-});
-
-// Evaluate all stacked filters against the row data
+// Apply global search and column filters
 async function applySearch() {
     const { fullData, displayedColumns } = getState();
     const q = activeFilters.search.toLowerCase();
 
     let rows = fullData.filter(row => {
-        // Iterate through all stored column filters
         for (const [col, filter] of Object.entries(activeFilters.columns)) {
             if (filter.type === 'dict') {
                 if (String(row[col]) !== String(filter.val)) return false;
-            }
-            else if (filter.type === 'bool') {
+            } else if (filter.type === 'bool') {
                 const rowBool = (row[col] === true || row[col] === 't' || row[col] === 'true' || row[col] === 1);
                 const targetBool = (filter.val === 'true');
                 if (rowBool !== targetBool) return false;
-            }
-            else if (filter.type === 'date') {
-                const rawDateStr = (row[col] ?? '').toString().substring(0, 10);
-                if (!rawDateStr) return false; 
-                if (filter.from && rawDateStr < filter.from) return false;
-                if (filter.to && rawDateStr > filter.to) return false;
-            }
-            else if (filter.type === 'num') {
-                const rawNum = parseFloat(row[col]);
-                if (isNaN(rawNum)) return false; 
-                if (filter.min !== null && rawNum < filter.min) return false;
-                if (filter.max !== null && rawNum > filter.max) return false;
+            } else if (filter.type === 'date') {
+                const rowDateStr = String(row[col] || '').substring(0, 10);
+                if (!rowDateStr) return false;
+                const rowTime = new Date(rowDateStr).getTime();
+                if (filter.from && rowTime < new Date(filter.from).getTime()) return false;
+                if (filter.to && rowTime > new Date(filter.to).getTime()) return false;
+            } else if (filter.type === 'number') {
+                const rowNum = Number(row[col]);
+                if (isNaN(rowNum)) return false;
+                if (filter.min !== '' && rowNum < Number(filter.min)) return false;
+                if (filter.max !== '' && rowNum > Number(filter.max)) return false;
             }
         }
 
-        // Global text search across all visible columns
         if (q) {
             const matchesText = displayedColumns.some(colName => {
-                const raw = (row[colName] ?? '').toString().toLowerCase();
+                const raw = String(row[colName] ?? '').toLowerCase();
                 const display = (row[colName + '__display'] ?? '').toString().toLowerCase();
                 return raw.includes(q) || display.includes(q);
             });
@@ -455,14 +439,14 @@ async function applySearch() {
     debugLog("Search Applied", { activeFilters, results: rows.length });
 }
 
-// Show the global Reset button only when any filter exists
+// Show global Reset button
 function updateClearFiltersVisibility() {
     const hasSearch = activeFilters.search !== '';
     const hasColumns = Object.keys(activeFilters.columns).length > 0;
     clearFiltersBtn.style.display = (hasSearch || hasColumns) ? 'inline-block' : 'none';
 }
 
-// Completely clear the filter state globally
+// Clear filter state globally
 clearFiltersBtn.addEventListener('click', async () => {
     activeFilters = { search: '', columns: {} };
     searchEl.value = '';
@@ -475,7 +459,7 @@ clearFiltersBtn.addEventListener('click', async () => {
     await resetFilters(schema);
 });
 
-// Sync the search input with the filter state
+// Sync search input
 searchEl.addEventListener('input', () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
@@ -484,7 +468,16 @@ searchEl.addEventListener('input', () => {
     }, 300);
 });
 
-// Dropdown column change
-columnFilterEl.addEventListener('change', () => {
-    handleColumnFilterChange();
+columnFilterEl.addEventListener('change', handleColumnFilterChange);
+
+// Re-init column filter dropdown on every table load
+document.addEventListener("tableLoaded", () => {
+    activeFilters = { search: '', columns: {} };
+    searchEl.value = '';
+    const filterBar = document.getElementById('filterBar');
+    if(filterBar) filterBar.innerHTML = '';
+    
+    populateColumnFilter();
+    renderFilterPills();
+    updateClearFiltersVisibility();
 });
