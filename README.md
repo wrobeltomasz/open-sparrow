@@ -17,8 +17,6 @@
   ![CodeQL Analysis](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/codeql.yml/badge.svg)
   ![Docker Lint](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/docker-lint.yml/badge.svg)
 
-  <a href="https://cla-assistant.io/wrobeltomasz/open-sparrow"><img src="https://cla-assistant.io/readme/badge/wrobeltomasz/open-sparrow" alt="CLA assistant" /></a>
-
 </div>
 
 ---
@@ -195,7 +193,8 @@ Currently, settings are stored in `includes/database.json`. Access is restricted
 
 ## Contributing
 
-Contributions are welcome. Please follow [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and sign the
+[Contributor License Agreement (CLA)](CLA.md) before opening a pull request.
 
 ---
 
