@@ -1,36 +1,56 @@
 services:
+  # PHP-FPM Application Service
   app:
     build: .
+    # Automatically restarts the container unless it was manually stopped.
+    # Useful for recovering from PHP crashes or system reboots.
+    restart: unless-stopped
     volumes:
+      # Syncs the current directory with the container for live development.
       - .:/var/www/html
     depends_on:
       - db
 
+  # Nginx Web Server Service
   nginx:
     image: nginx:alpine
+    restart: unless-stopped
     ports:
+      # Maps local port 8080 to container port 80.
       - "8080:80"
     volumes:
       - .:/var/www/html
+      # Mounts the custom Nginx configuration.
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - app
+
+  # Background Worker (Cron) Service
   cron:
     build: .
+    restart: unless-stopped
     volumes:
       - .:/var/www/html
+    # Schedule: Runs the notification script every minute (* * * * *).
+    # 'crond -f' keeps the cron daemon running in the foreground.
     command: >
-      sh -c "echo '0 * * * * php /var/www/html/cron/cron_notifications.php'  | crontab - && crond -f"
+      sh -c "echo '* * * * * php /var/www/html/cron/cron_notifications.php' | crontab - && crond -f"
     depends_on:
       - db
+
+  # PostgreSQL Database Service
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: opensparrow
       POSTGRES_USER: sparrow
       POSTGRES_PASSWORD: sparrow
     volumes:
+      # Named volume 'pgdata' ensures your database data is persistent 
+      # and not lost when containers are removed.
       - pgdata:/var/lib/postgresql/data
 
+# Definitions for persistent storage volumes
 volumes:
   pgdata:

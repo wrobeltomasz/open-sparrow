@@ -1,7 +1,32 @@
+# Version Control
 .git
 .gitignore
+
+# Docker configuration files
+# These are used to build/run the container but are not needed inside it
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# GitHub specific files and workflows
+.github/
+
+# Documentation and legal files
+# Using *.md ignores all markdown files (README, CONTRIBUTING, etc.)
+*.md
 COPYING
 LICENCE
-CONTRIBUTING.md
-README.md
-.md
+
+# Development and testing
+# PHP CodeSniffer configuration
+phpcs.xml
+# End-to-End tests (Selenium)
+tests/
+
+# Sensitive data and local settings
+# Ignore local database configs if they exist to prevent overwriting container settings
+includes/database.json
+.env
+
+# Logs and temporary files
+*.log
