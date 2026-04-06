@@ -18,58 +18,6 @@ async function initDashboard() {
         return;
     }
 
-    // Create the dashboard controls aligned to the left
-    const controls = document.createElement('div');
-    controls.className = 'dashboard-controls';
-    controls.style.display = 'flex';
-    controls.style.justifyContent = 'flex-start';
-    controls.style.gap = '15px';
-    controls.style.marginBottom = '20px';
-
-    const selectStyle = "padding: 8px 16px; border-radius: 6px; border: 1px solid #cbd5e1; background-color: #ffffff; font-weight: bold; color: #334155; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);";
-
-    // Target widget selector
-    const targetSelect = document.createElement('select');
-    targetSelect.style.cssText = selectStyle;
-    targetSelect.appendChild(new Option('All widgets', 'all'));
-
-    if (globalConfig && globalConfig.widgets) {
-        globalConfig.widgets.forEach(w => {
-            const wName = w.title || w.table || 'Unknown';
-            const wId = w.id || w.table || '';
-            targetSelect.appendChild(new Option(wName, wId));
-        });
-    }
-
-    // Date range selector
-    const dateSelect = document.createElement('select');
-    dateSelect.style.cssText = selectStyle;
-
-    const options = [
-        { val: 'all', text: 'All dates' },
-        { val: 'today', text: 'Today' },
-        { val: '7d', text: 'Last 7 days' },
-        { val: '30d', text: 'Last 30 days' },
-        { val: 'this_month', text: 'This month' }
-    ];
-
-    options.forEach(o => {
-        const opt = document.createElement('option');
-        opt.value = o.val;
-        opt.textContent = o.text;
-        dateSelect.appendChild(opt);
-    });
-
-    // Handle updates when selectors change
-    const updateDash = () => loadDashboardData(container, dateSelect.value, targetSelect.value);
-    
-    targetSelect.addEventListener('change', updateDash);
-    dateSelect.addEventListener('change', updateDash);
-    
-    controls.appendChild(targetSelect);
-    controls.appendChild(dateSelect);
-    container.parentNode.insertBefore(controls, container);
-
     // Initial render
     renderWidgets(container, globalConfig);
 }
