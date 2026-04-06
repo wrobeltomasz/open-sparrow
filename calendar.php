@@ -101,6 +101,11 @@ if (!isset($_SESSION['user_id'])) {
     <div id="calendarContainer" class="calendar-grid"></div>
 </main>
 
+<script>
+    // Load schema globally from PHP to avoid direct HTTP access to /includes
+    const schema = <?php echo file_get_contents(__DIR__ . '/includes/schema.json'); ?>;
+</script>
+
 <script type="module" src="assets/js/calendar.js"></script>
 
 <footer>
