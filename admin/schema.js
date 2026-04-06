@@ -433,6 +433,41 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
             
             block.appendChild(fkContainer);
         }
+
+        // New feature: Validation Regex and Message configuration block
+        const regexContainer = document.createElement('div');
+        regexContainer.style.marginLeft = '20px'; 
+        regexContainer.style.paddingLeft = '10px'; 
+        regexContainer.style.borderLeft = '2px solid #8b5cf6'; 
+        regexContainer.style.marginBottom = '15px';
+
+        const regexTitle = document.createElement('h5');
+        regexTitle.textContent = 'Validation Rules (Optional)';
+        regexTitle.style.marginTop = '0';
+        regexTitle.style.marginBottom = '10px';
+        regexContainer.appendChild(regexTitle);
+
+        regexContainer.appendChild(createTextInput(
+            'validation_regexp', 
+            'RegExp Pattern (e.g., ^[A-Z]{2}\\d{4}$)', 
+            colCfg.validation_regexp || '', 
+            (val) => { 
+                if (val) colCfg.validation_regexp = val; 
+                else delete colCfg.validation_regexp; 
+            }
+        ));
+
+        regexContainer.appendChild(createTextInput(
+            'validation_message', 
+            'Error Message (e.g., Invalid code format)', 
+            colCfg.validation_message || '', 
+            (val) => { 
+                if (val) colCfg.validation_message = val; 
+                else delete colCfg.validation_message; 
+            }
+        ));
+
+        block.appendChild(regexContainer);
         
         block.appendChild(createCheckbox('show_in_grid', 'Show in Grid', colCfg.show_in_grid, (val) => colCfg.show_in_grid = val, true));
         block.appendChild(createCheckbox('show_in_edit', 'Show in Edit Form', colCfg.show_in_edit, (val) => colCfg.show_in_edit = val, true));

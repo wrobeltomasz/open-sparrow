@@ -45,7 +45,7 @@ function normalizeValue(el) {
   return el.value ?? el.textContent;
 }
 
-// --- Visual feedback helpers ---
+// Visual feedback helpers
 function markCell(td, ok) {
   if (!td) return;
   td.classList.remove('cell-success', 'cell-error');
@@ -55,14 +55,14 @@ function markCell(td, ok) {
 
 // UNIVERSAL EVENT ATTACHER (exported for grid.js)
 export function attachCellEvents(el) {
-  // 1. Save original value as a JS property (not in dataset) to preserve strict types
+  // Save original value as a JS property (not in dataset) to preserve strict types
   el.addEventListener("focus", () => {
     el._originalValue = normalizeValue(el);
   });
 
   el.addEventListener("input", onInputChange);
 
-  // 2. Event optimization: avoid duplicate requests
+  // Event optimization: avoid duplicate requests
   if (el.tagName === 'SELECT' || el.type === 'checkbox') {
     // Checkboxes and selects are best caught immediately on change
     el.addEventListener("change", onCellBlur);
@@ -118,8 +118,7 @@ export function onInputChange(e) {
   const column = el.dataset.column;
   const value = normalizeValue(el);
 
-  // You can log typing if you want:
-  // debugLog("Typing in cell (no update)", { id, col: column, value, table });
+  // You can log typing if you want here
 }
 
 // Update ONLY on blur/change
@@ -137,6 +136,26 @@ export function onCellBlur(e) {
     return;
   }
 
+  // Validate using RegExp if pattern is provided in dataset safely avoiding 'v' flag errors
+  const pattern = el.dataset.pattern;
+  if (pattern && value !== '' && value !== null) {
+      try {
+          const regex = new RegExp(pattern);
+          if (!regex.test(String(value))) {
+              const msg = el.dataset.message || 'Invalid input format';
+              alert(msg);
+              
+              // Revert visual change back to original value
+              if (el.isContentEditable) el.textContent = original ?? '';
+              else el.value = original ?? '';
+              
+              return; // Abort update
+          }
+      } catch (err) {
+          console.error("Invalid regex pattern provided from schema", err);
+      }
+  }
+
   // IMMEDIATELY protect against race conditions (fire only one request if the event triggers twice)
   el._originalValue = value;
 
@@ -149,7 +168,7 @@ export function onCellBlur(e) {
   performUpdate(el, table, id, column, value);
 }
 
-// --- Delete row ---
+// Delete row
 export async function deleteRow(id) {
   const table = getCurrentTable();
   if (!table || !id) return;
@@ -181,7 +200,7 @@ export async function deleteRow(id) {
   }
 }
 
-// --- Add row ---
+// Add row
 export async function addRow() {
   const table = getCurrentTable();
   if (!table) return;

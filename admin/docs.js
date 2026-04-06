@@ -21,7 +21,7 @@ export function renderDocumentation(ctx) {
                 <li><strong>Boolean Types:</strong> Boolean columns (true/false) will automatically render as switch toggles in edit forms and dropdown filters in the data grids.</li>
             </ul>
 
-			<h3 style="color: #2563eb; margin-top: 30px;">2. Schema & Grid Configuration</h3>
+		<h3 style="color: #2563eb; margin-top: 30px;">2. Schema & Grid Configuration</h3>
             <p>The <strong>Schema</strong> tab is the core of your OpenSparrow. It maps directly to your database tables and defines how they are displayed in the frontend Grid.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Add New Tables:</strong> Use the "+ Add Table" button to dynamically create new physical tables in your PostgreSQL database. You will be prompted to specify the database schema and table name. The system automatically creates the mandatory 'id' primary key.</li>
@@ -31,6 +31,20 @@ export function renderDocumentation(ctx) {
                 <li><strong>Remove Tables:</strong> You can safely remove a table from your JSON configuration using the red "Delete Table" button without dropping the actual table from the PostgreSQL database.</li>
                 <li><strong>Foreign Keys Search & Display:</strong> You can assign multiple display columns to a foreign key (e.g., <code>first_name, last_name</code>). In the frontend grid, these render as advanced searchable input fields, making it easy to find relations among thousands of records.</li>
                 <li><strong>Visibility & Ordering:</strong> Toggle which columns are visible in the grid and use Up/Down arrows to reorder them.</li>
+                <li><strong>Validation Rules (RegExp):</strong> You can enforce strict data formats using Regular Expressions. If the user input fails to match the pattern, your custom error message is displayed. Useful examples:
+                    <ul style="padding-left: 20px; margin-top: 5px;">
+                        <li><strong>Email Address:</strong> <code>^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$</code></li>
+                        <li><strong>Phone Number (9 to 15 digits, optional +):</strong> <code>^\+?[0-9]{9,15}$</code></li>
+                        <li><strong>Postal Code (XX-XXX):</strong> <code>^[0-9]{2}-[0-9]{3}$</code></li>
+                        <li><strong>Website URL (http/https):</strong> <code>^https?:\/\/.*$</code></li>
+                        <li><strong>Username (3-16 chars, letters, numbers, underscores):</strong> <code>^[a-zA-Z0-9_]{3,16}$</code></li>
+                        <li><strong>Price / Decimal (optional up to 2 decimal places):</strong> <code>^\d+(\.\d{1,2})?$</code></li>
+                        <li><strong>Date (YYYY-MM-DD):</strong> <code>^\d{4}-\d{2}-\d{2}$</code></li>
+                        <li><strong>Time (24-hour format HH:MM):</strong> <code>^([01]\d|2[0-3]):[0-5]\d$</code></li>
+                        <li><strong>Strong Password (min 8 chars, 1 uppercase, 1 lowercase, 1 number):</strong> <code>^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$</code></li>
+                        <li><strong>IPv4 Address:</strong> <code>^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$</code></li>
+                    </ul>
+                </li>
             </ul>
 
             <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Configuring Subtables (One-to-Many Relationships)</h4>

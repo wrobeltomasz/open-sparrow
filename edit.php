@@ -247,7 +247,11 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
                         <input type="date" name="<?php echo $colName; ?>" value="<?php echo htmlspecialchars((string)$val); ?>" <?php echo $requiredAttr; ?> <?php echo $readOnlyAttr; ?> style="width: 100%; padding: 8px;" />
                         
                     <?php else : ?>
-                        <input type="text" name="<?php echo $colName; ?>" value="<?php echo htmlspecialchars((string)$val); ?>" <?php echo $requiredAttr; ?> <?php echo $readOnlyAttr; ?> style="width: 100%; padding: 8px;" />
+                        <?php
+                        $patternAttr = !empty($colCfg['validation_regexp']) ? 'data-pattern="' . htmlspecialchars($colCfg['validation_regexp']) . '"' : '';
+                        $titleAttr = !empty($colCfg['validation_message']) ? 'data-message="' . htmlspecialchars($colCfg['validation_message']) . '"' : '';
+                        ?>
+                        <input type="text" name="<?php echo $colName; ?>" value="<?php echo htmlspecialchars((string)$val); ?>" <?php echo $requiredAttr; ?> <?php echo $readOnlyAttr; ?> <?php echo $patternAttr; ?> <?php echo $titleAttr; ?> style="width: 100%; padding: 8px;" />
                         
                     <?php endif; ?>
                 </div>
@@ -316,6 +320,34 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
         </small>
     </div>
 </footer>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input[data-pattern]');
+    inputs.forEach(input => {
+        const validateInput = () => {
+            if (!input.value) {
+                input.setCustomValidity('');
+                return;
+            }
+            try {
+                const regex = new RegExp(input.dataset.pattern);
+                if (!regex.test(input.value)) {
+                    input.setCustomValidity(input.dataset.message || 'Invalid format');
+                } else {
+                    input.setCustomValidity('');
+                }
+            } catch (e) {
+                console.error("Invalid RegExp provided in schema:", input.dataset.pattern, e);
+            }
+        };
+
+        input.addEventListener('input', validateInput);
+        validateInput(); // Trigger validation on load just in case
+    });
+});
+</script>
 
 </body>
 </html>

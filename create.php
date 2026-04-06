@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $i = 1;
 
     foreach ($tableCfg['columns'] as $colName => $colCfg) {
+        // Skip primary key and readonly fields during create
         if ($colName === $idCol || !empty($colCfg['readonly'])) {
             continue;
         }
@@ -84,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             log_user_action($conn, $_SESSION['user_id'], 'INSERT', $table, (int)$newId);
         }
 
-        // Check if we came from a subtable (prefilled fk)
         header("Location: index.php");
         exit;
     } else {
@@ -206,7 +206,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="date" <?php echo $nameAttr; ?> value="<?php echo htmlspecialchars($prefillVal); ?>" <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
                     
                     <?php else : ?>
-                        <input type="text" <?php echo $nameAttr; ?> value="<?php echo htmlspecialchars($prefillVal); ?>" <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
+                        <?php
+                        $patternAttr = !empty($colCfg['validation_regexp']) ? 'data-pattern="' . htmlspecialchars($colCfg['validation_regexp']) . '"' : '';
+                        $titleAttr = !empty($colCfg['validation_message']) ? 'data-message="' . htmlspecialchars($colCfg['validation_message']) . '"' : '';
+                        ?>
+                        <input type="text" <?php echo $nameAttr; ?> value="<?php echo htmlspecialchars($prefillVal); ?>" <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> <?php echo $patternAttr; ?> <?php echo $titleAttr; ?> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
                     <?php endif; ?>
 
                     <?php if ($isPrefilled) : ?>
@@ -222,6 +226,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 </main>
+
+<script>
+// Parse RegExp using standard JS engine to avoid strict v flag issues
+// Handles validation before form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('input[data-pattern]');
+    inputs.forEach(input => {
+        const validateInput = () => {
+            if (!input.value) {
+                input.setCustomValidity('');
+                return;
+            }
+            try {
+                const regex = new RegExp(input.dataset.pattern);
+                if (!regex.test(input.value)) {
+                    input.setCustomValidity(input.dataset.message || 'Invalid format');
+                } else {
+                    input.setCustomValidity('');
+                }
+            } catch (e) {
+                console.error("Invalid RegExp provided in schema:", input.dataset.pattern, e);
+            }
+        };
+
+        input.addEventListener('input', validateInput);
+        validateInput();
+    });
+});
+</script>
 
 </body>
 </html>

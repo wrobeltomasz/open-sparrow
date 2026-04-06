@@ -69,9 +69,6 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
     debugLog("Menu built", Object.keys(schema.tables));
 }
 
-
-
-
 // Fetch and load table data
 export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
     debugLog("Loading table", table);
@@ -80,12 +77,10 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
         const urlParams = new URLSearchParams(window.location.search);
         const filterCol = urlParams.get('filter_col');
         const filterVal = urlParams.get('filter_val');
-        // DODANE: Pobieranie parametru filter_where
         const filterWhere = urlParams.get('filter_where');
 
         let fetchUrl = `api.php?api=list&table=${encodeURIComponent(table)}`;
 
-        // DODANE: Dodawanie parametrów do zapytania do API
         if (urlParams.get('table') === table) {
             if (filterCol && filterVal !== null) {
                 fetchUrl += `&filter_col=${encodeURIComponent(filterCol)}&filter_val=${encodeURIComponent(filterVal)}`;
@@ -571,6 +566,11 @@ export async function renderGrid(schema) {
                 
                 td.dataset.column = col;
                 td.dataset.id = row['id'];
+
+                if (colCfg.validation_regexp) {
+                    td.dataset.pattern = colCfg.validation_regexp;
+                    td.dataset.message = colCfg.validation_message || 'Invalid format';
+                }
                 
                 const strVal = String(value).trim();
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -8,7 +8,9 @@ export const helpTexts = {
     fk_ref: "Select a related table. If selected, specify the Reference Column (usually 'id') and Display Column (what users see).",
     url_template: "Template for the link when an event is clicked (e.g., edit.php?table=tasks&id={id}).",
     display_columns: "For 'list' widget type only: A comma-separated list of database columns to display in each row.",
-    notified_users: "Select specific active users who will receive notifications." // Added help text for users
+    notified_users: "Select specific active users who will receive notifications.", // Added help text for users
+    validation_regexp: "Regular expression pattern for client and server side validation (e.g., ^[A-Z]{2}\\d{4}$).",
+    validation_message: "Custom error message displayed when the input does not match the RegExp pattern."
 };
 
 export function moveArrayItem(arr, index, direction) {
