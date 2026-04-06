@@ -28,7 +28,7 @@
     <div class="header-user-menu">
         <div class="notifications-wrapper" 
              style="position: relative; cursor: pointer; display: inline-block; margin-right: 15px; vertical-align: middle;">
-            <span style="font-size: 20px;">🔔</span>
+            <span style="font-size: 20px;"><img style="height:20px;" title="User notifications" src="assets/img/notifications.png"></span>
             <span id="notif-badge" style="
                 display: none;
                 position: absolute;
@@ -68,7 +68,7 @@
 
         <a href="/admin/index.php" title="Admin" 
            style="text-decoration: none; font-size: 20px; margin-right: 15px; 
-                  vertical-align: middle; display: inline-block; transition: opacity 0.2s;">⚙️</a>
+                  vertical-align: middle; display: inline-block; transition: opacity 0.2s;"><img style="height:20px;"  title="Admin panel" src="assets/img/settings.png"></a>
         
         <?php if (isset($_SESSION['username'])) : ?>
             <span class="header-username"><?= htmlspecialchars($_SESSION['username']) ?></span>
