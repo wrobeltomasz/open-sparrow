@@ -46,19 +46,6 @@
     font-size: 16px !important;
   }
 
-  #hamburger {
-    order: 5 !important;
-    width: 100% !important;
-    padding: 12px !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    border-radius: var(--radius) !important;
-    margin: 0 !important;
-    display: flex !important;
-    justify-content: center !important;
-    color: #ffffff !important;
-  }
-
   nav {
     padding: 10px !important;
     overflow-x: hidden !important;

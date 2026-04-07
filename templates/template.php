@@ -77,8 +77,6 @@
         <button onclick="window.location.href='logout.php'" class="btn-logout">
             Logout
         </button>
-        
-        <button id="hamburger" class="hamburger">☰</button>
     </div>
 </header>
 
@@ -124,7 +122,6 @@
     document.addEventListener("DOMContentLoaded", () => {
         
         const mobileActions = document.getElementById("mobileActions");
-        const hamburger = document.getElementById("hamburger");
         const menu = document.getElementById("menu");
 
         if (mobileActions) {
@@ -137,18 +134,6 @@
             });
         }
 
-        if (hamburger && menu) {
-            hamburger.addEventListener("click", () => {
-                menu.classList.toggle("open");
-            });
-
-            menu.addEventListener("click", e => {
-                if (e.target.tagName === "A" || e.target.closest("A")) {
-                    menu.classList.remove("open");
-                }
-            });
-        }
-
         const badge = document.getElementById('notif-badge');
         const dropdown = document.getElementById('notif-dropdown');
         const notifList = document.getElementById('notif-list');
@@ -158,72 +143,65 @@
             try {
                 const res = await fetch('api_notifications.php?action=get_count');
                 const data = await res.json();
-                if (data.status === 'success') {
-                    if (data.count > 0) {
-                        badge.textContent = data.count;
-                        badge.style.display = 'inline-block';
-                    } else {
-                        badge.style.display = 'none';
-                    }
+                if (data.count > 0) {
+                    document.getElementById('notif-badge').style.display = 'block';
+                    document.getElementById('notif-badge').textContent = data.count;
+                } else {
+                    document.getElementById('notif-badge').style.display = 'none';
                 }
-            } catch(e) { console.error("Notif error:", e); }
+            } catch (error) {
+                console.error('Error checking notifications:', error);
+            }
         }
 
         if (wrapper) {
-            wrapper.addEventListener('click', async (e) => {
-                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-                
-                if (dropdown.style.display === 'block') {
-                    notifList.innerHTML = '<li style="padding:15px; text-align:center;">Ładowanie...</li>';
-                    const res = await fetch('api_notifications.php?action=get_list');
-                    const data = await res.json();
-                    
-                    notifList.innerHTML = '';
-                    if (data.notifications && data.notifications.length > 0) {
-                        data.notifications.forEach(n => {
-                            const li = document.createElement('li');
-                            li.style.padding = '12px 15px';
-                            li.style.borderBottom = '1px solid #eee';
-                            
-                            const isRead = (n.is_read === 't' || n.is_read === true);
-                            li.style.background = isRead ? '#fff' : '#f0f4ff'; 
-                            
-                            // Poprawiona zawartość - tylko tytuł i link (rozbite by nie przekraczać limitu linii)
-                            const linkHtml = n.link 
-                                ? `<a href="${n.link}" style="font-size:13px; color:#007ACC; ` + 
-                                  `text-decoration:none; font-weight:bold;">Go to the notification ➔</a>` 
-                                : '';
-
-                            li.innerHTML = `
-                                <div style="font-size:14px; margin-bottom: 6px;">${n.title}</div>
-                                ${linkHtml}
-                            `;
-                            
-                            if (n.link && !isRead) {
-                                li.querySelector('a').addEventListener('click', async (ev) => {
-                                    await fetch('api_notifications.php?action=mark_read', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ id: n.id })
-                                    });
-                                });
-                            }
-                            
-                            notifList.appendChild(li);
-                        });
-                    } else {
-                        const emptyMsg = '<li style="padding:15px; text-align:center; color:#777;">No new notifications</li>';
-                        notifList.innerHTML = emptyMsg;
-                    }
+            wrapper.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (dropdown.style.display === 'none') {
+                    dropdown.style.display = 'block';
+                    // Load notifications when opening
+                    loadNotifications();
+                } else {
+                    dropdown.style.display = 'none';
                 }
             });
         }
 
+        // Handle clicks outside the notifications dropdown
         document.addEventListener('click', (e) => {
             if (wrapper && !e.target.closest('.notifications-wrapper')) {
                 dropdown.style.display = 'none';
             }
         });
+
+        // Load notifications function
+        function loadNotifications() {
+            fetch('api_notifications.php?action=get_list')
+                .then(response => response.json())
+                .then(data => {
+                    notifList.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(notification => {
+                            const li = document.createElement('li');
+                            li.style.padding = '15px';
+                            li.style.textAlign = 'center';
+                            li.style.color = '#777';
+                            li.textContent = notification.title;
+                            notifList.appendChild(li);
+                        });
+                    } else {
+                        const emptyMsg = document.createElement('li');
+                        emptyMsg.style.padding = '15px';
+                        emptyMsg.style.textAlign = 'center';
+                        emptyMsg.style.color = '#777';
+                        emptyMsg.textContent = 'No new notifications';
+                        notifList.appendChild(emptyMsg);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading notifications:', error);
+                });
+        }
 
         checkNotifications();
         setInterval(checkNotifications, 120000);
