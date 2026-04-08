@@ -5,6 +5,13 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Check role and block POST requests for readonly users
+$isReadOnly = ($_SESSION['role'] ?? 'full') === 'readonly';
+if ($isReadOnly && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    http_response_code(403);
+    die("Forbidden: Read-only access");
+}
+
 require __DIR__ . '/includes/db.php';
 require __DIR__ . '/includes/api_helpers.php';
 $conn = db_connect();
@@ -136,7 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $prefillVal = $_GET[$colName] ?? '';
 
                 $requiredAttr = !empty($colCfg['not_null']) ? 'required' : '';
-                $disabledAttr = $isPrefilled ? 'disabled' : '';
+                // Disable field if prefilled or user is readonly
+                $disabledAttr = ($isPrefilled || $isReadOnly) ? 'disabled' : '';
                 $nameAttr = $isPrefilled ? '' : 'name="' . $colName . '"';
                 ?>
                 <div class="form-group" style="margin-bottom: 15px;">
@@ -220,7 +228,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endforeach; ?>
 
             <div class="form-actions" style="margin-top: 25px; display: flex; gap: 10px;">
-                <button type="submit" class="btn-save" style="padding: 10px 20px; background: #007ACC; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px;">Add Record</button>
+                <?php if ($isReadOnly) : ?>
+                    <button type="button" class="btn-save" style="padding: 10px 20px; background: #ccc; color: white; border: none; cursor: not-allowed; font-weight: bold; border-radius: 4px;" disabled>Add Record</button>
+                <?php else : ?>
+                    <button type="submit" class="btn-save" style="padding: 10px 20px; background: #007ACC; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px;">Add Record</button>
+                <?php endif; ?>
                 <button type="button" class="btn-cancel" onclick="window.history.back()" style="padding: 10px 20px; background: #eee; color: #333; border: 1px solid #ccc; cursor: pointer; border-radius: 4px;">Cancel</button>
             </div>
         </form>

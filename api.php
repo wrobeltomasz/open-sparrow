@@ -1,15 +1,21 @@
 <?php
-
 declare(strict_types=1);
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+session_start();
 
+// Block access without active session
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
+    exit(json_encode(['error' => 'Unauthorized']));
+}
+
+$method = $_SERVER['REQUEST_METHOD'];
+$role = $_SESSION['role'] ?? 'full';
+
+// Block data modification requests for readonly users
+if ($role === 'readonly' && in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+    http_response_code(403);
+    exit(json_encode(['error' => 'Forbidden: Read-only access']));
 }
 
 // Load schema

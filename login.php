@@ -35,7 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    $sql = 'SELECT id, username, password_hash FROM "app"."users" WHERE username = $1';
+    // Fetch role from the database
+    $sql = 'SELECT id, username, password_hash, role FROM "app"."users" WHERE username = $1';
     $res = pg_query_params($conn, $sql, [$username]);
 
     if (!$res) {
@@ -53,6 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
 
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
+            
+            // Assign user role to session
+            $_SESSION['role'] = $user['role'] ?? 'full';
+
             // Log login action
             log_user_action($conn, $user['id'], 'LOGIN');
 
