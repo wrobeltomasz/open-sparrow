@@ -3,6 +3,10 @@ import { onCellBlur, onInputChange, deleteRow, addRow, attachCellEvents } from '
 import { setupPagination, getPageRows } from './pagination.js';
 import { exportCSV } from './export_csv.js';
 
+// Retrieve global user role
+const userRole = window.USER_ROLE || 'full';
+const isReadOnly = userRole === 'readonly';
+
 const fkCache = {};
 
 let currentTable = null;
@@ -116,14 +120,20 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
 
         filteredData = fullData.slice();
         unsortedFilteredData = filteredData.slice(); 
-        addRowBtn.disabled = false;
         sortState = { column: null, asc: true };
 
-        // Redirect to create form on button click
-        addRowBtn.onclick = () => {
-            debugLog("Redirect to create form", { table: currentTable });
-            window.location.href = `create.php?table=${currentTable}`;
-        };
+        // Handle add row button visibility based on user role
+        if (isReadOnly) {
+            addRowBtn.style.display = 'none';
+        } else {
+            addRowBtn.style.display = '';
+            addRowBtn.disabled = false;
+            // Redirect to create form on button click
+            addRowBtn.onclick = () => {
+                debugLog("Redirect to create form", { table: currentTable });
+                window.location.href = `create.php?table=${currentTable}`;
+            };
+        }
 
         await renderGrid(schema);
 
@@ -298,9 +308,13 @@ export async function renderGrid(schema) {
         headRow.appendChild(th);
     });
 
-    const thActions = document.createElement('th');
-    thActions.textContent = 'Actions';
-    headRow.appendChild(thActions);
+    // Render Actions header only for full permission users
+    if (!isReadOnly) {
+        const thActions = document.createElement('th');
+        thActions.textContent = 'Actions';
+        headRow.appendChild(thActions);
+    }
+    
     thead.appendChild(headRow);
     table.appendChild(thead);
 
@@ -327,7 +341,7 @@ export async function renderGrid(schema) {
                     const ddTr = document.createElement('tr');
                     ddTr.className = 'drilldown-row';
                     const ddTd = document.createElement('td');
-                    ddTd.colSpan = displayedColumns.length + 2; 
+                    ddTd.colSpan = displayedColumns.length + (isReadOnly ? 1 : 2); 
                     ddTd.innerHTML = '<em>Loading...</em>';
                     ddTr.appendChild(ddTd);
                     tr.after(ddTr);
@@ -419,7 +433,7 @@ export async function renderGrid(schema) {
                 input.dataset.column = col;
                 input.dataset.id = row['id'];
 
-                if (colCfg.readonly) {
+                if (colCfg.readonly || isReadOnly) {
                     input.disabled = true;
                 }
 
@@ -471,7 +485,7 @@ export async function renderGrid(schema) {
                     }
                 });
 
-                attachCellEvents(input);
+                if (!isReadOnly) attachCellEvents(input);
                 td.appendChild(input);
                 td.appendChild(datalist);
                 tr.appendChild(td);
@@ -516,7 +530,7 @@ export async function renderGrid(schema) {
 
                 applyEnumColor(value);
 
-                if (colCfg.readonly) {
+                if (colCfg.readonly || isReadOnly) {
                     select.disabled = true;
                 }
 
@@ -524,7 +538,7 @@ export async function renderGrid(schema) {
                     applyEnumColor(e.target.value);
                 });
 
-                attachCellEvents(select);
+                if (!isReadOnly) attachCellEvents(select);
                 td.appendChild(select);
             }
             // Render boolean as checkbox
@@ -535,11 +549,11 @@ export async function renderGrid(schema) {
                 input.dataset.column = col;
                 input.dataset.id = row['id'];
 
-                if (colCfg.readonly) {
+                if (colCfg.readonly || isReadOnly) {
                     input.disabled = true;
                 }
 
-                attachCellEvents(input);
+                if (!isReadOnly) attachCellEvents(input);
                 td.appendChild(input);
             }
             // Render date picker
@@ -550,16 +564,16 @@ export async function renderGrid(schema) {
                 input.dataset.column = col;
                 input.dataset.id = row['id'];
 
-                if (colCfg.readonly) {
+                if (colCfg.readonly || isReadOnly) {
                     input.disabled = true;
                 }
 
-                attachCellEvents(input);
+                if (!isReadOnly) attachCellEvents(input);
                 td.appendChild(input);
             }
             // Render editable text cell
             else {
-                if (!colCfg.readonly) {
+                if (!colCfg.readonly && !isReadOnly) {
                     td.contentEditable = 'true';
                     td.classList.add('editable');
                 }
@@ -610,7 +624,7 @@ export async function renderGrid(schema) {
                     td.textContent = value;
                 }
 
-                attachCellEvents(td);
+                if (!isReadOnly) attachCellEvents(td);
 
                 td.addEventListener('keydown', e => {
                     if (e.key === 'Enter') {
@@ -629,36 +643,39 @@ export async function renderGrid(schema) {
             tr.appendChild(td);
         }
 
-        const tdActions = document.createElement('td');
-        
-        // Edit action button
-        const editBtn = document.createElement('button');
-        editBtn.textContent = 'Edit';
-        editBtn.style.marginRight = '8px';
-        editBtn.addEventListener('click', () => {
-            window.location.href = `edit.php?table=${currentTable}&id=${row['id']}`;
-        });
-        tdActions.appendChild(editBtn);
+        // Render action buttons only if user is not readonly
+        if (!isReadOnly) {
+            const tdActions = document.createElement('td');
+            
+            // Edit action button
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.style.marginRight = '8px';
+            editBtn.addEventListener('click', () => {
+                window.location.href = `edit.php?table=${currentTable}&id=${row['id']}`;
+            });
+            tdActions.appendChild(editBtn);
 
-        // Delete action button
-        const delBtn = document.createElement('button');
-        delBtn.textContent = 'Delete';
-        delBtn.className = 'danger';
+            // Delete action button
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'Delete';
+            delBtn.className = 'danger';
 
-        delBtn.addEventListener('click', async () => {
-            if (confirm("Are you sure you want to delete this record? This operation cannot be undone.")) {
-                const result = await deleteRow(row['id']);
-                if (result?.ok) {
-                    fullData = fullData.filter(r => String(r.id) !== String(row['id']));
-                    filteredData = filteredData.filter(r => String(r.id) !== String(row['id']));
-                    unsortedFilteredData = unsortedFilteredData.filter(r => String(r.id) !== String(row['id']));
-                    renderGrid(schema);
+            delBtn.addEventListener('click', async () => {
+                if (confirm("Are you sure you want to delete this record? This operation cannot be undone.")) {
+                    const result = await deleteRow(row['id']);
+                    if (result?.ok) {
+                        fullData = fullData.filter(r => String(r.id) !== String(row['id']));
+                        filteredData = filteredData.filter(r => String(r.id) !== String(row['id']));
+                        unsortedFilteredData = unsortedFilteredData.filter(r => String(r.id) !== String(row['id']));
+                        renderGrid(schema);
+                    }
                 }
-            }
-        });
+            });
 
-        tdActions.appendChild(delBtn);
-        tr.appendChild(tdActions);
+            tdActions.appendChild(delBtn);
+            tr.appendChild(tdActions);
+        }
 
         tbody.appendChild(tr);
     }

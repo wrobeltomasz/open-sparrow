@@ -5,6 +5,14 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$isReadOnly = ($_SESSION['role'] ?? 'full') === 'readonly';
+
+// Block POST request for readonly users
+if ($isReadOnly && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    http_response_code(403);
+    die("Forbidden: Read-only access");
+}
+
 require __DIR__ . '/includes/db.php';
 require __DIR__ . '/includes/api_helpers.php';
 $conn = db_connect();
@@ -169,9 +177,10 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
                 $type = strtolower($colCfg['type'] ?? '');
                 $val = $row[$colName] ?? '';
 
-                $readOnlyAttr = !empty($colCfg['readonly']) ? 'readonly' : '';
-                $disabledAttr = !empty($colCfg['readonly']) ? 'disabled' : '';
-                $requiredAttr = (!empty($colCfg['not_null']) && empty($colCfg['readonly'])) ? 'required' : '';
+                // Apply read-only mode across all fields if user role is readonly
+                $readOnlyAttr = (!empty($colCfg['readonly']) || $isReadOnly) ? 'readonly' : '';
+                $disabledAttr = (!empty($colCfg['readonly']) || $isReadOnly) ? 'disabled' : '';
+                $requiredAttr = (!empty($colCfg['not_null']) && empty($colCfg['readonly']) && !$isReadOnly) ? 'required' : '';
                 ?>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display: block; font-weight: bold; margin-bottom: 5px;">
@@ -216,7 +225,7 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
                                 </option>
                             <?php endwhile; ?>
                         </select>
-                        <?php if (!empty($colCfg['readonly'])) : ?>
+                        <?php if (!empty($colCfg['readonly']) || $isReadOnly) : ?>
                             <input type="hidden" name="<?php echo $colName; ?>" value="<?php echo htmlspecialchars((string)$val); ?>" />
                         <?php endif; ?>
 
@@ -232,14 +241,14 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
                                 <?php endforeach; ?>
                             <?php endif; ?>
                         </select>
-                        <?php if (!empty($colCfg['readonly'])) : ?>
+                        <?php if (!empty($colCfg['readonly']) || $isReadOnly) : ?>
                             <input type="hidden" name="<?php echo $colName; ?>" value="<?php echo htmlspecialchars((string)$val); ?>" />
                         <?php endif; ?>
 
                     <?php elseif (str_contains($type, 'bool')) : ?>
                         <?php $checked = ($val === 't' || $val === 'true' || $val === true || $val === '1') ? 'checked' : ''; ?>
                         <input type="checkbox" name="<?php echo $colName; ?>" <?php echo $disabledAttr; ?> <?php echo $checked; ?> />
-                        <?php if (!empty($colCfg['readonly'])) : ?>
+                        <?php if (!empty($colCfg['readonly']) || $isReadOnly) : ?>
                             <input type="hidden" name="<?php echo $colName; ?>" value="<?php echo htmlspecialchars((string)$val); ?>" />
                         <?php endif; ?>
                         
@@ -258,7 +267,11 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
             <?php endforeach; ?>
 
             <div class="form-actions" style="margin-top: 20px;">
-                <button type="submit" class="btn-save">Save Changes</button>
+                <?php if ($isReadOnly) : ?>
+                    <button type="button" class="btn-save" style="background: #ccc; cursor: not-allowed;" disabled>Update Record</button>
+                <?php else : ?>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                <?php endif; ?>
                 <button type="button" class="btn-cancel" onclick="window.history.back()">Cancel</button>
             </div>
         </form>
@@ -274,9 +287,11 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
             ?>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3><?php echo htmlspecialchars($sLabel); ?></h3>
-                <a href="create.php?table=<?php echo urlencode($sTable); ?>&<?php echo urlencode($sFk); ?>=<?php echo urlencode((string)$id); ?>" class="btn-add">
-                    + Add <?php echo htmlspecialchars($sLabel); ?>
-                </a>
+                <?php if (!$isReadOnly) : ?>
+                    <a href="create.php?table=<?php echo urlencode($sTable); ?>&<?php echo urlencode($sFk); ?>=<?php echo urlencode((string)$id); ?>" class="btn-add">
+                        + Add <?php echo htmlspecialchars($sLabel); ?>
+                    </a>
+                <?php endif; ?>
             </div>
 
             <?php if (empty($sd['rows'])) : ?>
@@ -300,7 +315,11 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
                                         <td><?php echo htmlspecialchars((string)$displayVal); ?></td>
                                     <?php endforeach; ?>
                                     <td class="subtable-actions">
-                                        <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action">Edit</a>
+                                        <?php if ($isReadOnly) : ?>
+                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action" style="pointer-events: none; opacity: 0.5;">View</a>
+                                        <?php else : ?>
+                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action">Edit</a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
