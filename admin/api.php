@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Ensure state-changing actions use POST method to prevent CSRF via GET
-$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'create_table', 'add_column'];
+$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'create_table', 'add_column'];
 if (in_array($action, $postActions, true) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Content-Type: application/json');
     http_response_code(405);
@@ -41,7 +41,7 @@ if ($action === 'init_db') {
         $conn = db_connect();
         $queries = [
             "CREATE SCHEMA IF NOT EXISTS app",
-            "CREATE TABLE IF NOT EXISTS app.users ( id serial4 NOT NULL, username varchar(50) NOT NULL, password_hash varchar(255) NOT NULL, is_active bool DEFAULT true, CONSTRAINT users_pkey PRIMARY KEY (id), CONSTRAINT users_username_key UNIQUE (username) )",
+            "CREATE TABLE IF NOT EXISTS app.users ( id serial4 NOT NULL, username varchar(50) NOT NULL, password_hash varchar(255) NOT NULL, is_active bool DEFAULT true, role varchar(20) DEFAULT 'full' NOT NULL, CONSTRAINT users_pkey PRIMARY KEY (id), CONSTRAINT users_username_key UNIQUE (username) )",
             "ALTER TABLE app.users ADD COLUMN IF NOT EXISTS is_active bool DEFAULT true",
             "CREATE TABLE IF NOT EXISTS app.users_log ( id serial4 NOT NULL, user_id int4 NOT NULL, \"action\" varchar(50) NOT NULL, target_table varchar(100), record_id int4, created_at timestamp DEFAULT CURRENT_TIMESTAMP, CONSTRAINT users_log_pkey PRIMARY KEY (id) )",
             "CREATE TABLE IF NOT EXISTS app.users_notifications ( id serial4 NOT NULL, user_id int8 NOT NULL, title varchar(255) NOT NULL, link varchar(255), source_table varchar(100), source_id int8, is_read bool DEFAULT false, notify_date date NOT NULL, created_at timestamp DEFAULT CURRENT_TIMESTAMP,CONSTRAINT users_notifications_pkey PRIMARY KEY (id), CONSTRAINT users_notifications_user_id_source_table_source_id_notify_d_key UNIQUE (user_id, source_table, source_id, notify_date) )",
@@ -69,7 +69,7 @@ if ($action === 'users_list') {
     try {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
-        $sql = "SELECT id, username, is_active FROM app.users ORDER BY id ASC";
+        $sql = "SELECT id, username, is_active, role FROM app.users ORDER BY id ASC";
         $res = @pg_query($conn, $sql);
         if (!$res) {
             $err = pg_last_error($conn);
@@ -103,6 +103,8 @@ if ($action === 'users_add') {
     $data = json_decode(file_get_contents('php://input'), true);
     $username = trim($data['username'] ?? '');
     $password = $data['password'] ?? '';
+    $role = isset($data['role']) && $data['role'] === 'readonly' ? 'readonly' : 'full';
+    
     if (empty($username) || empty($password)) {
         echo json_encode(['status' => 'error', 'error' => 'Username and password are required.']);
         exit;
@@ -112,8 +114,8 @@ if ($action === 'users_add') {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO app.users (username, password_hash, is_active) VALUES ($1, $2, true)";
-        $res = @pg_query_params($conn, $sql, [$username, $hash]);
+        $sql = "INSERT INTO app.users (username, password_hash, is_active, role) VALUES ($1, $2, true, $3)";
+        $res = @pg_query_params($conn, $sql, [$username, $hash, $role]);
         if (!$res) {
             throw new Exception(pg_last_error($conn));
         }
@@ -145,6 +147,38 @@ if ($action === 'users_toggle') {
         $conn = db_connect();
         $sql = "UPDATE app.users SET is_active = $1 WHERE id = $2";
         $res = @pg_query_params($conn, $sql, [$isActive ? 'true' : 'false', $userId]);
+        if (!$res) {
+            throw new Exception(pg_last_error($conn));
+        }
+        echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// Handle user role update
+if ($action === 'users_update_role') {
+    header('Content-Type: application/json');
+    if ($isDemoMode) {
+        echo json_encode(['status' => 'error', 'error' => 'Action disabled in Demo Mode.']);
+        exit;
+    }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    $userId = (int)($data['id'] ?? 0);
+    $role = isset($data['role']) && $data['role'] === 'readonly' ? 'readonly' : 'full';
+
+    if ($userId <= 0) {
+        echo json_encode(['status' => 'error', 'error' => 'Invalid user ID.']);
+        exit;
+    }
+
+    try {
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = db_connect();
+        $sql = "UPDATE app.users SET role = $1 WHERE id = $2";
+        $res = @pg_query_params($conn, $sql, [$role, $userId]);
         if (!$res) {
             throw new Exception(pg_last_error($conn));
         }
@@ -317,7 +351,7 @@ if ($action === 'import' && isset($_FILES['backup_file'])) {
         // Validate each file inside the archive
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $filename = $zip->getNameIndex($i);
-// Block path traversal characters and enforce .json extension to prevent RCE
+            // Block path traversal characters and enforce .json extension to prevent RCE
             if (str_contains($filename, '../') || str_contains($filename, '..\\') || substr($filename, -5) !== '.json') {
                 $zip->close();
                 http_response_code(400);
@@ -378,7 +412,7 @@ if ($action === 'get' && in_array($file, $allowedFiles, true)) {
     header('Content-Type: application/json');
     if (file_exists($filePath)) {
         $fileContent = file_get_contents($filePath);
-    // Mask sensitive data in Demo Mode
+        // Mask sensitive data in Demo Mode
         if ($isDemoMode && $file === 'database') {
             $dbData = json_decode($fileContent, true);
             $dbData['host'] = 'hidden-for-demo.postgres.database.azure.com';
@@ -403,7 +437,7 @@ if ($action === 'get' && in_array($file, $allowedFiles, true)) {
 
 // Save content to a JSON config file
 if ($action === 'save' && in_array($file, $allowedFiles, true)) {
-// Block saving sensitive files in Demo Mode
+    // Block saving sensitive files in Demo Mode
     if ($isDemoMode && in_array($file, ['database', 'security'])) {
         http_response_code(403);
         echo json_encode(['status' => 'error', 'error' => 'Saving ' . $file . ' configuration is disabled in Demo Mode.']);
@@ -415,7 +449,7 @@ if ($action === 'save' && in_array($file, $allowedFiles, true)) {
     header('Content-Type: application/json');
     $parsedData = json_decode($data, true);
     if ($parsedData !== null) {
-    // Hash the admin password securely before saving if it is not hashed already
+        // Hash the admin password securely before saving if it is not hashed already
         if ($file === 'security' && !empty($parsedData['admin_password'])) {
             $info = password_get_info($parsedData['admin_password']);
             if ($info['algoName'] === 'unknown') {
@@ -479,7 +513,7 @@ if ($action === 'get_db_columns') {
             $dataType = $row['data_type'];
             $udtName = $row['udt_name'];
             $enumValues = null;
-        // Fetch ENUM values only for user-defined types safely using pg_escape_identifier
+            // Fetch ENUM values only for user-defined types safely using pg_escape_identifier
             if ($dataType === 'USER-DEFINED') {
                 $safeSchema = pg_escape_identifier($conn, $schemaName);
                 $safeUdt = pg_escape_identifier($conn, $udtName);

@@ -30,6 +30,7 @@ export async function renderUsersEditor(ctx) {
                         <th style="padding: 10px;">ID</th>
                         <th style="padding: 10px;">Username</th>
                         <th style="padding: 10px;">Status</th>
+                        <th style="padding: 10px;">FE Permission</th>
                         <th style="padding: 10px;">Actions</th>
                     </tr>
                 </thead>
@@ -45,6 +46,12 @@ export async function renderUsersEditor(ctx) {
                         <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; color: white; background: ${u.is_active ? '#10b981' : '#ef4444'};">
                             ${u.is_active ? 'Active' : 'Inactive'}
                         </span>
+                    </td>
+                    <td style="padding: 10px;">
+                        <select class="select-user-role" data-id="${u.id}" style="padding: 5px; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;">
+                            <option value="full" ${u.role === 'full' || !u.role ? 'selected' : ''}>Full Access</option>
+                            <option value="readonly" ${u.role === 'readonly' ? 'selected' : ''}>Read Only</option>
+                        </select>
                     </td>
                     <td style="padding: 10px;">
                         <button class="btn-toggle-user" data-id="${u.id}" data-active="${u.is_active}" style="padding: 5px 10px; cursor: pointer; border: none; border-radius: 4px; background: ${u.is_active ? '#f59e0b' : '#3b82f6'}; color: white; font-weight: bold;">
@@ -73,13 +80,20 @@ export async function renderUsersEditor(ctx) {
                     </div>
                     <small id="passwordStrengthLabel" style="color: #777; display: block; margin-top: 4px;"></small>
                 </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">FE Permission</label>
+                    <select id="newRole" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+                        <option value="full">Full Access</option>
+                        <option value="readonly">Read Only</option>
+                    </select>
+                </div>
                 <button id="btnAddUser" style="background: #10b981; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Create User</button>
             </div>
         `;
         
         workspaceEl.innerHTML = html;
         
-        // Setup toggle events
+        // Setup toggle active status events
         workspaceEl.querySelectorAll('.btn-toggle-user').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const id = e.target.getAttribute('data-id');
@@ -104,6 +118,34 @@ export async function renderUsersEditor(ctx) {
                     }
                 } catch (err) {
                     alert('Network error occurred.');
+                }
+            });
+        });
+
+        // Setup role change events
+        workspaceEl.querySelectorAll('.select-user-role').forEach(select => {
+            select.addEventListener('change', async (e) => {
+                const id = e.target.getAttribute('data-id');
+                const role = e.target.value;
+                
+                try {
+                    const req = await fetch('api.php?action=users_update_role', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': getCsrfToken() 
+                        },
+                        body: JSON.stringify({ id, role })
+                    });
+                    
+                    const resData = await req.json();
+                    if (resData.status !== 'success') {
+                        alert('Error: ' + resData.error);
+                        renderUsersEditor(ctx); 
+                    }
+                } catch (err) {
+                    alert('Network error occurred.');
+                    renderUsersEditor(ctx); 
                 }
             });
         });
@@ -147,6 +189,7 @@ export async function renderUsersEditor(ctx) {
         document.getElementById('btnAddUser').addEventListener('click', async () => {
             const username = document.getElementById('newUsername').value;
             const password = document.getElementById('newPassword').value;
+            const role = document.getElementById('newRole').value;
 
             if (!username || !password) {
                 alert('Username and password are required!');
@@ -160,7 +203,7 @@ export async function renderUsersEditor(ctx) {
                         'Content-Type': 'application/json',
                         'X-CSRF-Token': getCsrfToken() 
                     },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password, role })
                 });
                 const resData = await req.json();
 
