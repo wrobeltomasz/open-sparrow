@@ -382,6 +382,92 @@ try {
         $schemaName = $tableCfg['schema'] ?? 'public';
         $idCol = id_column();
 
+        // POST: CALENDAR MOVE EVENT (Drag & Drop functionality)
+        if ($method === 'POST' && ($body['api'] ?? '') === 'calendar' && ($body['action'] ?? '') === 'move_event') {
+            if ($role === 'readonly') {
+                http_response_code(403);
+                echo json_encode(['error' => 'Forbidden']);
+                exit;
+            }
+
+            // Load calendar configuration to validate source tables
+            $calPath = __DIR__ . '/includes/calendar.json';
+            $calConfig = file_exists($calPath) ? json_decode(file_get_contents($calPath), true) : ['sources' => []];
+            $sources = $calConfig['sources'] ?? [];
+
+            // Whitelist payload table against calendar.json sources
+            $allowedTables = array_column($sources, 'table');
+            if (!in_array($table, $allowedTables, true)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid table']);
+                exit;
+            }
+
+            $id = (int)($body['id'] ?? 0);
+            $newDate = $body['newDate'] ?? '';
+
+            if ($id <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid ID']);
+                exit;
+            }
+
+            // Validate strict YYYY-MM-DD date format
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $newDate) || !checkdate((int)substr($newDate, 5, 2), (int)substr($newDate, 8, 2), (int)substr($newDate, 0, 4))) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid date format']);
+                exit;
+            }
+
+            // Get date column for specific table configuration
+            $dateColumn = '';
+            foreach ($sources as $source) {
+                if ($source['table'] === $table) {
+                    $dateColumn = $source['date_column'];
+                    break;
+                }
+            }
+
+            if ($dateColumn === '') {
+                http_response_code(400);
+                echo json_encode(['error' => 'Missing date column config']);
+                exit;
+            }
+
+            // Perform safety regex check on column identifier
+            if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $dateColumn)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid column name']);
+                exit;
+            }
+
+            // Update record via native pg_query_params for robust SQL injection prevention
+            $sql = sprintf(
+                'UPDATE "%s"."%s" SET "%s" = $1 WHERE %s = $2',
+                $schemaName,
+                $table,
+                $dateColumn,
+                pg_ident($idCol)
+            );
+
+            $res = @pg_query_params($conn, $sql, [$newDate, $id]);
+            if (!$res) {
+                http_response_code(500);
+                echo json_encode(['error' => 'Database error']);
+                error_log('Calendar move_event error: ' . pg_last_error($conn));
+                exit;
+            }
+
+            if (pg_affected_rows($res) === 0) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Record not found']);
+                exit;
+            }
+
+            echo json_encode(['success' => true]);
+            exit;
+        }
+
         // PATCH: UPDATE SINGLE CELL
         if ($method === 'PATCH' && isset($body['id'], $body['column'], $body['value'])) {
             $col = $body['column'];

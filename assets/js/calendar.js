@@ -122,12 +122,104 @@ function renderCalendar() {
 
         const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         
+        // Handle dragover required for dropping
+        cell.addEventListener('dragover', (e) => {
+            e.preventDefault(); 
+            e.dataTransfer.dropEffect = 'move';
+            cell.style.outline = '2px solid #6366f1'; 
+        });
+
+        // Handle dragleave
+        cell.addEventListener('dragleave', () => {
+            cell.style.outline = '';
+        });
+
+        // Handle dropping the event into a new date cell
+        cell.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            cell.style.outline = '';
+
+            let payload;
+            try {
+                payload = JSON.parse(e.dataTransfer.getData('application/json'));
+            } catch {
+                return;
+            }
+
+            // Do nothing if dropped on the exact same date
+            if (payload.date === dateString) return;
+
+            // Optimistic UI update immediately reflects changes
+            const eventIndex = eventsData.findIndex(ev => ev.id === payload.id && ev.table === payload.table);
+            const originalDate = payload.date;
+            
+            if (eventIndex !== -1) {
+                eventsData[eventIndex].date = dateString;
+                renderCalendar(); 
+            }
+
+            // Dispatch fetch to update backend
+            try {
+                const res = await fetch('api.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        api: 'calendar',
+                        action: 'move_event',
+                        id: payload.id,
+                        table: payload.table,
+                        newDate: dateString
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok || data.error) {
+                    // Rollback optimistic update on error
+                    if (eventIndex !== -1) {
+                        eventsData[eventIndex].date = originalDate;
+                        renderCalendar();
+                    }
+                    console.error('Failed to move event:', data.error ?? res.status);
+                }
+            } catch (err) {
+                // Rollback optimistic update on network failure
+                if (eventIndex !== -1) {
+                    eventsData[eventIndex].date = originalDate;
+                    renderCalendar();
+                }
+                console.error('Network error during event move:', err);
+            }
+        });
+
         const dayEvents = eventsData.filter(e => e.date === dateString);
         dayEvents.forEach(ev => {
             const evEl = document.createElement('div');
             evEl.className = 'calendar-event';
             evEl.style.backgroundColor = ev.color;
             
+            // Allow element to be dragged
+            evEl.draggable = true;
+
+            // Prepare payload and styles when drag starts
+            evEl.addEventListener('dragstart', (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('application/json', JSON.stringify({
+                    id: ev.id,
+                    table: ev.table,
+                    date: ev.date 
+                }));
+                evEl.style.opacity = '0.4'; 
+            });
+
+            // Clean up styles when drag ends
+            evEl.addEventListener('dragend', () => {
+                evEl.style.opacity = '';
+            });
+
             // Build icon safely
             if (ev.icon) {
                 if (ev.icon.includes('/') || ev.icon.includes('.')) {
