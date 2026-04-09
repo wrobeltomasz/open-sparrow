@@ -75,6 +75,8 @@ Below is an overview of the most important directories and files in the OpenSpar
 * **`create.php` / `edit.php`** – Dedicated forms for creating and updating records.
 * **`Dockerfile` / `docker-compose.yml`** – Containerization config for easy deployment and local development.
 * **`phpcs.xml`** – Configuration for PHP CodeSniffer to ensure PSR-12 coding standards.
+* **`api_schema.php`** – A secure endpoint that provides the necessary database structure to the frontend UI. It actively filters out sensitive, backend-only information (like hidden tables or exact relationship maps) and customizes the data validation rules based on the user's permission level.
+* **`api_fk.php`** – A proxy endpoint designed to securely fetch related data (foreign keys) for dropdowns and inputs. It acts as a middleman, preventing the browser from ever knowing the exact internal database structure or table relationships while still providing the necessary options to the user.
 
 ---
 
