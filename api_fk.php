@@ -1,0 +1,61 @@
+<?php
+// Disable HTML error output to prevent corrupting JSON payload
+ini_set('display_errors', 0);
+
+// Safely start session only if not already active
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Require authorization and AJAX request
+if (!isset($_SESSION['user_id']) || !isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest') {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
+}
+
+$table = $_GET['table'] ?? '';
+$col = $_GET['col'] ?? '';
+
+$schemaPath = __DIR__ . '/includes/schema.json';
+
+// Check if schema file exists
+if (!file_exists($schemaPath)) {
+    header('Content-Type: application/json');
+    echo json_encode(['rows' => []]);
+    exit;
+}
+
+// Read schema file securely
+$raw = file_get_contents($schemaPath);
+if ($raw === false) {
+    header('Content-Type: application/json');
+    echo json_encode(['rows' => []]);
+    exit;
+}
+
+$schemaData = json_decode($raw, true);
+
+// Verify valid schema structure and check if relation exists
+if (!is_array($schemaData) || !isset($schemaData['tables'][$table]['foreign_keys'][$col])) {
+    header('Content-Type: application/json');
+    echo json_encode(['rows' => []]);
+    exit;
+}
+
+$refTable = $schemaData['tables'][$table]['foreign_keys'][$col]['reference_table'] ?? '';
+
+if (empty($refTable)) {
+    header('Content-Type: application/json');
+    echo json_encode(['rows' => []]);
+    exit;
+}
+
+// Rewrite GET parameters to simulate a direct call to api.php for the reference table
+$_GET['api'] = 'list';
+$_GET['table'] = $refTable;
+
+// Delegate response generation to main API handler
+require __DIR__ . '/api.php';
+exit;

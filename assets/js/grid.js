@@ -3,8 +3,8 @@ import { onCellBlur, onInputChange, deleteRow, addRow, attachCellEvents } from '
 import { setupPagination, getPageRows } from './pagination.js';
 import { exportCSV } from './export_csv.js';
 
-// Retrieve global user role
-const userRole = window.USER_ROLE || 'full';
+// Retrieve global user role with safe fallback
+const userRole = window.USER_ROLE || 'readonly';
 const isReadOnly = userRole === 'readonly';
 
 const fkCache = {};
@@ -13,35 +13,27 @@ let currentTable = null;
 let fullData = [];
 let displayedColumns = [];
 let filteredData = [];
-// Backup array for the third state of sorting
 let unsortedFilteredData = []; 
 let sortState = { column: null, asc: true };
 
-// Build dynamic menu from schema
+// Build dynamic menu from loaded schema
 export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
     const ul = document.createElement('ul');
     
-    // Check parameters to properly highlight active menu item
     const urlParams = new URLSearchParams(window.location.search);
     const urlTable = urlParams.get('table');
     const firstTable = Object.keys(schema.tables)[0];
     const initialTable = (urlTable && schema.tables[urlTable]) ? urlTable : firstTable;
   
     for (const [t, cfg] of Object.entries(schema.tables)) {
-        if (cfg.hidden === true) {
-            continue;
-        }
-
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.href = '#';
 
-        // Add active class if this is the target table
         if (t === initialTable) {
             a.classList.add('active');
         }
 
-        // Append icon if it exists
         if (cfg.icon) {
             const img = document.createElement('img');
             img.src = cfg.icon;
@@ -53,13 +45,11 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
         textSpan.textContent = cfg.display_name || t;
         a.appendChild(textSpan);
 
-        // Handle menu item click
         a.onclick = e => {
             e.preventDefault();
             menuEl.querySelectorAll('a').forEach(link => link.classList.remove('active'));
             a.classList.add('active');
             
-            // Clear URL params when clicking menu items manually to reset filters
             window.history.pushState({}, document.title, window.location.pathname);
             loadTable(schema, t, gridTitleEl, addRowBtn);
         };
@@ -68,7 +58,8 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
         ul.appendChild(li);
     }
   
-    menuEl.innerHTML = '';
+    // Secure DOM clearing
+    menuEl.replaceChildren();
     menuEl.appendChild(ul);
     debugLog("Menu built", Object.keys(schema.tables));
 }
@@ -94,7 +85,7 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
             }
         }
 
-        const res = await fetch(fetchUrl);
+        const res = await fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' }});
         const data = await res.json();
 
         currentTable = table;
@@ -103,7 +94,6 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
 
         fullData = data.rows || [];
     
-        // Filter out hidden columns and PK
         displayedColumns = (data.columns || []).filter(c => {
             if (c === 'id') return false;
             const colCfg = schema.tables[table].columns[c] || {};
@@ -111,7 +101,6 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
             return true;
         });
 
-        // Set visual indicator for filtered view in the grid title
         let displayTitle = data.table?.display_name || table;
         if (urlParams.get('table') === table && filterCol && filterVal !== null) {
             displayTitle += ` (Filtered by ${filterCol}: ${filterVal})`;
@@ -122,29 +111,26 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
         unsortedFilteredData = filteredData.slice(); 
         sortState = { column: null, asc: true };
 
-        // Handle add row button visibility based on user role
-        if (isReadOnly) {
-            addRowBtn.style.display = 'none';
-        } else {
-            addRowBtn.style.display = '';
-            addRowBtn.disabled = false;
-            // Redirect to create form on button click
-            addRowBtn.onclick = () => {
-                debugLog("Redirect to create form", { table: currentTable });
-                window.location.href = `create.php?table=${currentTable}`;
-            };
+        if (addRowBtn) {
+            if (isReadOnly) {
+                addRowBtn.style.display = 'none';
+            } else {
+                addRowBtn.style.display = '';
+                addRowBtn.disabled = false;
+                addRowBtn.onclick = () => {
+                    window.location.href = `create.php?table=${currentTable}`;
+                };
+            }
         }
 
         await renderGrid(schema);
-
-        // Dispatch event to re-init filters
         document.dispatchEvent(new Event("tableLoaded"));
     } catch (err) {
         console.error("Failed to load table data:", err);
     }
 }
 
-// Preload foreign key relations
+// Preload foreign key relations securely
 async function preloadForeignKeys(schema) {
     const fks = schema.tables[currentTable]?.foreign_keys;
     if (!fks) return;
@@ -154,20 +140,20 @@ async function preloadForeignKeys(schema) {
     for (const col of displayedColumns) {
         const fkCfg = fks[col];
         if (fkCfg) {
-            const refTable = fkCfg.reference_table;
-      
-            // Fetch related data if not cached
-            if (!fkCache[refTable]) {
-                fkCache[refTable] = fetch(`index.php?api=list&table=${encodeURIComponent(refTable)}`)
+            const cacheKey = `${currentTable}_${col}`;
+            
+            if (!fkCache[cacheKey]) {
+                fkCache[cacheKey] = fetch(`api_fk.php?table=${encodeURIComponent(currentTable)}&col=${encodeURIComponent(col)}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
                 .then(res => res.json())
                 .then(refData => refData.rows || [])
                 .catch(err => {
-                    console.error(`Failed to fetch FK for ${refTable}`, err);
+                    console.error(`Failed to fetch FK for ${col}`, err);
                     return [];
                 });
             }
-      
-            fetchPromises.push(fkCache[refTable]);
+            fetchPromises.push(fkCache[cacheKey]);
         }
     }
 
@@ -187,27 +173,22 @@ export async function renderGrid(schema) {
     const thead = document.createElement('thead');
     const headRow = document.createElement('tr');
 
-    // Add expand column for subtables
     if (hasSubtables) {
         const thExpand = document.createElement('th');
         thExpand.style.width = '30px';
         headRow.appendChild(thExpand);
     }
 
-    // Create table headers with Resize and Drag and Drop features
     displayedColumns.forEach(col => {
         const th = document.createElement('th');
         const colCfg = schema.tables[currentTable].columns[col] || {};
         th.textContent = colCfg.display_name || col;
         th.dataset.col = col; 
 
-        // Column Sorting Logic
         th.style.cursor = 'pointer';
         th.addEventListener('click', (e) => {
-            // Ignore click if user clicked on the resizer handle
             if (e.target.classList.contains('col-resizer')) return;
 
-            // Handle 3-state sorting logic
             if (sortState.column === col) {
                 if (sortState.asc === true) {
                     sortState.asc = false;
@@ -220,22 +201,15 @@ export async function renderGrid(schema) {
                 sortState.asc = true;
             }
 
-            // Restore array to unsorted base before applying new sort
             filteredData = unsortedFilteredData.slice();
-
-            if (sortState.column) {
-                sortData();
-            }
-
+            if (sortState.column) sortData();
             renderGrid(schema);
         });
 
-        // Add sort indicator
         if (sortState.column === col) {
             th.textContent += sortState.asc ? ' ↑' : ' ↓';
         }
 
-        // Column Resizer Logic
         const resizer = document.createElement('div');
         resizer.className = 'col-resizer';
         th.appendChild(resizer);
@@ -265,7 +239,6 @@ export async function renderGrid(schema) {
             document.addEventListener('mouseup', onMouseUp);
         });
 
-        // Drag and Drop Column Reordering Logic
         th.draggable = true;
         
         th.addEventListener('dragstart', (e) => {
@@ -274,9 +247,7 @@ export async function renderGrid(schema) {
             setTimeout(() => th.classList.add('dragging'), 0);
         });
 
-        th.addEventListener('dragend', () => {
-            th.classList.remove('dragging');
-        });
+        th.addEventListener('dragend', () => th.classList.remove('dragging'));
 
         th.addEventListener('dragover', (e) => {
             e.preventDefault(); 
@@ -284,9 +255,7 @@ export async function renderGrid(schema) {
             th.classList.add('drag-over');
         });
 
-        th.addEventListener('dragleave', () => {
-            th.classList.remove('drag-over');
-        });
+        th.addEventListener('dragleave', () => th.classList.remove('drag-over'));
 
         th.addEventListener('drop', (e) => {
             e.preventDefault();
@@ -308,7 +277,6 @@ export async function renderGrid(schema) {
         headRow.appendChild(th);
     });
 
-    // Render Actions header only for full permission users
     if (!isReadOnly) {
         const thActions = document.createElement('th');
         thActions.textContent = 'Actions';
@@ -324,7 +292,6 @@ export async function renderGrid(schema) {
     for (const row of pageRows) {
         const tr = document.createElement('tr');
 
-        // Handle subtable drilldown
         if (hasSubtables) {
             const tdExpand = document.createElement('td');
             const btnExpand = document.createElement('button');
@@ -342,11 +309,16 @@ export async function renderGrid(schema) {
                     ddTr.className = 'drilldown-row';
                     const ddTd = document.createElement('td');
                     ddTd.colSpan = displayedColumns.length + (isReadOnly ? 1 : 2); 
-                    ddTd.innerHTML = '<em>Loading...</em>';
+                    
+                    // Secure loading element creation
+                    const loadingEl = document.createElement('em');
+                    loadingEl.textContent = 'Loading...';
+                    ddTd.appendChild(loadingEl);
+                    
                     ddTr.appendChild(ddTd);
                     tr.after(ddTr);
 
-                    ddTd.innerHTML = '';
+                    ddTd.replaceChildren();
                     
                     for (const sub of subtables) {
                         const subWrapper = document.createElement('div');
@@ -361,9 +333,10 @@ export async function renderGrid(schema) {
                         subTitle.style.color = 'var(--text)';
                         subWrapper.appendChild(subTitle);
 
-                        // Fetch related subtable rows
                         try {
-                            const res = await fetch(`index.php?api=list&table=${encodeURIComponent(sub.table)}&filter_col=${encodeURIComponent(sub.foreign_key)}&filter_val=${encodeURIComponent(row.id)}`);
+                            const res = await fetch(`api.php?api=list&table=${encodeURIComponent(sub.table)}&filter_col=${encodeURIComponent(sub.foreign_key)}&filter_val=${encodeURIComponent(row.id)}`, {
+                                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                            });
                             const data = await res.json();
                             
                             const ul = document.createElement('ul');
@@ -401,7 +374,12 @@ export async function renderGrid(schema) {
                             }
                             subWrapper.appendChild(ul);
                         } catch(err) {
-                            subWrapper.innerHTML += '<p style="color:var(--danger); font-size:13px;">Error fetching data.</p>';
+                            // Secure error element creation
+                            const errP = document.createElement('p');
+                            errP.style.color = 'var(--danger)';
+                            errP.style.fontSize = '13px';
+                            errP.textContent = 'Error fetching data.';
+                            subWrapper.appendChild(errP);
                         }
 
                         ddTd.appendChild(subWrapper);
@@ -419,12 +397,10 @@ export async function renderGrid(schema) {
 
             const fkCfg = schema.tables[currentTable].foreign_keys?.[col];
 
-            // Handle Foreign Key rendering with datalist for searchability
             if (fkCfg) {
                 const td = document.createElement('td');
                 const input = document.createElement('input');
                 
-                // Use type search to add native clear button in browsers
                 input.type = 'search'; 
                 
                 const dlId = `fk_${currentTable}_${col}_${row['id']}`;
@@ -440,23 +416,18 @@ export async function renderGrid(schema) {
                 const datalist = document.createElement('datalist');
                 datalist.id = dlId;
 
-                const refTable = fkCfg.reference_table;
-                const refCol = fkCfg.reference_column || 'id';
-                
-                // Safely parse display_column to array
                 const dispCols = Array.isArray(fkCfg.display_column) ? fkCfg.display_column : [fkCfg.display_column || 'id'];
-
+                const cacheKey = `${currentTable}_${col}`;
                 let currentDisplay = "";
 
-                if (fkCache[refTable]) {
-                    const refData = await fkCache[refTable];
+                if (fkCache[cacheKey]) {
+                    const refData = await fkCache[cacheKey];
                     refData.forEach(r => {
                         const option = document.createElement('option');
+                        const refCol = 'id'; 
                         const displayValue = dispCols.map(c => r[c + '__display'] ?? r[c] ?? '').join(' - ') || r[refCol];
                         
                         option.value = displayValue;
-                        
-                        // Hide the real database ID in a hidden data attribute
                         option.dataset.realId = r[refCol]; 
 
                         if (String(r[refCol]) === String(row[col])) {
@@ -469,12 +440,10 @@ export async function renderGrid(schema) {
 
                 input.value = currentDisplay;
 
-                // Select all text on click to allow fast overriding
                 input.addEventListener('focus', () => {
                     input.select();
                 });
 
-                // Revert to the last valid name upon leaving the cell
                 input.addEventListener('blur', () => {
                     const isValid = Array.from(datalist.options).some(o => o.value === input.value);
                     
@@ -494,7 +463,6 @@ export async function renderGrid(schema) {
 
             const td = document.createElement('td');
 
-            // Render enum as dropdown
             if (type === 'enum') {
                 const select = document.createElement('select');
                 select.dataset.column = col;
@@ -534,14 +502,10 @@ export async function renderGrid(schema) {
                     select.disabled = true;
                 }
 
-                select.addEventListener('change', (e) => {
-                    applyEnumColor(e.target.value);
-                });
-
+                select.addEventListener('change', (e) => applyEnumColor(e.target.value));
                 if (!isReadOnly) attachCellEvents(select);
                 td.appendChild(select);
             }
-            // Render boolean as checkbox
             else if (type.includes('boolean')) {
                 const input = document.createElement('input');
                 input.type = 'checkbox';
@@ -549,14 +513,10 @@ export async function renderGrid(schema) {
                 input.dataset.column = col;
                 input.dataset.id = row['id'];
 
-                if (colCfg.readonly || isReadOnly) {
-                    input.disabled = true;
-                }
-
+                if (colCfg.readonly || isReadOnly) input.disabled = true;
                 if (!isReadOnly) attachCellEvents(input);
                 td.appendChild(input);
             }
-            // Render date picker
             else if (type.includes('date')) {
                 const input = document.createElement('input');
                 input.type = 'date';
@@ -564,14 +524,10 @@ export async function renderGrid(schema) {
                 input.dataset.column = col;
                 input.dataset.id = row['id'];
 
-                if (colCfg.readonly || isReadOnly) {
-                    input.disabled = true;
-                }
-
+                if (colCfg.readonly || isReadOnly) input.disabled = true;
                 if (!isReadOnly) attachCellEvents(input);
                 td.appendChild(input);
             }
-            // Render editable text cell
             else {
                 if (!colCfg.readonly && !isReadOnly) {
                     td.contentEditable = 'true';
@@ -589,7 +545,6 @@ export async function renderGrid(schema) {
                 const strVal = String(value).trim();
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 
-                // Handle URL links
                 if (/^https?:\/\//i.test(strVal)) {
                     const a = document.createElement('a');
                     a.href = strVal;
@@ -603,10 +558,8 @@ export async function renderGrid(schema) {
                         e.preventDefault();
                         window.open(strVal, '_blank');
                     });
-
                     td.appendChild(a);
                 } 
-                // Handle email links
                 else if (emailRegex.test(strVal)) {
                     const a = document.createElement('a');
                     a.href = `mailto:${strVal}`;
@@ -615,10 +568,7 @@ export async function renderGrid(schema) {
                     a.style.textDecoration = 'underline';
                     a.style.cursor = 'pointer';
                     
-                    a.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                    });
-
+                    a.addEventListener('click', (e) => e.stopPropagation());
                     td.appendChild(a);
                 } else {
                     td.textContent = value;
@@ -643,11 +593,9 @@ export async function renderGrid(schema) {
             tr.appendChild(td);
         }
 
-        // Render action buttons only if user is not readonly
         if (!isReadOnly) {
             const tdActions = document.createElement('td');
             
-            // Edit action button
             const editBtn = document.createElement('button');
             editBtn.textContent = 'Edit';
             editBtn.style.marginRight = '8px';
@@ -656,7 +604,6 @@ export async function renderGrid(schema) {
             });
             tdActions.appendChild(editBtn);
 
-            // Delete action button
             const delBtn = document.createElement('button');
             delBtn.textContent = 'Delete';
             delBtn.className = 'danger';
@@ -681,11 +628,10 @@ export async function renderGrid(schema) {
     }
 
     table.appendChild(tbody);
-    gridEl.innerHTML = '';
+    gridEl.replaceChildren();
     gridEl.appendChild(table);
 
     setupPagination(schema);
-
     debugLog("Grid rendered", { rows: pageRows.length });
 }
 
@@ -716,14 +662,12 @@ function sortData() {
     });
 }
 
-// Convert dates to standard ISO format for input fields
+// Convert dates to standard format
 function normalizeDateValue(value) {
     if (!value) return '';
     if (typeof value === 'string') {
         const dbMatch = value.match(/^(\d{4}-\d{2}-\d{2})/);
-        if (dbMatch) {
-            return dbMatch[1];
-        }
+        if (dbMatch) return dbMatch[1];
 
         const iso = value.includes('T') ? value.split('T')[0] : value;
         const m = iso.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
@@ -743,14 +687,10 @@ export function getState() {
 export function setFilteredData(rows) {
     filteredData = rows;
     unsortedFilteredData = rows.slice();
-  
-    // Re-apply sort if currently active
-    if (sortState.column) {
-        sortData();
-    }
+    if (sortState.column) sortData();
 }
 
-// Reset filtered data to full dataset and re render
+// Reset filters
 export async function resetFilters(schema) {
     filteredData = fullData.slice();
     unsortedFilteredData = fullData.slice();
@@ -758,12 +698,8 @@ export async function resetFilters(schema) {
     await renderGrid(schema);
 }
 
-// Initialize export button event listener
+// Setup export event listener
 document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('exportCsv');
-    if (btn) {
-        btn.addEventListener('click', exportCSV);
-    } else {
-        console.error("Export CSV button not found");
-    }
+    if (btn) btn.addEventListener('click', exportCSV);
 });

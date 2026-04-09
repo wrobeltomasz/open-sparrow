@@ -1,10 +1,14 @@
 <?php
-
 session_start();
+
+// Redirect to login if not authenticated
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
+
+// Define strict user role
+$userRole = $_SESSION['role'] ?? 'readonly';
 ?>
 <!doctype html>
 <html lang="en">
@@ -102,16 +106,16 @@ if (!isset($_SESSION['user_id'])) {
 </main>
 
 <script>
-    // Load schema globally from PHP to avoid direct HTTP access to /includes
-    const schema = <?php echo file_get_contents(__DIR__ . '/includes/schema.json'); ?>;
+    // Define global user role state
+    window.USER_ROLE = '<?php echo htmlspecialchars($userRole ?? 'readonly', ENT_QUOTES, 'UTF-8'); ?>';
 </script>
 
-<script type="module" src="assets/js/calendar.js"></script>
+<script type="module" src="assets/js/calendar.js?v=<?php echo @filemtime('assets/js/calendar.js'); ?>"></script>
 
 <footer>
     <div class="footer-content">
         <small>
-            <a href="https://opensparrow.org/">OpenSparrow.org</a> | Open source | LGPL v3. | PHP + vanilla JS + Postgres!
+            <a href="https://opensparrow.org/">OpenSparrow.org</a> | Open source | LGPL v3. | PHP + vanilla JS + Postgres
         </small>
     </div>
 </footer>

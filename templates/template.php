@@ -66,12 +66,16 @@
             </div>
         </div>
 
+        <?php if (($userRole ?? '') === 'full') : ?>
         <a href="/admin/index.php" title="Admin" 
            style="text-decoration: none; font-size: 20px; margin-right: 15px; 
-                  vertical-align: middle; display: inline-block; transition: opacity 0.2s;"><img style="height:20px;"  title="Admin panel" src="assets/img/settings.png"></a>
+                  vertical-align: middle; display: inline-block; transition: opacity 0.2s;">
+           <img style="height:20px;" title="Admin panel" src="assets/img/settings.png">
+        </a>
+        <?php endif; ?>
         
         <?php if (isset($_SESSION['username'])) : ?>
-            <span class="header-username"><?= htmlspecialchars($_SESSION['username']) ?></span>
+            <span class="header-username"><?= htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8') ?></span>
         <?php endif; ?>
         
         <button onclick="window.location.href='logout.php'" class="btn-logout">
@@ -92,12 +96,16 @@
             <div class="left">
                 <select id="mobileActions">
                     <option value="">Choose action…</option>
+                    <?php if (($userRole ?? '') === 'full') : ?>
                     <option value="add">Add row</option>
+                    <?php endif; ?>
                     <option value="export">Export CSV</option>
                     <option value="refresh">Refresh table</option>
                 </select>
 
-                <button id="addRow" class="success" disabled>Add</button>
+                <?php if (($userRole ?? '') === 'full') : ?>
+                <button id="addRow" class="success">Add</button>
+                <?php endif; ?>
                 <button id="exportCsv">Export CSV</button>
             </div>
 
@@ -111,24 +119,30 @@
 <footer>
     <div class="footer-content">
         <small>
-            <a href="https://opensparrow.org/">OpenSparrow.org</a> | Open source | LGPL v3. | PHP + vanilla JS + Postgres!
+            <a href="https://opensparrow.org/">OpenSparrow.org</a> | Open source | LGPL v3. | PHP + vanilla JS + Postgres
         </small>
     </div>
 </footer>
 
 <script>
-    const schema = <?php echo isset($schemaJson) ? $schemaJson : '{}'; ?>;
+    // Define global user role state
+    window.USER_ROLE = '<?php echo htmlspecialchars($userRole ?? 'readonly', ENT_QUOTES, 'UTF-8'); ?>';
 
     document.addEventListener("DOMContentLoaded", () => {
-        
         const mobileActions = document.getElementById("mobileActions");
         const menu = document.getElementById("menu");
 
         if (mobileActions) {
             mobileActions.addEventListener("change", e => {
                 const action = e.target.value;
-                if (action === "add") document.getElementById("addRow").click();
-                if (action === "export") document.getElementById("exportCsv").click();
+                if (action === "add") {
+                    const addBtn = document.getElementById("addRow");
+                    if (addBtn) addBtn.click();
+                }
+                if (action === "export") {
+                    const exportBtn = document.getElementById("exportCsv");
+                    if (exportBtn) exportBtn.click();
+                }
                 if (action === "refresh") location.reload();
                 mobileActions.value = "";
             });
@@ -141,13 +155,17 @@
 
         async function checkNotifications() {
             try {
-                const res = await fetch('api_notifications.php?action=get_count');
+                const res = await fetch('api_notifications.php?action=get_count', {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
                 const data = await res.json();
                 if (data.count > 0) {
-                    document.getElementById('notif-badge').style.display = 'block';
-                    document.getElementById('notif-badge').textContent = data.count;
+                    if (badge) {
+                        badge.style.display = 'block';
+                        badge.textContent = data.count;
+                    }
                 } else {
-                    document.getElementById('notif-badge').style.display = 'none';
+                    if (badge) badge.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Error checking notifications:', error);
@@ -159,7 +177,6 @@
                 e.stopPropagation();
                 if (dropdown.style.display === 'none') {
                     dropdown.style.display = 'block';
-                    // Load notifications when opening
                     loadNotifications();
                 } else {
                     dropdown.style.display = 'none';
@@ -167,40 +184,39 @@
             });
         }
 
-        // Handle clicks outside the notifications dropdown
         document.addEventListener('click', (e) => {
             if (wrapper && !e.target.closest('.notifications-wrapper')) {
-                dropdown.style.display = 'none';
+                if (dropdown) dropdown.style.display = 'none';
             }
         });
 
-        // Load notifications function
         function loadNotifications() {
-            fetch('api_notifications.php?action=get_list')
-                .then(response => response.json())
-                .then(data => {
-                    notifList.innerHTML = '';
-                    if (data.length > 0) {
-                        data.forEach(notification => {
-                            const li = document.createElement('li');
-                            li.style.padding = '15px';
-                            li.style.textAlign = 'center';
-                            li.style.color = '#777';
-                            li.textContent = notification.title;
-                            notifList.appendChild(li);
-                        });
-                    } else {
-                        const emptyMsg = document.createElement('li');
-                        emptyMsg.style.padding = '15px';
-                        emptyMsg.style.textAlign = 'center';
-                        emptyMsg.style.color = '#777';
-                        emptyMsg.textContent = 'No new notifications';
-                        notifList.appendChild(emptyMsg);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading notifications:', error);
-                });
+            fetch('api_notifications.php?action=get_list', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!notifList) return;
+                notifList.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(notification => {
+                        const li = document.createElement('li');
+                        li.style.padding = '15px';
+                        li.style.textAlign = 'center';
+                        li.style.color = '#777';
+                        li.textContent = notification.title;
+                        notifList.appendChild(li);
+                    });
+                } else {
+                    const emptyMsg = document.createElement('li');
+                    emptyMsg.style.padding = '15px';
+                    emptyMsg.style.textAlign = 'center';
+                    emptyMsg.style.color = '#777';
+                    emptyMsg.textContent = 'No new notifications';
+                    notifList.appendChild(emptyMsg);
+                }
+            })
+            .catch(error => console.error('Error loading notifications:', error));
         }
 
         checkNotifications();
@@ -208,9 +224,7 @@
     });
 </script>
 
-<script type="module" 
-        src="assets/js/app.js?v=<?php echo filemtime('assets/js/app.js'); ?>">
-</script>
+<script type="module" src="assets/js/app.js?v=<?php echo @filemtime('assets/js/app.js'); ?>"></script>
 
 </body>
 </html>
