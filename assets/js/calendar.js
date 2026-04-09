@@ -1,8 +1,8 @@
-// assets/js/calendar.js
+// Store current date state
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let eventsData = [];
-let appSchema = null; // Store schema object globally
+let appSchema = null; 
 
 // Init calendar when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
@@ -29,32 +29,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-// Fetch schema definition from backend
+// Fetch secure schema definition from backend API
 async function fetchSchema() {
-    if (typeof window.schema !== 'undefined') {
-        appSchema = window.schema;
-        return;
-    }
-    if (typeof schema !== 'undefined') {
-        appSchema = schema;
-        return;
-    }
     try {
-        const res = await fetch('includes/schema.json');
+        const res = await fetch('api_schema.php', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
         if (res.ok) {
             appSchema = await res.json();
+            window.schema = appSchema; 
+        } else {
+            console.error('Failed to load secure schema');
         }
     } catch (err) {
-        console.warn('Failed to fetch schema in calendar', err);
+        console.error('Failed to fetch schema in calendar', err);
     }
 }
 
 // Fetch calendar events via API
 async function fetchEvents() {
     try {
-        const res = await fetch('api.php?api=calendar');
-        const data = await res.json();
-        eventsData = data.events || [];
+        const res = await fetch('api.php?api=calendar', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            eventsData = data.events || [];
+        }
     } catch (err) {
         console.error('Failed to load calendar events', err);
     }
@@ -65,6 +66,7 @@ function renderCalendar() {
     const container = document.getElementById('calendarContainer');
     const title = document.getElementById('calendarTitle');
     
+    // Clear container safely
     container.innerHTML = '';
 
     // Initialize floating tooltip container
@@ -110,8 +112,8 @@ function renderCalendar() {
         dateNum.className = 'calendar-date-num';
         dateNum.textContent = i;
         cell.appendChild(dateNum);
-		
-		const todayDate = new Date();
+        
+        const todayDate = new Date();
         if (i === todayDate.getDate() && 
             currentMonth === todayDate.getMonth() && 
             currentYear === todayDate.getFullYear()) {
@@ -126,7 +128,7 @@ function renderCalendar() {
             evEl.className = 'calendar-event';
             evEl.style.backgroundColor = ev.color;
             
-            // Build icon safely without innerHTML
+            // Build icon safely
             if (ev.icon) {
                 if (ev.icon.includes('/') || ev.icon.includes('.')) {
                     const img = document.createElement('img');
@@ -145,8 +147,9 @@ function renderCalendar() {
             const titleText = document.createTextNode(ev.title);
             evEl.appendChild(titleText);
             
+            // Securely encode URL parameters
             evEl.addEventListener('click', () => {
-                window.location.href = `edit.php?table=${ev.table}&id=${ev.id}`;
+                window.location.href = `edit.php?table=${encodeURIComponent(ev.table)}&id=${encodeURIComponent(ev.id)}`;
             });
 
             // Handle tooltip hover event safely

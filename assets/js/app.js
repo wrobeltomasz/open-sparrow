@@ -35,91 +35,109 @@ function renderIconElement(iconVal, fallbackPath) {
 
 // Initialize application on DOM load
 document.addEventListener('DOMContentLoaded', async () => {
-    if (typeof schema !== 'undefined' && Object.keys(schema.tables).length > 0) {
+    try {
+        // Fetch secure schema dynamically via API instead of reading from HTML
+        const schemaRes = await fetch('api_schema.php', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
         
-        // Read URL params to check if dashboard redirected us to a specific table
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlTable = urlParams.get('table');
+        if (!schemaRes.ok) throw new Error('Failed to load secure schema');
         
-        // Determine the initial table to load
-        let initialTableName = Object.keys(schema.tables)[0];
-        if (urlTable && schema.tables[urlTable]) {
-            initialTableName = urlTable;
-        }
+        const schemaData = await schemaRes.json();
+        
+        // Define globally so other functions and modules can access it
+        window.schema = schemaData;
+        window.AppState = window.AppState || {};
+        window.AppState.schema = schemaData;
 
-        buildMenu(schema, menuEl, gridTitleEl, addRowBtn);
-        const navList = menuEl.querySelector('ul') || menuEl;
-        
-        let dashName = 'Dashboard';
-        let dashIconEl = renderIconElement('', 'assets/icons/dashboard.png');
-        let calName = 'Calendar';
-        let calIconEl = renderIconElement('', 'assets/icons/calendar.png');
-
-        try {
-            const dashRes = await fetch('api.php?api=dashboard&v=' + Date.now());
-            if (dashRes.ok) {
-                const dashCfg = await dashRes.json();
-                if (dashCfg.menu_name) dashName = dashCfg.menu_name;
-                dashIconEl = renderIconElement(dashCfg.menu_icon, 'assets/icons/dashboard.png');
+        if (Object.keys(window.schema.tables).length > 0) {
+            
+            // Read URL params to check if dashboard redirected us to a specific table
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlTable = urlParams.get('table');
+            
+            // Determine the initial table to load
+            let initialTableName = Object.keys(window.schema.tables)[0];
+            if (urlTable && window.schema.tables[urlTable]) {
+                initialTableName = urlTable;
             }
-        } catch(e) { console.warn('Could not load dashboard config', e); }
 
-        try {
-            const calRes = await fetch('api.php?api=calendar&v=' + Date.now());
-            if (calRes.ok) {
-                const calCfg = await calRes.json();
-                if (calCfg.menu_name) calName = calCfg.menu_name;
-                calIconEl = renderIconElement(calCfg.menu_icon, 'assets/icons/calendar.png');
+            buildMenu(window.schema, menuEl, gridTitleEl, addRowBtn);
+            const navList = menuEl.querySelector('ul') || menuEl;
+            
+            let dashName = 'Dashboard';
+            let dashIconEl = renderIconElement('', 'assets/icons/dashboard.png');
+            let calName = 'Calendar';
+            let calIconEl = renderIconElement('', 'assets/icons/calendar.png');
+
+            try {
+                const dashRes = await fetch('api.php?api=dashboard&v=' + Date.now());
+                if (dashRes.ok) {
+                    const dashCfg = await dashRes.json();
+                    if (dashCfg.menu_name) dashName = dashCfg.menu_name;
+                    dashIconEl = renderIconElement(dashCfg.menu_icon, 'assets/icons/dashboard.png');
+                }
+            } catch(e) { console.warn('Could not load dashboard config', e); }
+
+            try {
+                const calRes = await fetch('api.php?api=calendar&v=' + Date.now());
+                if (calRes.ok) {
+                    const calCfg = await calRes.json();
+                    if (calCfg.menu_name) calName = calCfg.menu_name;
+                    calIconEl = renderIconElement(calCfg.menu_icon, 'assets/icons/calendar.png');
+                }
+            } catch(e) { console.warn('Could not load calendar config', e); }
+
+            // Dashboard Item
+            const dashItem = document.createElement('li');
+            const dashLink = document.createElement('a');
+            dashLink.href = 'dashboard.php';
+            dashLink.className = 'custom-nav-link';
+            dashLink.appendChild(dashIconEl);
+            const dashSpan = document.createElement('span');
+            dashSpan.style.verticalAlign = 'middle';
+            dashSpan.textContent = dashName;
+            dashLink.appendChild(dashSpan);
+            dashItem.appendChild(dashLink);
+
+            // Calendar Item
+            const calItem = document.createElement('li');
+            const calLink = document.createElement('a');
+            calLink.href = 'calendar.php';
+            calLink.className = 'custom-nav-link';
+            calLink.appendChild(calIconEl);
+            const calSpan = document.createElement('span');
+            calSpan.style.verticalAlign = 'middle';
+            calSpan.textContent = calName;
+            calLink.appendChild(calSpan);
+            calItem.appendChild(calLink);
+
+            if (navList.tagName === 'UL') {
+                navList.prepend(calItem);
+                navList.prepend(dashItem);
+            } else {
+                menuEl.prepend(calLink);
+                menuEl.prepend(dashLink);
             }
-        } catch(e) { console.warn('Could not load calendar config', e); }
+            
+            // Dynamically create a container for Active Filter Pills
+            const gridSection = document.getElementById('gridSection');
+            if (gridSection) {
+                const pillsContainer = document.createElement('div');
+                pillsContainer.id = 'filterPills';
+                pillsContainer.style.cssText = 'display: none; gap: 8px; flex-wrap: wrap; padding: 0 1.25rem; background: var(--panel); border-bottom: 1px solid var(--border-light);';
+                gridTitleEl.after(pillsContainer);
+            }
 
-        // Dashboard Item
-        const dashItem = document.createElement('li');
-        const dashLink = document.createElement('a');
-        dashLink.href = 'dashboard.php';
-        dashLink.className = 'custom-nav-link';
-        dashLink.appendChild(dashIconEl);
-        const dashSpan = document.createElement('span');
-        dashSpan.style.verticalAlign = 'middle';
-        dashSpan.textContent = dashName;
-        dashLink.appendChild(dashSpan);
-        dashItem.appendChild(dashLink);
-
-        // Calendar Item
-        const calItem = document.createElement('li');
-        const calLink = document.createElement('a');
-        calLink.href = 'calendar.php';
-        calLink.className = 'custom-nav-link';
-        calLink.appendChild(calIconEl);
-        const calSpan = document.createElement('span');
-        calSpan.style.verticalAlign = 'middle';
-        calSpan.textContent = calName;
-        calLink.appendChild(calSpan);
-        calItem.appendChild(calLink);
-
-        if (navList.tagName === 'UL') {
-            navList.prepend(calItem);
-            navList.prepend(dashItem);
-        } else {
-            menuEl.prepend(calLink);
-            menuEl.prepend(dashLink);
+            const gridContainerEl = document.getElementById('grid');
+            if (gridContainerEl) { initWorkflows(navList, gridContainerEl, gridTitleEl); }
+            
+            // Load target table requested by URL
+            loadTable(window.schema, initialTableName, gridTitleEl, addRowBtn);
+            setupPagination(window.schema);
         }
-        
-        // Dynamically create a container for Active Filter Pills
-        const gridSection = document.getElementById('gridSection');
-        if (gridSection) {
-            const pillsContainer = document.createElement('div');
-            pillsContainer.id = 'filterPills';
-            pillsContainer.style.cssText = 'display: none; gap: 8px; flex-wrap: wrap; padding: 0 1.25rem; background: var(--panel); border-bottom: 1px solid var(--border-light);';
-            gridTitleEl.after(pillsContainer);
-        }
-
-        const gridContainerEl = document.getElementById('grid');
-        if (gridContainerEl) { initWorkflows(navList, gridContainerEl, gridTitleEl); }
-        
-        // Load target table requested by URL
-        loadTable(schema, initialTableName, gridTitleEl, addRowBtn);
-        setupPagination(schema);
+    } catch (error) {
+        console.error("Initialization error:", error);
     }
 });
 
@@ -138,12 +156,12 @@ function populateColumnFilter() {
         opt.value = col; 
         
         let displayName = col; 
-        if (currentTable && schema.tables[currentTable]?.columns[col]?.display_name) {
-            displayName = schema.tables[currentTable].columns[col].display_name;
+        if (currentTable && window.schema.tables[currentTable]?.columns[col]?.display_name) {
+            displayName = window.schema.tables[currentTable].columns[col].display_name;
         } else {
-            for (const tKey in schema.tables) {
-                if (schema.tables[tKey].columns[col]?.display_name) {
-                    displayName = schema.tables[tKey].columns[col].display_name;
+            for (const tKey in window.schema.tables) {
+                if (window.schema.tables[tKey].columns[col]?.display_name) {
+                    displayName = window.schema.tables[tKey].columns[col].display_name;
                     break;
                 }
             }
@@ -169,11 +187,11 @@ function handleColumnFilterChange() {
     const filterBar = document.getElementById('filterBar');
     
     filterBar.innerHTML = '';
-    if (!col || !currentTable || !schema.tables[currentTable]) return;
+    if (!col || !currentTable || !window.schema.tables[currentTable]) return;
 
-    const colCfg = schema.tables[currentTable].columns[col] || {};
+    const colCfg = window.schema.tables[currentTable].columns[col] || {};
     const type = (colCfg.type || '').toLowerCase();
-    const isFK = schema.tables[currentTable].foreign_keys && schema.tables[currentTable].foreign_keys[col];
+    const isFK = window.schema.tables[currentTable].foreign_keys && window.schema.tables[currentTable].foreign_keys[col];
 
     const existingFilter = activeFilters.columns[col] || {};
 
@@ -361,8 +379,8 @@ function renderFilterPills() {
 
     for (const [col, filter] of Object.entries(activeFilters.columns)) {
         let colName = col;
-        if (currentTable && schema.tables[currentTable]?.columns[col]?.display_name) {
-            colName = schema.tables[currentTable].columns[col].display_name;
+        if (currentTable && window.schema.tables[currentTable]?.columns[col]?.display_name) {
+            colName = window.schema.tables[currentTable].columns[col].display_name;
         }
 
         let label = '';
@@ -433,7 +451,7 @@ async function applySearch() {
     });
 
     setFilteredData(rows);
-    await renderGrid(schema);
+    await renderGrid(window.schema);
     renderFilterPills();
     updateClearFiltersVisibility();
     debugLog("Search Applied", { activeFilters, results: rows.length });
@@ -456,7 +474,7 @@ clearFiltersBtn.addEventListener('click', async () => {
     renderFilterPills();
     updateClearFiltersVisibility();
     
-    await resetFilters(schema);
+    await resetFilters(window.schema);
 });
 
 // Sync search input
