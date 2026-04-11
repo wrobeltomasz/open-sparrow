@@ -1,9 +1,14 @@
-// workflows.js
-
 // Fetch workflows configuration from backend
 async function fetchWorkflowsConfig() {
     try {
-        const res = await fetch('api.php?api=workflows');
+        // Add CSRF header to prevent cross-site request forgery
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        const res = await fetch('api.php?api=workflows', {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            }
+        });
         if (!res.ok) throw new Error('Network response was not ok');
         return await res.json();
     } catch (e) {
@@ -12,10 +17,18 @@ async function fetchWorkflowsConfig() {
     }
 }
 
-// Helper to render icons for the menu and cards
-function renderIcon(iconPath, fallbackColor = 'var(--accent)') {
-    if (!iconPath) return `<div style="width:20px; height:20px; background:${fallbackColor}; border-radius:50%; margin-right:8px; display:inline-block; vertical-align:middle;"></div>`;
-    return `<img src="${iconPath}" alt="" style="width:20px; height:20px; vertical-align:middle; margin-right:8px; object-fit:contain;">`;
+// Helper to safely render icons as DOM elements
+function createIconElement(iconPath, fallbackColor = 'var(--accent)') {
+    if (!iconPath) {
+        const div = document.createElement('div');
+        div.style.cssText = `width:20px; height:20px; background:${fallbackColor}; border-radius:50%; margin-right:8px; display:inline-block; vertical-align:middle;`;
+        return div;
+    }
+    const img = document.createElement('img');
+    img.src = iconPath;
+    img.alt = '';
+    img.style.cssText = 'width:20px; height:20px; vertical-align:middle; margin-right:8px; object-fit:contain;';
+    return img;
 }
 
 // Main initialization function to be called from app.js
@@ -41,7 +54,13 @@ export async function initWorkflows(menuListEl, containerEl, titleEl, appSchema)
     
     wfLink.href = '#';
     wfLink.className = 'custom-nav-link';
-    wfLink.innerHTML = `${renderIcon(menuIcon)} <span style="vertical-align:middle;">${menuName}</span>`;
+    
+    // Safely append elements instead of using innerHTML
+    wfLink.appendChild(createIconElement(menuIcon));
+    const textSpan = document.createElement('span');
+    textSpan.style.verticalAlign = 'middle';
+    textSpan.textContent = menuName;
+    wfLink.appendChild(textSpan);
     
     // Handle menu click to display the workflows list
     wfLink.addEventListener('click', (e) => {
@@ -68,7 +87,7 @@ export async function initWorkflows(menuListEl, containerEl, titleEl, appSchema)
 // Render the beautiful grid list of available workflows
 function renderWorkflowsList(workflows, containerEl, titleEl, menuName, appSchema) {
     titleEl.textContent = menuName;
-    containerEl.innerHTML = '';
+    containerEl.textContent = ''; // Safely clear container
 
     const listContainer = document.createElement('div');
     listContainer.style.display = 'grid';
@@ -122,10 +141,17 @@ function renderWorkflowsList(workflows, containerEl, titleEl, menuName, appSchem
             border-radius: 8px;
         `;
         
+        // Safely append image or placeholder
         if (wf.icon) {
-            iconWrapper.innerHTML = `<img src="${wf.icon}" alt="" style="width:22px; height:22px; object-fit:contain;">`;
+            const img = document.createElement('img');
+            img.src = wf.icon;
+            img.alt = '';
+            img.style.cssText = 'width:22px; height:22px; object-fit:contain;';
+            iconWrapper.appendChild(img);
         } else {
-            iconWrapper.innerHTML = `<div style="width:22px; height:22px; background:var(--accent); border-radius:50%;"></div>`;
+            const div = document.createElement('div');
+            div.style.cssText = 'width:22px; height:22px; background:var(--accent); border-radius:50%;';
+            iconWrapper.appendChild(div);
         }
 
         const cardTitle = document.createElement('h3');
@@ -199,7 +225,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema) {
         
         // Set main title to show progress
         titleEl.textContent = `${workflow.title} - Step ${currentStepIndex + 1} of ${workflow.steps.length}`;
-        containerEl.innerHTML = '';
+        containerEl.textContent = ''; // Safely clear container
 
         // Safely resolve schema with API fallback
         let activeSchema = appSchema;
@@ -209,7 +235,14 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema) {
         
         if (!activeSchema) {
             try {
-                const res = await fetch('api.php?api=schema');
+                // Add CSRF header to schema fetch
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                const res = await fetch('api.php?api=schema', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': csrfToken
+                    }
+                });
                 if (res.ok) activeSchema = await res.json();
             } catch (err) {
                 console.warn('Could not fetch schema dynamically', err);
@@ -224,7 +257,10 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema) {
         }
 
         if (!tableSchema) {
-            containerEl.innerHTML = `<p style="color: red; text-align: center; margin-top: 40px;">Error: Schema for table '${step.table}' not found.</p>`;
+            const errorMsg = document.createElement('p');
+            errorMsg.style.cssText = 'color: red; text-align: center; margin-top: 40px;';
+            errorMsg.textContent = `Error: Schema for table '${step.table}' not found.`;
+            containerEl.appendChild(errorMsg);
             return;
         }
 
@@ -396,7 +432,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema) {
             submitBtn.disabled = true;
             if (finishBtn) finishBtn.disabled = true;
             submitBtn.textContent = 'Saving...';
-            msgBox.innerHTML = '';
+            msgBox.textContent = ''; // Safely clear messages
 
             const payload = {};
             
@@ -429,10 +465,15 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema) {
             }
 
             try {
-                // Post data using the structure expected by the API
+                // Add CSRF header to API request
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
                 const response = await fetch('api.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': csrfToken
+                    },
                     body: JSON.stringify({
                         table: step.table,
                         data: payload
@@ -460,7 +501,13 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema) {
 
                     if (step.allow_multiple) {
                         form.reset();
-                        msgBox.innerHTML = '<span style="color: var(--ok);">Record saved successfully. Add another or finish.</span>';
+                        
+                        // Safely create success message
+                        const successSpan = document.createElement('span');
+                        successSpan.style.color = 'var(--ok)';
+                        successSpan.textContent = 'Record saved successfully. Add another or finish.';
+                        msgBox.appendChild(successSpan);
+                        
                         submitBtn.disabled = false;
                         if (finishBtn) finishBtn.disabled = false;
                         submitBtn.textContent = 'Save & Add Another';
@@ -483,21 +530,45 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema) {
         containerEl.appendChild(form);
     }
 
-    // Render the final success screen centered
+    // Render the final success screen centered using DOM methods
     function renderSuccessScreen() {
         titleEl.textContent = 'Workflow Completed';
-        containerEl.innerHTML = `
-            <div style="margin: 60px auto; padding: 0 20px; text-align: center; max-width: 500px;">
-                <h2 style="color: var(--ok); margin-top: 0; font-size: 28px;">Success!</h2>
-                <p style="color: var(--text); font-size: 15px; line-height: 1.6;">All steps of the <b>${workflow.title}</b> workflow have been completed successfully.</p>
-                <button id="wf-finish-btn" style="margin-top: 24px; padding: 10px 24px; background: var(--accent); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; box-shadow: var(--shadow-sm); transition: background var(--transition);">Finish & Return</button>
-            </div>
-        `;
+        containerEl.textContent = ''; // Safely clear container
 
-        const finishBtn = document.getElementById('wf-finish-btn');
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'margin: 60px auto; padding: 0 20px; text-align: center; max-width: 500px;';
+
+        const heading = document.createElement('h2');
+        heading.style.cssText = 'color: var(--ok); margin-top: 0; font-size: 28px;';
+        heading.textContent = 'Success!';
+
+        const paragraph = document.createElement('p');
+        paragraph.style.cssText = 'color: var(--text); font-size: 15px; line-height: 1.6;';
+        
+        // Safely build mixed text and HTML elements
+        const textStart = document.createTextNode('All steps of the ');
+        const boldTitle = document.createElement('b');
+        boldTitle.textContent = workflow.title;
+        const textEnd = document.createTextNode(' workflow have been completed successfully.');
+        
+        paragraph.appendChild(textStart);
+        paragraph.appendChild(boldTitle);
+        paragraph.appendChild(textEnd);
+
+        const finishBtn = document.createElement('button');
+        finishBtn.id = 'wf-finish-btn';
+        finishBtn.style.cssText = 'margin-top: 24px; padding: 10px 24px; background: var(--accent); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; box-shadow: var(--shadow-sm); transition: background var(--transition);';
+        finishBtn.textContent = 'Finish & Return';
+
         finishBtn.addEventListener('mouseenter', () => finishBtn.style.background = 'var(--accent-dark)');
         finishBtn.addEventListener('mouseleave', () => finishBtn.style.background = 'var(--accent)');
         finishBtn.addEventListener('click', () => window.location.reload());
+
+        wrapper.appendChild(heading);
+        wrapper.appendChild(paragraph);
+        wrapper.appendChild(finishBtn);
+        
+        containerEl.appendChild(wrapper);
     }
 
     // Start the first step
