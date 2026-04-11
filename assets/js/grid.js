@@ -149,7 +149,7 @@ async function preloadForeignKeys(schema) {
                 .then(res => res.json())
                 .then(refData => refData.rows || [])
                 .catch(err => {
-                    console.error(`Failed to fetch FK for ${col}`, err);
+                    console.error('Failed to fetch FK for column:', col, err);
                     return [];
                 });
             }
