@@ -66,6 +66,7 @@ Below is an overview of the most important directories and files in the OpenSpar
 * **`cron/`** – Background workers and scheduled tasks, such as `cron_notifications.php` for automated alerts.
 * **`templates/`** – UI layout wrappers. The `template.php` file defines the standard look and feel of every page.
 * **`tests/`** – Quality assurance suite, featuring end-to-end (E2E) Selenium tests.
+* **`storage/files/`** – The location where files uploaded by system users are saved.
 
 ### Key Files
 * **`api.php`** – The main application API gateway handling all CRUD operations.
