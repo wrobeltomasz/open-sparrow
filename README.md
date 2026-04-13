@@ -46,8 +46,8 @@ Demo: http://www.demo.opensparrow.org
 - **Export and Navigation Tools:** Use CSV export and pagination modules for day-to-day data operations.
 - **Standards-Based Interoperability:** (Planned) Built-in REST API and Webhook engine to prevent data silos and integrate with n8n, Make, or custom scripts.
 - **Inclusive Design:** Focused on WCAG 2.1 compliance to ensure internal tools are accessible to everyone, including users with disabilities.
-
 - **Workflows Builder:** Construct dynamic, multi-step wizards for complex data entry. Easily link parent and child records across multiple PostgreSQL tables and allow multiple record additions within a single guided process.
+- **Files management:** A module for adding files to specific records, tagging, or searching. Configuration management via the admin panel.
 
 ---
 
