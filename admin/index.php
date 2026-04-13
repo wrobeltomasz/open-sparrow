@@ -117,6 +117,7 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
             <button class="admin-tab" data-file="dashboard">Dashboard</button>
             <button class="admin-tab" data-file="calendar">Calendar</button>
             <button class="admin-tab" data-file="workflows">Workflows</button>
+            <button class="admin-tab" data-file="files">Files</button>
         </div>
 
         <div class="header-user-menu">
@@ -134,7 +135,7 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
                     <button class="admin-tab" data-file="health">System Health</button>
                 </div>
             </div>
-			<button id="btnSave" type="button">Save config</button>
+            <button id="btnSave" type="button">Save config</button>
             <div class="config-dropdown" id="configDropdownContainer">
                 <button type="button" class="btn-logout" style="background: var(--accent); color: white; border-color: var(--accent); font-weight: bold;" onclick="document.getElementById('configDropdownContainer').classList.toggle('active')">Configuration</button>
                 <div class="config-dropdown-content">

@@ -9,6 +9,7 @@ import { renderHealthDashboard } from './health.js';
 import { renderDocumentation } from './docs.js';
 import { renderUsersEditor } from './users.js';
 import { renderWorkflowsEditor } from './workflows.js';
+import { renderFilesEditor } from './files_render.js';
 
 let currentConfig = null;
 let currentFile = 'schema'; 
@@ -125,8 +126,15 @@ async function loadConfigFile(fileName) {
     }
 
     try {
-        const response = await fetch(`api.php?action=get&file=${fileName}`);
-        currentConfig = await response.json();
+        if (fileName === 'files') {
+            const response = await fetch('../api_files.php?action=get_config');
+            const data = await response.json();
+            if (!data.success) throw new Error('API Files error');
+            currentConfig = data.config || {};
+        } else {
+            const response = await fetch(`api.php?action=get&file=${fileName}`);
+            currentConfig = await response.json();
+        }
 
         if (fileName === 'schema') {
             if (!currentConfig.tables || Array.isArray(currentConfig.tables)) currentConfig.tables = {};
@@ -140,6 +148,8 @@ async function loadConfigFile(fileName) {
         } else if (fileName === 'workflows') {
             if (!currentConfig.workflows || !Array.isArray(currentConfig.workflows)) currentConfig.workflows = [];
             if (!currentConfig.menu_name) currentConfig.menu_name = 'Workflows';
+        } else if (fileName === 'files') {
+            if (!currentConfig.menu_name) currentConfig.menu_name = 'Files';
         } else if (fileName === 'database') {
             if (!currentConfig.host) currentConfig = { host: 'localhost', port: '5432', dbname: '', user: 'postgres', password: '' };
         } else if (fileName === 'security') {
@@ -209,28 +219,26 @@ function renderSidebar() {
         return; 
     }
 
-    document.getElementById('sidebarTitle').textContent = currentFile === 'schema' ? 'Tables' : currentFile === 'dashboard' ? 'Widgets' : currentFile === 'workflows' ? 'Workflows' : 'Sources';
-	
-	// Remove existing button to prevent duplicates when sidebar re-renders
-	const existingBtn = document.getElementById('addTableBtn');
-	if (existingBtn) existingBtn.remove();
+    document.getElementById('sidebarTitle').textContent = currentFile === 'schema' ? 'Tables' : currentFile === 'dashboard' ? 'Widgets' : currentFile === 'workflows' ? 'Workflows' : currentFile === 'files' ? 'Files Config' : 'Sources';
+    
+    // Remove existing button to prevent duplicates when sidebar re-renders
+    const existingBtn = document.getElementById('addTableBtn');
+    if (existingBtn) existingBtn.remove();
 
-	// Append the button only if the active tab is 'schema'
-	if (currentFile === 'schema') {
-		const btnAddTable = createAddTableButton(currentConfig, 'app', (newTableName) => {
-			alert('Table created successfully. Please click "Save File" to apply.');
-			// Refresh sidebar to show the new table
-			if (typeof renderSidebar === 'function') renderSidebar(); 
-		}, (err) => {
-			alert(err);
-		});
-		
-		// Style and attach the button next to the title
-		btnAddTable.id = 'addTableBtn';
-		btnAddTable.style.fontSize = '12px';
-		btnAddTable.style.float = 'right';
-		sidebarTitle.appendChild(btnAddTable);
-	}
+    // Append the button only if the active tab is 'schema'
+    if (currentFile === 'schema') {
+        const btnAddTable = createAddTableButton(currentConfig, 'app', (newTableName) => {
+            alert('Table created successfully. Please click "Save File" to apply.');
+            if (typeof renderSidebar === 'function') renderSidebar(); 
+        }, (err) => {
+            alert(err);
+        });
+        
+        btnAddTable.id = 'addTableBtn';
+        btnAddTable.style.fontSize = '12px';
+        btnAddTable.style.float = 'right';
+        sidebarTitle.appendChild(btnAddTable);
+    }
     
     let actionDiv = document.getElementById('sidebarActions');
     if (!actionDiv) {
@@ -249,7 +257,7 @@ function renderSidebar() {
                 (err) => alert(err));
         };
         actionDiv.appendChild(btnSync);
-    } else {
+    } else if (currentFile !== 'files') {
         const btnAdd = document.createElement('button');
         btnAdd.className = 'btn-add'; btnAdd.style.width = '100%'; 
         btnAdd.innerHTML = currentFile === 'dashboard' ? '+ Add New Widget' : currentFile === 'workflows' ? '+ Add New Workflow' : '+ Add New Source';
@@ -257,12 +265,14 @@ function renderSidebar() {
         actionDiv.appendChild(btnAdd);
     }
 
-    const btnClear = document.createElement('button');
-    btnClear.className = 'btn-remove'; btnClear.style.width = '100%'; btnClear.style.marginTop = '10px'; btnClear.style.float = 'none';
-    btnClear.innerHTML = 'Clear Entire Config'; btnClear.onclick = clearConfig;
-    actionDiv.appendChild(btnClear);
+    if (currentFile !== 'files') {
+        const btnClear = document.createElement('button');
+        btnClear.className = 'btn-remove'; btnClear.style.width = '100%'; btnClear.style.marginTop = '10px'; btnClear.style.float = 'none';
+        btnClear.innerHTML = 'Clear Entire Config'; btnClear.onclick = clearConfig;
+        actionDiv.appendChild(btnClear);
+    }
 
-    if (currentFile === 'dashboard' || currentFile === 'calendar' || currentFile === 'workflows') {
+    if (currentFile === 'dashboard' || currentFile === 'calendar' || currentFile === 'workflows' || currentFile === 'files') {
         const layoutLi = document.createElement('li');
         layoutLi.textContent = "Global Settings"; layoutLi.style.fontWeight = 'bold'; layoutLi.style.borderBottom = '2px solid var(--accent)';
         if (currentItemKey === 'LAYOUT') layoutLi.classList.add('active');
@@ -274,7 +284,21 @@ function renderSidebar() {
         itemListEl.appendChild(layoutLi);
     }
 
+    if (currentFile === 'files') {
+        const managerLi = document.createElement('li');
+        managerLi.textContent = "File Explorer"; managerLi.style.fontWeight = 'bold'; managerLi.style.borderBottom = '2px solid var(--accent)';
+        if (currentItemKey === 'MANAGER') managerLi.classList.add('active');
+        managerLi.onclick = () => {
+            currentItemKey = 'MANAGER';
+            renderSidebar();
+            renderEditor('MANAGER', null, false);
+        };
+        itemListEl.appendChild(managerLi);
+    }
+
     if (!currentConfig) return;
+
+    if (currentFile === 'files') return; // Specific iteration bypass
 
     let itemsToIterate = currentFile === 'schema' ? (currentConfig.tables || {}) : currentFile === 'dashboard' ? (currentConfig.widgets || []) : currentFile === 'workflows' ? (currentConfig.workflows || []) : (currentConfig.sources || []);
     const isArray = Array.isArray(itemsToIterate);
@@ -327,8 +351,7 @@ function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    // FIX: Show/hide save button based on currentFile instead of key
-    if (['health', 'docs', 'users'].includes(currentFile)) {
+    if (['health', 'docs', 'users'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -339,6 +362,7 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'health') return renderHealthDashboard(ctx);
     if (currentFile === 'docs') return renderDocumentation(ctx);
     if (currentFile === 'users') return renderUsersEditor(ctx);
+    if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
 
     if (key === 'LAYOUT') {
         if (currentFile === 'dashboard') return renderDashboardLayout(ctx);
@@ -353,6 +377,14 @@ function renderEditor(key, itemData, isArray) {
         if (currentFile === 'workflows') {
             workspaceEl.innerHTML = `<h3>Workflows Global Settings</h3>`;
             workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Workflows', v => currentConfig.menu_name = v));
+            workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
+                if (v && v.trim() !== '') currentConfig.menu_icon = v; else delete currentConfig.menu_icon;
+            }));
+            return;
+        }
+        if (currentFile === 'files') {
+            workspaceEl.innerHTML = `<h3>Files Global Settings</h3>`;
+            workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Files', v => currentConfig.menu_name = v));
             workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
                 if (v && v.trim() !== '') currentConfig.menu_icon = v; else delete currentConfig.menu_icon;
             }));
@@ -391,7 +423,27 @@ function renderEditor(key, itemData, isArray) {
 btnSave.addEventListener('click', async () => {
     if (!currentConfig) return;
     try {
-        const response = await fetch(`api.php?action=save&file=${currentFile}`, {
+        let response, result;
+        
+        if (currentFile === 'files') {
+            currentConfig.action = 'save_config';
+            response = await fetch('../api_files.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(currentConfig)
+            });
+            result = await response.json();
+            
+            if (result.success) {
+                alert(`${currentFile}.json saved!`); 
+                fetchGlobalSchema();
+            } else {
+                alert('Error saving: ' + (result.error || 'Unknown error'));
+            }
+            return;
+        }
+
+        response = await fetch(`api.php?action=save&file=${currentFile}`, {
             method: 'POST', 
             headers: { 
                 'Content-Type': 'application/json',
@@ -399,8 +451,13 @@ btnSave.addEventListener('click', async () => {
             }, 
             body: JSON.stringify(currentConfig)
         });
-        const result = await response.json();
-        if (result.status === 'success') { alert(`${currentFile}.json saved!`); fetchGlobalSchema(); } 
-        else alert('Error saving: ' + (result.error || 'Unknown error'));
+        result = await response.json();
+        
+        if (result.status === 'success') { 
+            alert(`${currentFile}.json saved!`); 
+            fetchGlobalSchema(); 
+        } else {
+            alert('Error saving: ' + (result.error || 'Unknown error'));
+        }
     } catch (err) { alert('Failed to save changes.'); }
 });
