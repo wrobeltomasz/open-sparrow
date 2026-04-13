@@ -31,6 +31,19 @@ $schemaName = $tableCfg['schema'] ?? 'public';
 $idCol = id_column();
 $error = '';
 
+// Helper for file sizes
+function format_bytes_edit($bytes) {
+    if (!$bytes) return '0 B';
+    $units = ['B', 'KB', 'MB', 'GB'];
+    $i = 0;
+    $v = (int)$bytes;
+    while ($v >= 1024 && $i < count($units) - 1) { 
+        $v /= 1024; 
+        $i++; 
+    }
+    return round($v, 1) . ' ' . $units[$i];
+}
+
 // Handle POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $updates = [];
@@ -137,6 +150,19 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
         ];
     }
 }
+
+// Fetch related files with tags
+$relatedFiles = [];
+$fileSql = "SELECT uuid, display_name, name, type, size_bytes, created_at, tags 
+            FROM app.files 
+            WHERE related_table = $1 AND related_id = $2 AND deleted_at IS NULL 
+            ORDER BY created_at DESC";
+$fileRes = @pg_query_params($conn, $fileSql, [$table, $id]);
+if ($fileRes) {
+    while ($f = pg_fetch_assoc($fileRes)) {
+        $relatedFiles[] = $f;
+    }
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -145,6 +171,9 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
     <title>OpenSparrow | Edit Record - <?php echo htmlspecialchars($tableCfg['display_name'] ?? $table); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="/assets/css/styles.css" rel="stylesheet">
+    <style>
+        .tag-badge { background: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #cbd5e1; margin-right: 4px; display: inline-block; }
+    </style>
 </head>
 <body>
 
@@ -277,7 +306,98 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
         </form>
     </div>
 
-<?php foreach ($subtablesData as $sd) : ?>
+    <div class="subtable-container" style="margin-top: 40px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color: #0f172a; margin: 0;">Attached Files</h3>
+        </div>
+
+        <?php if (!$isReadOnly) : ?>
+            <div style="background: #f8fafc; padding: 15px; border: 1px dashed #cbd5e1; border-radius: 6px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="file" id="inlineFileInput" style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #fff;" />
+                <input type="text" id="inlineFileName" placeholder="Optional display name" style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; width: 180px;" />
+                <input type="text" id="inlineFileTags" placeholder="Tags (comma separated)" style="padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; width: 180px;" list="tagSuggestions" />
+                
+                <datalist id="tagSuggestions">
+                    <option value="Invoice">
+                    <option value="Contract">
+                    <option value="Image">
+                    <option value="Report">
+                </datalist>
+
+                <button type="button" id="btnInlineUpload" class="btn-action" style="background: #0ea5e9; padding: 7px 16px; border: none; border-radius: 4px; color: #fff; cursor: pointer; font-weight: bold;">Upload File</button>
+                <span id="inlineUploadStatus" style="font-size: 13px; font-weight: 500; margin-left: 10px;"></span>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($relatedFiles)) : ?>
+            <div class="edit-subtable-wrapper">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e2e8f0; background: #f8fafc;">
+                            <th style="padding: 10px;">Type</th>
+                            <th style="padding: 10px;">Name</th>
+                            <th style="padding: 10px;">Tags</th>
+                            <th style="padding: 10px;">Size</th>
+                            <th style="padding: 10px;">Date</th>
+                            <th style="padding: 10px; width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <?php 
+                    $fileIcons = [
+                        'image'       => 'assets/icons/image.png',
+                        'pdf'         => 'assets/icons/picture_as_pdf.png',
+                        'doc'         => 'assets/icons/docs.png',
+                        'spreadsheet' => 'assets/icons/grid_on.png',
+                        'archive'     => 'assets/icons/folder_zip.png',
+                        'other'       => 'assets/icons/file_present.png'
+                    ];
+                    ?>
+                    <tbody>
+                        <?php foreach ($relatedFiles as $rf) : ?>
+                            <?php 
+                            $iconPath = $fileIcons[$rf['type']] ?? $fileIcons['other']; 
+                            
+                            // Parse PostgreSQL array string to PHP array
+                            $rawTags = $rf['tags'] ?? '';
+                            $tagsArr = [];
+                            if ($rawTags && $rawTags !== '{}') {
+                                $rawTags = trim($rawTags, '{}');
+                                $tagsArr = explode(',', str_replace('"', '', $rawTags));
+                            }
+                            ?>
+                            <tr style="border-bottom: 1px solid #f1f5f9;">
+                                <td style="padding: 10px; font-weight: bold; color: #64748b; font-size: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <img src="<?php echo htmlspecialchars($iconPath); ?>" alt="icon" style="width: 20px; height: 20px; opacity: 0.8;">
+                                        <?php echo htmlspecialchars(strtoupper($rf['type'])); ?>
+                                    </div>
+                                </td>
+                                <td style="padding: 10px; font-weight: 500;"><?php echo htmlspecialchars($rf['display_name'] ?: $rf['name']); ?></td>
+                                <td style="padding: 10px;">
+                                    <?php if (!empty($tagsArr)): ?>
+                                        <?php foreach($tagsArr as $t): ?>
+                                            <span class="tag-badge"><?php echo htmlspecialchars(trim($t)); ?></span>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <span style="color:#cbd5e1">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="padding: 10px; color: #64748b;"><?php echo format_bytes_edit($rf['size_bytes']); ?></td>
+                                <td style="padding: 10px; color: #64748b;"><?php echo htmlspecialchars(date('Y-m-d', strtotime($rf['created_at']))); ?></td>
+                                <td style="padding: 10px;">
+                                    <a href="file_download.php?uuid=<?php echo urlencode($rf['uuid']); ?>" target="_blank" class="btn-action" style="background: #0ea5e9; padding: 4px 10px; border-radius: 4px; color: #fff; text-decoration: none; font-size: 12px; display: inline-block;">Download</a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else : ?>
+            <p style="color: #64748b; font-size: 14px; margin-top: 10px;">No files attached to this record.</p>
+        <?php endif; ?>
+    </div>
+
+    <?php foreach ($subtablesData as $sd) : ?>
         <div class="subtable-container" style="margin-top: 40px;">
             <?php
                 $sTable = $sd['config']['table'];
@@ -328,7 +448,7 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
                 </div>
             <?php endif; ?>
         </div>
-<?php endforeach; ?>
+    <?php endforeach; ?>
 
 </main>
 
@@ -341,8 +461,8 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
 </footer>
 
 <script>
-
 document.addEventListener('DOMContentLoaded', function() {
+    // 1. RegExp Validation Logic
     const inputs = document.querySelectorAll('input[data-pattern]');
     inputs.forEach(input => {
         const validateInput = () => {
@@ -365,6 +485,67 @@ document.addEventListener('DOMContentLoaded', function() {
         input.addEventListener('input', validateInput);
         validateInput(); // Trigger validation on load just in case
     });
+
+    // 2. Inline File Upload Logic
+    const btnUpload = document.getElementById('btnInlineUpload');
+    if (btnUpload) {
+        btnUpload.addEventListener('click', async () => {
+            const fileInput = document.getElementById('inlineFileInput');
+            const nameInput = document.getElementById('inlineFileName');
+            const tagsInput = document.getElementById('inlineFileTags');
+            const statusEl = document.getElementById('inlineUploadStatus');
+
+            if (!fileInput.files || !fileInput.files.length) {
+                statusEl.textContent = 'Please select a file to upload.';
+                statusEl.style.color = 'red';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'upload');
+            formData.append('file', fileInput.files[0]);
+            
+            if (nameInput.value.trim()) {
+                formData.append('display_name', nameInput.value.trim());
+            }
+            if (tagsInput && tagsInput.value.trim()) {
+                formData.append('tags', tagsInput.value.trim());
+            }
+            
+            // Automatically inject related_table and related_id from PHP
+            formData.append('related_table', <?php echo json_encode($table); ?>);
+            formData.append('related_id', <?php echo json_encode($id); ?>);
+
+            statusEl.textContent = 'Uploading...';
+            statusEl.style.color = '#334155';
+            btnUpload.disabled = true;
+
+            try {
+                const res = await fetch('api_files.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await res.json();
+
+                if (data.success) {
+                    statusEl.textContent = 'Uploaded successfully! Refreshing...';
+                    statusEl.style.color = '#10b981';
+                    
+                    // Reload to show the new file in the list
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    statusEl.textContent = 'Error: ' + (data.error || 'Upload failed');
+                    statusEl.style.color = 'red';
+                    btnUpload.disabled = false;
+                }
+            } catch (err) {
+                statusEl.textContent = 'Network error during upload.';
+                statusEl.style.color = 'red';
+                btnUpload.disabled = false;
+            }
+        });
+    }
 });
 </script>
 

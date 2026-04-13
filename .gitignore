@@ -44,3 +44,6 @@ includes/calendar.json
 includes/dashboard.json
 includes/database.json
 includes/schema.json
+
+# Files storage
+storage/

@@ -69,6 +69,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             let dashIconEl = renderIconElement('', 'assets/icons/dashboard.png');
             let calName = 'Calendar';
             let calIconEl = renderIconElement('', 'assets/icons/calendar.png');
+            let filesName = 'Files';
+            let filesIconEl = renderIconElement('', 'assets/icons/folder_open.png');
 
             try {
                 const dashRes = await fetch('api.php?api=dashboard&v=' + Date.now());
@@ -88,6 +90,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch(e) { console.warn('Could not load calendar config', e); }
 
+            // Fetch files config from correct API endpoint
+            try {
+                const filesRes = await fetch('api_files.php?action=get_config&v=' + Date.now());
+                if (filesRes.ok) {
+                    const filesData = await filesRes.json();
+                    if (filesData.success && filesData.config) {
+                        if (filesData.config.menu_name) filesName = filesData.config.menu_name;
+                        filesIconEl = renderIconElement(filesData.config.menu_icon, 'assets/icons/folder_open.png');
+                    }
+                }
+            } catch(e) { console.warn('Could not load files config', e); }
+
             // Dashboard Item
             const dashItem = document.createElement('li');
             const dashLink = document.createElement('a');
@@ -96,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             dashLink.appendChild(dashIconEl);
             const dashSpan = document.createElement('span');
             dashSpan.style.verticalAlign = 'middle';
+            dashSpan.style.textTransform = 'none'; // Prevent CSS from changing case
             dashSpan.textContent = dashName;
             dashLink.appendChild(dashSpan);
             dashItem.appendChild(dashLink);
@@ -108,14 +123,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             calLink.appendChild(calIconEl);
             const calSpan = document.createElement('span');
             calSpan.style.verticalAlign = 'middle';
+            calSpan.style.textTransform = 'none'; // Prevent CSS from changing case
             calSpan.textContent = calName;
             calLink.appendChild(calSpan);
             calItem.appendChild(calLink);
 
+            // Files Item
+            const filesItem = document.createElement('li');
+            const filesLink = document.createElement('a');
+            filesLink.href = 'files.php';
+            filesLink.className = 'custom-nav-link';
+            if (window.location.pathname.includes('files.php')) {
+                filesLink.classList.add('active');
+            }
+            filesLink.appendChild(filesIconEl);
+            const filesSpan = document.createElement('span');
+            filesSpan.style.verticalAlign = 'middle';
+            filesSpan.style.textTransform = 'none'; // Prevent CSS from changing case
+            filesSpan.textContent = filesName;
+            filesLink.appendChild(filesSpan);
+            filesItem.appendChild(filesLink);
+
+            // Prepend in reverse order to achieve: Dashboard, Calendar, Files
             if (navList.tagName === 'UL') {
+                navList.prepend(filesItem);
                 navList.prepend(calItem);
                 navList.prepend(dashItem);
             } else {
+                menuEl.prepend(filesLink);
                 menuEl.prepend(calLink);
                 menuEl.prepend(dashLink);
             }
