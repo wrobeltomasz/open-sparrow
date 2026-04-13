@@ -29,21 +29,13 @@ Thumbs.db
 .env.*.local
 
 # Config json
-include/security.json
-include/schema.json
-include/database.json
-include/dashboard.json
-include/calendar.json
-include/php.ini
+includes/*.json
+includes/php.ini
 
 # CodeSniffer
 phpcs.phar
 phpcbf.phar
-*.json
-includes/calendar.json
-includes/dashboard.json
-includes/database.json
-includes/schema.json
 
 # Files storage
-storage/
+storage/files/*
+!storage/files/.gitkeep
