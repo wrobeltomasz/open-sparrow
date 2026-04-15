@@ -46,7 +46,7 @@ export async function initWorkflows(menuListEl, containerEl, titleEl, appSchema)
     });
 
     // Force uppercase for the menu name
-    const menuName = (config.menu_name || 'Workflows').toUpperCase();
+    const menuName = config.menu_name || 'Workflows';
     const menuIcon = config.menu_icon || ''; 
 
     const wfItem = document.createElement('li');
@@ -58,6 +58,7 @@ export async function initWorkflows(menuListEl, containerEl, titleEl, appSchema)
     // Safely append elements instead of using innerHTML
     wfLink.appendChild(createIconElement(menuIcon));
     const textSpan = document.createElement('span');
+    textSpan.className = 'menu-text'; // Add class to hide text on collapse
     textSpan.style.verticalAlign = 'middle';
     textSpan.textContent = menuName;
     wfLink.appendChild(textSpan);
@@ -81,7 +82,7 @@ export async function initWorkflows(menuListEl, containerEl, titleEl, appSchema)
     });
 
     wfItem.appendChild(wfLink);
-    menuListEl.prepend(wfItem);
+    menuListEl.append(wfItem);
 }
 
 // Render the beautiful grid list of available workflows

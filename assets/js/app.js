@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             dashLink.className = 'custom-nav-link';
             dashLink.appendChild(dashIconEl);
             const dashSpan = document.createElement('span');
+            dashSpan.className = 'menu-text'; // Added class for hiding text
             dashSpan.style.verticalAlign = 'middle';
             dashSpan.style.textTransform = 'none'; // Prevent CSS from changing case
             dashSpan.textContent = dashName;
@@ -122,6 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             calLink.className = 'custom-nav-link';
             calLink.appendChild(calIconEl);
             const calSpan = document.createElement('span');
+            calSpan.className = 'menu-text'; // Added class for hiding text
             calSpan.style.verticalAlign = 'middle';
             calSpan.style.textTransform = 'none'; // Prevent CSS from changing case
             calSpan.textContent = calName;
@@ -138,6 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             filesLink.appendChild(filesIconEl);
             const filesSpan = document.createElement('span');
+            filesSpan.className = 'menu-text'; // Added class for hiding text
             filesSpan.style.verticalAlign = 'middle';
             filesSpan.style.textTransform = 'none'; // Prevent CSS from changing case
             filesSpan.textContent = filesName;

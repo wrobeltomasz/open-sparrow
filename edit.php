@@ -452,13 +452,7 @@ if ($fileRes) {
 
 </main>
 
-<footer>
-    <div class="footer-content">
-        <small>
-            <a href="https://opensparrow.org/">OpenSparrow.org</a> | Open source | LGPL v3. | PHP + vanilla JS + Postgres!
-        </small>
-    </div>
-</footer>
+<?php include 'templates/footer.php'; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

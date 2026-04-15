@@ -42,6 +42,7 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
         }
 
         const textSpan = document.createElement('span');
+        textSpan.className = 'menu-text'; // Added class for hiding text
         textSpan.textContent = cfg.display_name || t;
         a.appendChild(textSpan);
 
@@ -302,9 +303,9 @@ export async function renderGrid(schema) {
                 const nextTr = tr.nextElementSibling;
                 if (nextTr && nextTr.classList.contains('drilldown-row')) {
                     nextTr.remove();
-                    btnExpand.textContent = '↪';
+                    btnExpand.textContent = '>';
                 } else {
-                    btnExpand.textContent = '↩';
+                    btnExpand.textContent = 'v';
                     const ddTr = document.createElement('tr');
                     ddTr.className = 'drilldown-row';
                     const ddTd = document.createElement('td');
