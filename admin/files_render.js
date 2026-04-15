@@ -1,7 +1,7 @@
 // admin/files_render.js
 // OpenSparrow Files Module UI
 
-const FILES_API = '../api_files.php';
+const FILES_API = 'api_files.php';
 
 // Text indicators for file types
 const TYPE_ICONS = {
@@ -31,15 +31,30 @@ function resetState() {
 
 // Entry point called by app.js
 export async function renderFilesEditor(ctx) {
-    const { workspaceEl, getTableOptions, getColumnOptionsForTable } = ctx;
+    const { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable } = ctx;
     resetState();
     _state.getTableOptions = getTableOptions;
     _state.getColumnOptionsForTable = getColumnOptionsForTable;
+    
+    // Bind directly to global config to avoid overwriting menu settings!
+    _state.config = currentConfig; 
+
+    // Ensure defaults exist in global config
+    if (!_state.config.max_file_size_mb) _state.config.max_file_size_mb = 20;
+    if (!_state.config.storage_path) _state.config.storage_path = 'storage/files/';
+    if (!_state.config.allowed_types) _state.config.allowed_types = ['image', 'spreadsheet', 'archive', 'other'];
+    if (!_state.config.allowed_extensions) _state.config.allowed_extensions = ["jpg", "jpeg", "png", "gif", "webp", "svg", "pdf", "doc", "docx", "odt", "rtf", "xls", "xlsx", "ods", "csv", "zip", "tar", "gz"];
+    if (!('public_access' in _state.config)) _state.config.public_access = false;
+    if (!('virus_scan' in _state.config)) _state.config.virus_scan = false;
+    if (!_state.config.relations) _state.config.relations = [];
 
     workspaceEl.innerHTML = '';
     workspaceEl.appendChild(buildSkeleton());
 
-    await Promise.all([loadConfig(), loadList()]);
+    fillConfigForm(_state.config);
+    bindEvents(workspaceEl);
+
+    await loadList();
 }
 
 // Skeleton HTML construction
@@ -58,9 +73,24 @@ function buildSkeleton() {
                 <label>Storage path <span class="help-text" style="display:inline">(relative to project root, must not be web-accessible)</span></label>
                 <input id="f-storage-path" type="text" style="max-width:340px">
             </div>
+            
+            <div class="form-group" style="display:flex; gap:20px; margin-top:10px;">
+                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                    <input type="checkbox" id="f-public-access"> Public Access
+                </label>
+                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+                    <input type="checkbox" id="f-virus-scan"> Virus Scan
+                </label>
+            </div>
+
             <div class="form-group">
                 <label>Allowed types</label>
                 <div id="f-allowed-types" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Allowed Extensions (comma separated)</label>
+                <input id="f-allowed-exts" type="text" style="width:100%" placeholder="jpg, png, pdf, zip">
             </div>
             
             <div class="form-group" style="margin-top:20px; padding-top:15px; border-top:1px solid #eee;">
@@ -69,7 +99,7 @@ function buildSkeleton() {
                 <button id="f-add-relation-btn" type="button" class="btn-add" style="margin-top:10px; padding:4px 10px; font-size:12px; background:#1d4ed8;">+ Add Relation</button>
             </div>
 
-            <button id="f-save-cfg" class="btn-add" style="margin:0">Save configuration</button>
+            <button type="button" id="f-save-cfg" class="btn-add" style="margin:0">Save configuration</button>
             <span id="f-cfg-msg" style="margin-left:12px;font-size:13px"></span>
         </div>
 
@@ -84,7 +114,7 @@ function buildSkeleton() {
                     <label>Display name (optional)</label>
                     <input type="text" id="f-upload-name" placeholder="Leave empty to use original">
                 </div>
-                <button id="f-upload-btn" class="btn-add" style="margin:0">Upload</button>
+                <button type="button" id="f-upload-btn" class="btn-add" style="margin:0">Upload</button>
             </div>
             <div id="f-upload-status" style="margin-top:8px;font-size:13px"></div>
         </div>
@@ -97,7 +127,7 @@ function buildSkeleton() {
                     <option value="all">All types</option>
                     ${ALL_TYPES.map(t => `<option value="${t}">${cap(t)}</option>`).join('')}
                 </select>
-                <button id="f-refresh" class="btn-add" style="margin:0;padding:6px 14px">Refresh</button>
+                <button type="button" id="f-refresh" class="btn-add" style="margin:0;padding:6px 14px">Refresh</button>
             </div>
             <div id="f-status" style="font-size:13px;color:#777;margin-bottom:8px"></div>
             <table style="width:100%;border-collapse:collapse;font-size:13px" id="f-table">
@@ -198,28 +228,22 @@ function addRelationRow(data = { table: '', col1: '', col2: '' }) {
     list.appendChild(row);
 }
 
-// API Config setup
-async function loadConfig() {
-    try {
-        const res  = await fetch(`${FILES_API}?action=get_config`);
-        const data = await res.json();
-        if (!data.success) return;
-        _state.config = data.config;
-        fillConfigForm(data.config);
-    } catch (e) {
-        console.error('[files_render] loadConfig error', e);
-    }
-}
-
 // Fill UI config form
 function fillConfigForm(cfg) {
     const maxEl  = document.getElementById('f-max-size');
     const pathEl = document.getElementById('f-storage-path');
+    const extsEl = document.getElementById('f-allowed-exts');
+    const pubEl  = document.getElementById('f-public-access');
+    const virEl  = document.getElementById('f-virus-scan');
     const typesEl = document.getElementById('f-allowed-types');
+
     if (!maxEl) return;
 
-    maxEl.value  = cfg.max_file_size_mb ?? 20;
-    pathEl.value = cfg.storage_path     ?? 'storage/files/';
+    maxEl.value  = cfg.max_file_size_mb;
+    pathEl.value = cfg.storage_path;
+    extsEl.value = (cfg.allowed_extensions || []).join(', ');
+    pubEl.checked = !!cfg.public_access;
+    virEl.checked = !!cfg.virus_scan;
 
     typesEl.innerHTML = ALL_TYPES.map(t => `
         <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-weight:normal">
@@ -234,10 +258,13 @@ function fillConfigForm(cfg) {
     relations.forEach(r => addRelationRow(r));
 }
 
-// Save config handler
+// Save config handler - syncs with global app state and saves via core api
 async function saveConfig() {
     const maxEl   = document.getElementById('f-max-size');
     const pathEl  = document.getElementById('f-storage-path');
+    const extsEl  = document.getElementById('f-allowed-exts');
+    const pubEl   = document.getElementById('f-public-access');
+    const virEl   = document.getElementById('f-virus-scan');
     const checks  = document.querySelectorAll('#f-allowed-types input[type=checkbox]:checked');
     const msgEl   = document.getElementById('f-cfg-msg');
 
@@ -249,24 +276,31 @@ async function saveConfig() {
         };
     }).filter(r => r.table !== '');
 
-    const payload = {
-        action:           'save_config',
-        max_file_size_mb: parseInt(maxEl?.value || '20', 10),
-        storage_path:     pathEl?.value || 'storage/files/',
-        allowed_types:    [...checks].map(c => c.value),
-        relations:        relations
-    };
+    const extsArray = extsEl.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    // Assign directly to _state.config (which is a reference to the global currentConfig)
+    _state.config.storage_path       = pathEl?.value || 'storage/files/';
+    _state.config.max_file_size_mb   = parseInt(maxEl?.value || '20', 10);
+    _state.config.allowed_types      = [...checks].map(c => c.value);
+    _state.config.allowed_extensions = extsArray;
+    _state.config.public_access      = pubEl.checked;
+    _state.config.virus_scan         = virEl.checked;
+    _state.config.relations          = relations;
 
     try {
-        const res  = await fetch(FILES_API, {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const res  = await fetch('api.php?action=save&file=files', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify(_state.config),
         });
         const data = await res.json();
-        showMsg(msgEl, data.success ? 'Saved' : (data.error || 'Error'), data.success);
+        showMsg(msgEl, data.status === 'success' ? 'Saved successfully' : (data.error || 'Save failed'), data.status === 'success');
     } catch {
-        showMsg(msgEl, 'Network error', false);
+        showMsg(msgEl, 'Network error during save', false);
     }
 }
 
@@ -281,11 +315,13 @@ async function uploadFile() {
         return;
     }
 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const file = fileInput.files[0];
     const formData = new FormData();
     
     formData.append('action', 'upload');
     formData.append('file', file);
+    formData.append('csrf_token', csrfToken);
     
     if (nameInput.value.trim()) {
         formData.append('display_name', nameInput.value.trim());
@@ -297,6 +333,7 @@ async function uploadFile() {
     try {
         const res = await fetch(FILES_API, {
             method: 'POST',
+            headers: { 'X-CSRF-Token': csrfToken },
             body: formData
         });
         const data = await res.json();
@@ -394,10 +431,14 @@ function renderTable(files) {
 async function deleteFile(uuid, name) {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
     try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         const res  = await fetch(FILES_API, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'delete', uuid }),
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify({ action: 'delete', uuid, csrf_token: csrfToken }),
         });
         const data = await res.json();
         if (data.success) {

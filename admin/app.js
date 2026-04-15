@@ -50,11 +50,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-	tabs.forEach(tab => {
+    tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             tabs.forEach(t => t.classList.remove('active'));
-            // Use currentTarget to always get the button element
-            e.currentTarget.classList.add('active');
+            e.currentTarget.classList.add('active'); // Poprawka z currentTarget
             currentFile = e.currentTarget.dataset.file;
             loadConfigFile(currentFile);
         });
@@ -127,15 +126,8 @@ async function loadConfigFile(fileName) {
     }
 
     try {
-        if (fileName === 'files') {
-            const response = await fetch('../api_files.php?action=get_config');
-            const data = await response.json();
-            if (!data.success) throw new Error('API Files error');
-            currentConfig = data.config || {};
-        } else {
-            const response = await fetch(`api.php?action=get&file=${fileName}`);
-            currentConfig = await response.json();
-        }
+        const response = await fetch(`api.php?action=get&file=${fileName}`);
+        currentConfig = await response.json();
 
         if (fileName === 'schema') {
             if (!currentConfig.tables || Array.isArray(currentConfig.tables)) currentConfig.tables = {};
@@ -192,6 +184,7 @@ function clearConfig() {
         else if (currentFile === 'dashboard') currentConfig = { layout: { columns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }, widgets: [], menu_name: 'Dashboard' };
         else if (currentFile === 'calendar') currentConfig = { sources: [], menu_name: 'Calendar' };
         else if (currentFile === 'workflows') currentConfig = { workflows: [], menu_name: 'Workflows' };
+        else if (currentFile === 'files') currentConfig = { menu_name: 'Files' };
         
         renderSidebar();
         workspaceEl.innerHTML = `<h2>Configuration cleared. Click "Save File" to apply!</h2>`;
@@ -424,27 +417,7 @@ function renderEditor(key, itemData, isArray) {
 btnSave.addEventListener('click', async () => {
     if (!currentConfig) return;
     try {
-        let response, result;
-        
-        if (currentFile === 'files') {
-            currentConfig.action = 'save_config';
-            response = await fetch('../api_files.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(currentConfig)
-            });
-            result = await response.json();
-            
-            if (result.success) {
-                alert(`${currentFile}.json saved!`); 
-                fetchGlobalSchema();
-            } else {
-                alert('Error saving: ' + (result.error || 'Unknown error'));
-            }
-            return;
-        }
-
-        response = await fetch(`api.php?action=save&file=${currentFile}`, {
+        const response = await fetch(`api.php?action=save&file=${currentFile}`, {
             method: 'POST', 
             headers: { 
                 'Content-Type': 'application/json',
@@ -452,7 +425,7 @@ btnSave.addEventListener('click', async () => {
             }, 
             body: JSON.stringify(currentConfig)
         });
-        result = await response.json();
+        const result = await response.json();
         
         if (result.status === 'success') { 
             alert(`${currentFile}.json saved!`); 

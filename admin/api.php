@@ -39,14 +39,25 @@ if ($action === 'init_db') {
     try {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
+        
+        // Prepare missing DB updates and tables creation
         $queries = [
             "CREATE SCHEMA IF NOT EXISTS app",
             "CREATE TABLE IF NOT EXISTS app.users ( id serial4 NOT NULL, username varchar(50) NOT NULL, password_hash varchar(255) NOT NULL, is_active bool DEFAULT true, role varchar(20) DEFAULT 'full' NOT NULL, CONSTRAINT users_pkey PRIMARY KEY (id), CONSTRAINT users_username_key UNIQUE (username) )",
             "ALTER TABLE app.users ADD COLUMN IF NOT EXISTS is_active bool DEFAULT true",
+            "ALTER TABLE app.users ADD COLUMN IF NOT EXISTS \"role\" varchar(20) DEFAULT 'full' NOT NULL",
             "CREATE TABLE IF NOT EXISTS app.users_log ( id serial4 NOT NULL, user_id int4 NOT NULL, \"action\" varchar(50) NOT NULL, target_table varchar(100), record_id int4, created_at timestamp DEFAULT CURRENT_TIMESTAMP, CONSTRAINT users_log_pkey PRIMARY KEY (id) )",
             "CREATE TABLE IF NOT EXISTS app.users_notifications ( id serial4 NOT NULL, user_id int8 NOT NULL, title varchar(255) NOT NULL, link varchar(255), source_table varchar(100), source_id int8, is_read bool DEFAULT false, notify_date date NOT NULL, created_at timestamp DEFAULT CURRENT_TIMESTAMP,CONSTRAINT users_notifications_pkey PRIMARY KEY (id), CONSTRAINT users_notifications_user_id_source_table_source_id_notify_d_key UNIQUE (user_id, source_table, source_id, notify_date) )",
-            "INSERT INTO app.users (username, password_hash, is_active) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', true WHERE NOT EXISTS (SELECT 1 FROM app.users WHERE username = 'test')"
+            "CREATE TABLE IF NOT EXISTS app.files ( id serial4 NOT NULL, \"uuid\" uuid DEFAULT gen_random_uuid() NOT NULL, \"name\" varchar(255) NOT NULL, display_name varchar(255) NULL, \"type\" varchar(50) NOT NULL, mime_type varchar(100) NOT NULL, \"extension\" varchar(20) NOT NULL, size_bytes int8 DEFAULT 0 NOT NULL, storage_path text NOT NULL, related_table varchar(100) NULL, related_id int4 NULL, related_field varchar(100) NULL, uploaded_by int4 NULL, created_at timestamp DEFAULT now() NOT NULL, updated_at timestamp DEFAULT now() NOT NULL, deleted_at timestamp NULL, description text NULL, tags _text NULL, metadata jsonb NULL, CONSTRAINT files_pkey PRIMARY KEY (id), CONSTRAINT files_uuid_key UNIQUE (uuid), CONSTRAINT files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES app.users(id) ON DELETE SET NULL)",
+            "CREATE INDEX IF NOT EXISTS idx_files_deleted_at ON app.files USING btree (deleted_at) WHERE (deleted_at IS NULL)",
+            "CREATE INDEX IF NOT EXISTS idx_files_metadata ON app.files USING gin (metadata)",
+            "CREATE INDEX IF NOT EXISTS idx_files_related ON app.files USING btree (related_table, related_id)",
+            "CREATE INDEX IF NOT EXISTS idx_files_tags ON app.files USING gin (tags)",
+            "CREATE INDEX IF NOT EXISTS idx_files_type ON app.files USING btree (type)",
+            "CREATE INDEX IF NOT EXISTS idx_files_uploaded_by ON app.files USING btree (uploaded_by)",
+            "INSERT INTO app.users (username, password_hash, is_active, role) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', true, 'full' WHERE NOT EXISTS (SELECT 1 FROM app.users WHERE username = 'test')"
         ];
+        
         foreach ($queries as $q) {
             $res = @pg_query($conn, $q);
             if (!$res) {
@@ -313,7 +324,8 @@ if ($action === 'export') {
     $zipFile = sys_get_temp_dir() . '/sparrow_config_' . time() . '.zip';
     if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
         $includesDir = __DIR__ . '/../includes/';
-        $filesToBackup = ['schema.json', 'dashboard.json', 'calendar.json', 'database.json', 'security.json', 'workflows.json'];
+        // Dodałem files.json do backupu
+        $filesToBackup = ['schema.json', 'dashboard.json', 'calendar.json', 'database.json', 'security.json', 'workflows.json', 'files.json'];
         foreach ($filesToBackup as $f) {
             if (file_exists($includesDir . $f)) {
                 $zip->addFile($includesDir . $f, $f);
@@ -405,7 +417,9 @@ if ($action === 'list_icons') {
 }
 
 // Allowed config files for read and write operations
-$allowedFiles = ['schema', 'dashboard', 'calendar', 'database', 'security', 'workflows'];
+// Dodałem 'files' do autoryzowanych konfiguracji
+$allowedFiles = ['schema', 'dashboard', 'calendar', 'database', 'security', 'workflows', 'files'];
+
 // Get content of a JSON config file
 if ($action === 'get' && in_array($file, $allowedFiles, true)) {
     $filePath = __DIR__ . '/../includes/' . $file . '.json';
