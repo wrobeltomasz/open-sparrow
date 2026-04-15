@@ -91,84 +91,80 @@ Below is an overview of the most important directories and files in the OpenSpar
 - Git
 
 ### 1. Clone the repository
-
-```bash
+Bash
 git clone https://github.com/wrobeltomasz/open-sparrow.git
 cd open-sparrow
-```
-
 ### 2. Run with Docker (Quick Start)
 If you have Docker installed, you can start the entire stack with a single command. This handles PHP, Nginx, and PostgreSQL for you:
 
-```bash
-# Set permissions and start containers
-sudo chown -R 82:82 includes/ && docker compose up -d --build
-```
+Bash
+# Create required directories if they don't exist
+mkdir -p includes storage/files
 
+# Set permissions for the web server (82:82 is www-data in Alpine Linux)
+sudo chown -R 82:82 includes/ storage/
+sudo chmod -R 775 includes/ storage/
+
+# Start the containers
+docker compose up -d --build
 The app will be available at: http://localhost:8080
 
 ### 3. Install dependencies
-
 There is no dependency install step required for the current repository state.
 
 ### 4. Set up environment variables (.env example)
-
 OpenSparrow can read PostgreSQL environment variables:
 
-```dotenv
+Fragment kodu
 PGHOST=127.0.0.1
 PGPORT=5432
 PGDATABASE=opensparrow
 PGUSER=postgres
 PGPASSWORD=postgres
-```
-
-Important: there is no `.env` loader in the current codebase. Define these variables in your server or shell environment, or use the admin UI Database tab.
+Important: there is no .env loader in the current codebase. Define these variables in your server or shell environment, or simply use the Admin UI Database tab.
 
 ### 5. Configure database connection from Admin
-
 Open the admin panel:
-
-- http://localhost/open-sparrow/admin
+http://localhost:8080/admin
 
 Log in with default credentials:
 
-- Password: `admin` (no username required — the admin panel only asks for a password)
+Password: admin (no username required — the admin panel only asks for a master password)
 
 Then go to the Database tab:
 
-1. Enter host, port, database, username, and password.
-2. Save configuration.
+Enter host, port, database, username, and password.
 
-The settings are stored in `includes/database.json`.
+Click Save configuration.
+
+Note: The settings are stored securely in includes/database.json.
 
 ### 6. Run database migrations (system initialization)
+In the Admin Panel -> System Health tab, click Initialize System Tables.
+This creates required tables in the app schema, including:
 
-In Admin -> System Health, click Initialize System Tables.
+app.users
 
-This creates required tables in schema `app`, including:
+app.users_log
 
-- `app.users`
-- `app.users_log`
-- `app.users_notifications`
+app.users_notifications
+
+app.files
 
 This is the migration-equivalent step for the current project.
 
-### 7. Start the development server
+### 7. Start the development server (Without Docker)
+If you used Docker in Step 2, you can skip this step!
 
-Option A (recommended): serve through Apache/Nginx and open:
+Option A (recommended): Serve through Apache/Nginx and open:
+http://localhost/open-sparrow/
 
-- http://localhost/open-sparrow/
+Option B (quick local PHP server):
 
-Option B (quick local):
-
-```bash
+Bash
 php -S localhost:8000
-```
-
 Then open:
-
-- http://localhost:8000/admin
+http://localhost:8000/admin
 
 ### 8. Start building your app
 
