@@ -3,6 +3,7 @@
 export function renderDocumentation(ctx) {
     const { workspaceEl } = ctx;
     
+    // Render the static documentation content
     workspaceEl.innerHTML = `
         <div style="max-width: 900px; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: #334155; line-height: 1.6; margin-bottom: 40px;">
             <h2 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; color: #0f172a;">
@@ -21,7 +22,7 @@ export function renderDocumentation(ctx) {
                 <li><strong>Boolean Types:</strong> Boolean columns (true/false) will automatically render as switch toggles in edit forms and dropdown filters in the data grids.</li>
             </ul>
 
-		<h3 style="color: #2563eb; margin-top: 30px;">2. Schema & Grid Configuration</h3>
+            <h3 style="color: #2563eb; margin-top: 30px;">2. Schema & Grid Configuration</h3>
             <p>The <strong>Schema</strong> tab is the core of your OpenSparrow. It maps directly to your database tables and defines how they are displayed in the frontend Grid.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Add New Tables:</strong> Use the "+ Add Table" button to dynamically create new physical tables in your PostgreSQL database. You will be prompted to specify the database schema and table name. The system automatically creates the mandatory 'id' primary key.</li>
@@ -40,9 +41,9 @@ export function renderDocumentation(ctx) {
                         <li><strong>Username (3-16 chars, letters, numbers, underscores):</strong> <code>^[a-zA-Z0-9_]{3,16}$</code></li>
                         <li><strong>Price / Decimal (optional up to 2 decimal places):</strong> <code>^\d+(\.\d{1,2})?$</code></li>
                         <li><strong>Date (YYYY-MM-DD):</strong> <code>^\d{4}-\d{2}-\d{2}$</code></li>
-                        <li><strong>Time (24-hour format HH:MM):</strong> <code>^([01]\d|2[0-3]):[0-5]\d$</code></li>
-                        <li><strong>Strong Password (min 8 chars, 1 uppercase, 1 lowercase, 1 number):</strong> <code>^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$</code></li>
-                        <li><strong>IPv4 Address:</strong> <code>^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$</code></li>
+                        <li><strong>Time (24-hour format HH:MM):</strong> <code>^([01]\\d|2[0-3]):[0-5]\\d$</code></li>
+                        <li><strong>Strong Password (min 8 chars, 1 uppercase, 1 lowercase, 1 number):</strong> <code>^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$</code></li>
+                        <li><strong>IPv4 Address:</strong> <code>^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$</code></li>
                     </ul>
                 </li>
             </ul>
@@ -112,6 +113,14 @@ export function renderDocumentation(ctx) {
                 <li><strong>Initialize System Tables:</strong> Found in the Health tab, this critical feature builds the base <code>app.users</code>, <code>app.users_log</code>, and <code>app.users_notifications</code> tables. It must be executed on a fresh installation.</li>
                 <li><strong>System Diagnostics:</strong> Performs live checks on your PHP version, ZIP extensions, directory write permissions, and database connectivity.</li>
                 <li><strong>Export / Import Config:</strong> Use the top navigation buttons to download (Export) or upload (Import) a ZIP archive containing all your JSON settings. This is highly recommended for creating backups or migrating your setup to a production server.</li>
+            </ul>
+
+            <h3 style="color: #2563eb; margin-top: 30px;">9. Files Module</h3>
+            <p>The <strong>Files</strong> tab provides a central repository for managing uploaded documents and media.</p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Configuration:</strong> Define maximum file size, secure storage path (which should not be directly accessible via web for security), and allowed file types (e.g., images, PDFs, archives).</li>
+                <li><strong>Record Relations:</strong> Auto-link uploaded files to specific database records, allowing you to easily attach documents to objects like users or projects.</li>
+                <li><strong>File Library:</strong> Upload, search, filter by type, preview (for images), and safely delete files directly from the admin panel interface.</li>
             </ul>
         </div>
     `;

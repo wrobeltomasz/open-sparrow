@@ -84,16 +84,9 @@ $userRole = $_SESSION['role'] ?? 'readonly';
 </head>
 <body>
 
-<header>
-    <a href="index.php" class="brand-logo">
-        <img src="assets/img/logo-blue.png" alt="OpenSparrow Logo" />
-  </a>
-    <button onclick="window.location.href='index.php'" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.4); color: white; margin-right: auto; margin-left: 20px; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-        &larr; Back to Grid
-    </button>
-</header>
+<?php include 'templates/header_app.php'; ?>
 
-<main style="padding: 20px;">
+<main style="padding: 20px; width: 100%; overflow-y: auto;">
     <div class="calendar-header">
         <h2 id="calendarTitle">Month Year</h2>
         <div class="calendar-nav">
@@ -103,7 +96,6 @@ $userRole = $_SESSION['role'] ?? 'readonly';
     </div>
     
     <div id="calendarContainer" class="calendar-grid"></div>
-</main>
 
 <script>
     // Define global user role state
@@ -111,14 +103,10 @@ $userRole = $_SESSION['role'] ?? 'readonly';
 </script>
 
 <script type="module" src="assets/js/calendar.js?v=<?php echo @filemtime('assets/js/calendar.js'); ?>"></script>
+</main>
 
-<footer>
-    <div class="footer-content">
-        <small>
-            <a href="https://opensparrow.org/">OpenSparrow.org</a> | Open source | LGPL v3. | PHP + vanilla JS + Postgres
-        </small>
-    </div>
-</footer>
+</div>
+<?php include 'templates/footer.php'; ?>
 
 </body>
 </html>

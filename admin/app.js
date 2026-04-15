@@ -50,11 +50,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    tabs.forEach(tab => {
+	tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             tabs.forEach(t => t.classList.remove('active'));
-            e.target.classList.add('active');
-            currentFile = e.target.dataset.file;
+            // Use currentTarget to always get the button element
+            e.currentTarget.classList.add('active');
+            currentFile = e.currentTarget.dataset.file;
             loadConfigFile(currentFile);
         });
     });

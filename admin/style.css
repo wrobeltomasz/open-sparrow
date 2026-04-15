@@ -1,176 +1,406 @@
 /* admin/style.css */
+/* Modern UI configuration variables */
+:root {
+  --bg:           #F4F7F9;
+  --panel:        #ffffff;
+  --text:         #1E293B;
+  --muted:        #64748B;
+  --accent:       #005A9E;
+  --accent-dark:  #003366;
+  --accent-light: #F0F6FA;
+  --accent-mid:   #DDEAF4;
+  --danger:       #DC2626;
+  --ok:           #16A34A;
+  --border:       #CBD5E1;
+  --border-light: #E2E8F0;
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md:    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --radius:       6px;
+  --radius-lg:    10px;
+  --header-h:     60px;
+  --transition:   150ms ease;
+}
+
+/* Base styles and typography */
 body {
     margin: 0;
     padding: 0;
-    background-color: var(--bg-color, #f4f6f8); 
-    color: var(--text-color, #333);
-    font-family: sans-serif;
+    background-color: var(--bg); 
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
+/* Top header navigation */
+header {
+    background-color: var(--accent-dark);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    height: var(--header-h);
+    box-shadow: var(--shadow-sm);
+    color: white;
+}
+
+/* Header tabs layout */
 .admin-header-tabs {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     margin-right: auto;
-    margin-left: 20px;
+    margin-left: 30px;
 }
 
+/* Individual header tab */
 .admin-tab {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
-    padding: 5px 15px;
-    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--accent-light);
+    padding: 8px 16px;
+    border-radius: var(--radius);
     cursor: pointer;
-    transition: background 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition);
 }
 
+/* Tab active and hover states */
 .admin-tab.active, .admin-tab:hover {
-    background: rgba(255,255,255,0.3);
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Main content wrapper */
 .admin-container {
     display: flex;
-    height: calc(100vh - 60px);
+    flex-direction: row;
+    align-items: stretch;
+    height: calc(100vh - var(--header-h));
+    width: 100%;
+    overflow: hidden;
 }
 
+/* Sidebar navigation */
 .admin-sidebar {
-    width: 250px;
-    background-color: var(--panel, #ffffff); 
-    border-right: 1px solid var(--border-light, #ddd);
-    padding: 15px;
+    flex: 0 0 260px;
+    width: 260px;
+    background-color: var(--panel); 
+    border-right: 1px solid var(--border);
+    padding: 20px 15px;
     overflow-y: auto;
 }
 
+/* Sidebar title */
 .admin-sidebar h3 {
     margin-top: 0;
-    color: var(--accent, #007ACC);
+    margin-bottom: 20px;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 600;
+    padding-left: 10px;
 }
 
+/* Sidebar list reset */
 .admin-sidebar ul {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
+/* Sidebar items */
 .admin-sidebar li {
-    padding: 10px;
+    padding: 12px 15px;
     cursor: pointer;
-    border-bottom: 1px solid var(--border-light, #eee);
-    color: var(--text-color, #333);
-    transition: background 0.2s, color 0.2s;
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all var(--transition);
+    margin-bottom: 4px;
 }
 
+/* Sidebar active item */
 .admin-sidebar li:hover, .admin-sidebar li.active {
-    background-color: var(--hover-color, #f0f8ff);
-    color: var(--accent, #005999);
-    font-weight: bold;
+    background-color: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
 }
 
+/* Main workspace area */
 .admin-workspace {
-    flex: 1;
-    padding: 20px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 30px;
     overflow-y: auto;
-    background-color: var(--bg-color, #f4f6f8);
+    background-color: var(--bg);
 }
 
+/* Form group spacing */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
+/* Form field labels */
 .form-group label {
     display: block;
-    margin-bottom: 3px;
-    font-weight: bold;
-    color: var(--text-color, #444);
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
 }
 
+/* Form field hints */
 .help-text {
     display: block;
     font-size: 12px;
-    color: #666;
-    margin-bottom: 8px;
+    color: var(--muted);
+    margin-top: 6px;
 }
 
+/* Standard inputs and selects */
 .form-group input[type="text"],
+.form-group input[type="password"],
+.form-group input[type="number"],
 .form-group select,
 .form-group textarea {
     width: 100%;
-    max-width: 400px;
-    padding: 8px;
+    max-width: 450px;
+    padding: 10px 12px;
     background: #fff;
-    border: 1px solid #ccc;
-    color: #333;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
     font-family: inherit;
+    font-size: 14px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    box-sizing: border-box;
 }
 
+/* Input focus state */
+.form-group input[type="text"]:focus,
+.form-group input[type="password"]:focus,
+.form-group input[type="number"]:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-mid);
+}
+
+/* Textarea specific styles */
 .form-group textarea {
     resize: vertical;
-    min-height: 80px;
+    min-height: 100px;
 }
 
+/* Color picker specific styles */
 .form-group input[type="color"] {
     width: 60px;
-    height: 35px;
+    height: 40px;
     padding: 0;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     cursor: pointer;
 }
 
+/* Checkbox specific styles */
 .form-group input[type="checkbox"] {
-    margin-right: 10px;
-    transform: scale(1.2);
+    margin-right: 12px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
 }
 
+/* Section blocks */
 .column-block, .subtable-block {
-    background: #fff;
-    border: 1px solid var(--border-light, #ddd);
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    background: var(--panel);
+    border: 1px solid var(--border-light);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
 }
 
+/* Section block titles */
 .column-block h4, .subtable-block h4 {
     margin-top: 0;
-    color: var(--accent, #007ACC);
-    border-bottom: 1px solid var(--border-light, #eee);
-    padding-bottom: 5px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 12px;
+    font-size: 15px;
 }
 
+/* Standard primary button */
 .btn-add {
-    background: #28a745;
+    background: var(--ok);
     color: white;
     border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
     cursor: pointer;
     margin-bottom: 15px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background var(--transition), transform 100ms;
 }
-.btn-add:hover { background: #218838; }
 
+/* Button active and hover */
+.btn-add:hover { background: #15803d; }
+.btn-add:active { transform: scale(0.98); }
+
+/* Danger removal button */
 .btn-remove {
-    background: #dc3545;
+    background: var(--danger);
     color: white;
     border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
+    padding: 8px 12px;
+    border-radius: var(--radius);
     cursor: pointer;
     font-size: 12px;
+    font-weight: 600;
     float: right;
+    transition: background var(--transition);
 }
 
-#passwordStrengthBar {
-    height: 6px;
-    background: #e2e8f0;
-    border-radius: 3px;
-    margin-top: 5px;
+/* Danger hover */
+.btn-remove:hover { background: #b91c1c; }
+
+/* Standard secondary logout button */
+.btn-logout {
+    background: transparent;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all var(--transition);
+}
+
+/* Logout hover */
+.btn-logout:hover { background: rgba(255,255,255,0.1); }
+
+/* User menu layout right side */
+.header-user-menu {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Save main button - Zmieniony na zielony */
+#btnSave {
+    background: var(--ok); 
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: bold;
+    transition: background var(--transition);
+}
+
+/* Save button hover */
+#btnSave:hover { background: #15803d; }
+
+/* Header dropdown container */
+.config-dropdown { 
+    position: relative; 
+    display: inline-block; 
+    margin-right: 15px; 
+    padding-right: 15px; 
+    border-right: 1px solid rgba(255, 255, 255, 0.2); 
+}
+
+/* Dropdown list layout */
+.config-dropdown-content { 
+    display: none; 
+    position: absolute; 
+    right: 15px; 
+    top: 100%; 
+    margin-top: 8px; 
+    background-color: var(--panel); 
+    min-width: 200px; 
+    box-shadow: var(--shadow-md); 
+    border-radius: var(--radius); 
+    z-index: 100; 
+    overflow: hidden; 
+    border: 1px solid var(--border); 
+}
+
+/* Dropdown list buttons */
+.config-dropdown-content button { 
+    width: 100%; 
+    text-align: left; 
+    padding: 12px 16px; 
+    border: none; 
+    background: transparent; 
+    color: var(--text); 
+    font-size: 13px; 
+    cursor: pointer; 
+    border-bottom: 1px solid var(--border-light); 
+    transition: background var(--transition), color var(--transition); 
+    font-weight: 500; 
+    border-radius: 0;
+}
+
+/* Naprawa kolorów dla przycisków .admin-tab wewnątrz dropdown */
+.config-dropdown-content .admin-tab {
+    color: var(--text);
+}
+
+/* Dropdown hover element */
+.config-dropdown-content button:hover,
+.config-dropdown-content .admin-tab:hover { 
+    background-color: var(--accent-light); 
+    color: var(--accent); 
+    border-color: transparent;
+}
+
+/* Dropdown active element fix */
+.config-dropdown-content .admin-tab.active {
+    background-color: var(--accent-mid);
+    color: var(--accent-dark);
+    font-weight: 600;
+    border-color: transparent;
+}
+
+/* Dropdown last child fix */
+.config-dropdown-content button:last-child { 
+    border-bottom: none; 
+}
+
+/* Dropdown open state */
+.config-dropdown.active .config-dropdown-content { 
+    display: block; 
+}
+
+/* Data tables general class */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel);
+    border-radius: var(--radius-lg);
     overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
 }
 
-#passwordStrengthFill {
-    height: 100%;
-    width: 0%;
-    transition: width 0.3s, background 0.3s;
+/* Data tables header */
+.admin-table th {
+    background: var(--bg);
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text);
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* Data tables cells */
+.admin-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--muted);
 }

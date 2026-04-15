@@ -11,9 +11,8 @@
 <body>
 
 <header>
-    <a href="index.php" class="brand-logo">
-        <img src="assets/img/logo-blue.png" alt="Sparrow Logo" />
-    </a>
+
+    <button id="sidebarToggle" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer; margin-left: -10px; margin-right: 5px;">☰</button>
 
     <input id="globalSearch" type="text" placeholder="Find..." />
 
@@ -83,9 +82,8 @@
         </button>
     </div>
 </header>
-
+<div class="app-container">
 <nav id="menu" class="menu"></nav>
-
 <main>
     <section id="gridSection">
         <h2 id="gridTitle">Table</h2>
@@ -113,22 +111,33 @@
         </div>
     </section>
 </main>
+</div>
 
 <pre id="debug"></pre>
 
-<footer>
-    <div class="footer-content">
-        <small>
-            <a href="https://opensparrow.org/">OpenSparrow.org</a> | Open source | LGPL v3. | PHP + vanilla JS + Postgres
-        </small>
-    </div>
-</footer>
+<?php include 'templates/footer.php'; ?>
 
 <script>
     // Define global user role state
     window.USER_ROLE = '<?php echo htmlspecialchars($userRole ?? 'readonly', ENT_QUOTES, 'UTF-8'); ?>';
 
     document.addEventListener("DOMContentLoaded", () => {
+		
+		// Setup sidebar toggle and restore state
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarMenu = document.getElementById('menu');
+        
+        if (sidebarToggle && sidebarMenu) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebarMenu.classList.toggle('collapsed');
+                localStorage.setItem('menuCollapsed', sidebarMenu.classList.contains('collapsed'));
+            });
+            
+            // Apply saved state
+            if (localStorage.getItem('menuCollapsed') === 'true') {
+                sidebarMenu.classList.add('collapsed');
+            }
+        }
         const mobileActions = document.getElementById("mobileActions");
         const menu = document.getElementById("menu");
 

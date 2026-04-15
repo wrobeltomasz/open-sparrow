@@ -239,6 +239,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </main>
 
+<?php include 'templates/footer.php'; ?>
+
 <script>
 // Parse RegExp using standard JS engine to avoid strict v flag issues
 // Handles validation before form submission
