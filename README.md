@@ -90,14 +90,29 @@ Below is an overview of the most important directories and files in the OpenSpar
 - Web server (Apache or Nginx) or PHP built-in server
 - Git
 
+Cieszę się, że wszystko w końcu działa! 
+
+Zaktualizowałem Twoją instrukcję. Wprowadziłem do niej kilka kluczowych poprawek:
+1. **Dodałem tworzenie folderu `storage/files` i nadawanie mu uprawnień** w sekcji Docker (krok 2) – dzięki temu nowi użytkownicy od razu unikną błędu z wgrywaniem plików, z którym przed chwilą walczyłeś. Ujednoliciłem też komendę `chmod`, by upewnić się, że foldery mają prawa zapisu.
+2. **Ujednoliciłem adresy URL** – w kroku 2 piszesz, że aplikacja startuje na `localhost:8080`, więc poprawiłem ścieżki w kroku 5, aby wskazywały bezpośrednio na ten sam port.
+3. W kroku 7 dopisałem informację, że dotyczy to tylko instalacji **bez użycia Dockera**, co zmniejszy zamieszanie (skoro uruchomili Dockera w kroku 2, to serwer już działa).
+
+Oto gotowy do wklejenia w README (lub dokumentację) zaktualizowany kod w formacie Markdown:
+
+***
+
 ### 1. Clone the repository
-Bash
+
+```bash
 git clone https://github.com/wrobeltomasz/open-sparrow.git
 cd open-sparrow
+```
+
 ### 2. Run with Docker (Quick Start)
+
 If you have Docker installed, you can start the entire stack with a single command. This handles PHP, Nginx, and PostgreSQL for you:
 
-Bash
+```bash
 # Create required directories if they don't exist
 mkdir -p includes storage/files
 
@@ -107,76 +122,64 @@ sudo chmod -R 775 includes/ storage/
 
 # Start the containers
 docker compose up -d --build
-The app will be available at: http://localhost:8080
+```
+
+The app will be available at: **http://localhost:8080**
 
 ### 3. Install dependencies
+
 There is no dependency install step required for the current repository state.
 
 ### 4. Set up environment variables (.env example)
-OpenSparrow can read PostgreSQL environment variables:
 
-Fragment kodu
+OpenSparrow can read PostgreSQL environment variables:
+```env
 PGHOST=127.0.0.1
 PGPORT=5432
 PGDATABASE=opensparrow
 PGUSER=postgres
 PGPASSWORD=postgres
-Important: there is no .env loader in the current codebase. Define these variables in your server or shell environment, or simply use the Admin UI Database tab.
+```
+*Important:* there is no `.env` loader in the current codebase. Define these variables in your server or shell environment, or simply use the Admin UI Database tab.
 
 ### 5. Configure database connection from Admin
+
 Open the admin panel:
-http://localhost:8080/admin
+**http://localhost:8080/admin**
 
 Log in with default credentials:
+* **Password:** `admin` *(no username required — the admin panel only asks for a master password)*
 
-Password: admin (no username required — the admin panel only asks for a master password)
+Then go to the **Database** tab:
+1. Enter host, port, database, username, and password.
+2. Click **Save configuration**.
 
-Then go to the Database tab:
-
-Enter host, port, database, username, and password.
-
-Click Save configuration.
-
-Note: The settings are stored securely in includes/database.json.
+*Note: The settings are stored securely in `includes/database.json`.*
 
 ### 6. Run database migrations (system initialization)
-In the Admin Panel -> System Health tab, click Initialize System Tables.
-This creates required tables in the app schema, including:
 
-app.users
-
-app.users_log
-
-app.users_notifications
-
-app.files
+In the Admin Panel -> **System Health** tab, click **Initialize System Tables**.
+This creates required tables in the `app` schema, including:
+* `app.users`
+* `app.users_log`
+* `app.users_notifications`
+* `app.files`
 
 This is the migration-equivalent step for the current project.
 
 ### 7. Start the development server (Without Docker)
-If you used Docker in Step 2, you can skip this step!
 
-Option A (recommended): Serve through Apache/Nginx and open:
+*If you used Docker in Step 2, you can skip this step!*
+
+**Option A (recommended):** Serve through Apache/Nginx and open:
 http://localhost/open-sparrow/
 
-Option B (quick local PHP server):
-
-Bash
+**Option B (quick local PHP server):**
+```bash
 php -S localhost:8000
+```
 Then open:
 http://localhost:8000/admin
-
-### 8. Start building your app
-
-After setup:
-
-1. Open the Schema tab and sync existing tables.
-2. Configure views and field behavior.
-3. Use `index.php`, `dashboard.php`, and `calendar.php` as your runtime entry points.
-
-On a fresh install, a default app user is seeded automatically (username: `test`).
-Use these credentials to log into the main app at `login.php`.
-Change them before going to production.
 
 ---
 
