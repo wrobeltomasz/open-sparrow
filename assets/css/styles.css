@@ -338,11 +338,11 @@ thead th {
   text-align: left;
   padding: 0.7rem 0.85rem;
   background: var(--accent-mid);
-  border-bottom: 2px solid var(--border-light);
+  border-bottom: 2px solid var(--border);
   font-weight: 600;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: .04em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--accent-dark);
   white-space: nowrap;
   user-select: none;
