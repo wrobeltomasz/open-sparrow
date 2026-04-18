@@ -1,0 +1,20 @@
+# Disable browser caching for admin JavaScript modules.
+#
+# Rationale: admin/index.php appends ?v=<filemtime> to the entry script
+# (app.js), but native ES module imports (import { x } from './schema.js')
+# do NOT inherit the parent's query string. Each module is therefore cached
+# by the browser under its bare URL and can go stale across deployments,
+# leading to hard-to-diagnose mismatches between updated backend endpoints
+# and cached frontend code.
+#
+# The admin panel is used only by administrators, so disabling cache for a
+# few small JS files has a negligible bandwidth impact while guaranteeing
+# that every deploy is picked up immediately.
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|mjs)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+</IfModule>

@@ -75,9 +75,19 @@ export function createAddTableButton(currentConfig, defaultSchema, onSuccess, on
 }
 
 // Sync tables from database
+// Uses POST with JSON body so that shared-hosting WAFs (ModSecurity / OWASP CRS)
+// do not flag the request as SQL injection based on the query string.
 export async function syncSchemaTables(currentConfig, schemaName, onSuccess, onError) {
     try {
-        const res = await fetch(`api.php?action=sync_schema&schema_name=${encodeURIComponent(schemaName)}`);
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const res = await fetch('api.php?action=sync_schema', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken
+            },
+            body: JSON.stringify({ schema_name: schemaName })
+        });
         const data = await res.json();
         
         if (data.status === 'success') {
@@ -155,9 +165,18 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
     // Fetch and sync columns from database
     btnSyncCols.onclick = async () => {
         try {
-            const schemaName = tableData.schema || 'public'; 
-            const res = await fetch(`api.php?action=get_db_columns&schema_name=${encodeURIComponent(schemaName)}&table=${encodeURIComponent(tableName)}`);
-            
+            const schemaName = tableData.schema || 'public';
+            // POST with JSON body — avoids WAF false positives on GET query strings.
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const res = await fetch('api.php?action=get_db_columns', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ schema_name: schemaName, table: tableName })
+            });
+
             const rawText = await res.text();
             
             if (!res.ok) {
@@ -370,15 +389,43 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         }));
         
         const optsStr = colCfg.options ? colCfg.options.join(', ') : '';
-        block.appendChild(createTextInput('options', 'Enum Options (Comma separated)', optsStr, (val) => {
-            if(val) {
-                colCfg.options = val.split(',').map(s => s.trim());
+        // Build this input inline (instead of createTextInput) so we can update
+        // the model on every keystroke without re-rendering the whole editor —
+        // the full re-render was stealing focus and resetting the scroll on
+        // every keypress. Color pickers depend on colCfg.options, so the
+        // re-render is deferred to the `change` event (fires on blur).
+        const enumWrapper = document.createElement('div');
+        enumWrapper.className = 'form-group';
+        const enumLabel = document.createElement('label');
+        enumLabel.textContent = 'Enum Options (Comma separated)';
+        enumWrapper.appendChild(enumLabel);
+        const enumInput = document.createElement('input');
+        enumInput.type = 'text';
+        enumInput.value = optsStr;
+
+        const applyEnumValue = (val) => {
+            if (val) {
+                colCfg.options = val.split(',').map(s => s.trim()).filter(Boolean);
             } else {
                 delete colCfg.options;
                 delete colCfg.enum_colors;
             }
+        };
+
+        enumInput.addEventListener('input', (e) => {
+            // Keep the in-memory config in sync so that clicking "Save File"
+            // mid-typing does not lose the current value.
+            applyEnumValue(e.target.value);
+        });
+        enumInput.addEventListener('change', (e) => {
+            // Blur / Enter — now it is safe to re-render the editor so the
+            // color-picker rows appear for the freshly entered options.
+            applyEnumValue(e.target.value);
             renderEditor(tableName, tableData, false);
-        }));
+        });
+
+        enumWrapper.appendChild(enumInput);
+        block.appendChild(enumWrapper);
 
         const isTypeEnum = String(colCfg.type || '').toLowerCase() === 'enum';
 

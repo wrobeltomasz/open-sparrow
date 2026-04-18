@@ -493,12 +493,16 @@ if ($action === 'save' && in_array($file, $allowedFiles, true)) {
 }
 
 // Fetch all tables from a specific database schema
+// Parameters are accepted via POST JSON body (preferred — avoids WAF/ModSecurity
+// rules that flag SQL-looking GET query strings on shared hosting) with a GET
+// fallback for backward compatibility.
 if ($action === 'sync_schema') {
     header('Content-Type: application/json');
     try {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
-        $schemaName = $_GET['schema_name'] ?? 'public';
+        $body = json_decode((string) file_get_contents('php://input'), true) ?: [];
+        $schemaName = $body['schema_name'] ?? $_POST['schema_name'] ?? $_GET['schema_name'] ?? 'public';
         // Exclude OpenSparrow system tables (spw_*) so they cannot be imported as user tables.
         $sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_type = 'BASE TABLE' AND table_name NOT LIKE 'spw\\_%' ESCAPE '\\'";
         $res = @pg_query_params($conn, $sql, [$schemaName]);
@@ -519,13 +523,17 @@ if ($action === 'sync_schema') {
 }
 
 // Fetch all columns and their data types for a specific table
+// Parameters are accepted via POST JSON body (preferred — avoids WAF/ModSecurity
+// rules that flag SQL-looking GET query strings on shared hosting) with a GET
+// fallback for backward compatibility.
 if ($action === 'get_db_columns') {
     header('Content-Type: application/json');
     try {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
-        $tableName = $_GET['table'] ?? '';
-        $schemaName = $_GET['schema_name'] ?? 'public';
+        $body = json_decode((string) file_get_contents('php://input'), true) ?: [];
+        $tableName = $body['table'] ?? $_POST['table'] ?? $_GET['table'] ?? '';
+        $schemaName = $body['schema_name'] ?? $_POST['schema_name'] ?? $_GET['schema_name'] ?? 'public';
         $sql = "SELECT column_name, data_type, is_nullable, udt_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2";
         $res = @pg_query_params($conn, $sql, [$schemaName, $tableName]);
         if (!$res) {
