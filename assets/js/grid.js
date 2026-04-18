@@ -41,10 +41,15 @@ export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn) {
             a.appendChild(img);
         }
 
+        const linkLabel = cfg.display_name || t;
         const textSpan = document.createElement('span');
         textSpan.className = 'menu-text'; // Added class for hiding text
-        textSpan.textContent = cfg.display_name || t;
+        textSpan.textContent = linkLabel;
         a.appendChild(textSpan);
+
+        // Expose label for tooltip in collapsed sidebar + screen readers
+        a.title = linkLabel;
+        a.setAttribute('aria-label', linkLabel);
 
         a.onclick = e => {
             e.preventDefault();

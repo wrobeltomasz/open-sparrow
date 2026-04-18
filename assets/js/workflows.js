@@ -54,7 +54,9 @@ export async function initWorkflows(menuListEl, containerEl, titleEl, appSchema)
     
     wfLink.href = '#';
     wfLink.className = 'custom-nav-link';
-    
+    wfLink.title = menuName;
+    wfLink.setAttribute('aria-label', menuName);
+
     // Safely append elements instead of using innerHTML
     wfLink.appendChild(createIconElement(menuIcon));
     const textSpan = document.createElement('span');

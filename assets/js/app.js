@@ -107,6 +107,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const dashLink = document.createElement('a');
             dashLink.href = 'dashboard.php';
             dashLink.className = 'custom-nav-link';
+            dashLink.title = dashName;
+            dashLink.setAttribute('aria-label', dashName);
             dashLink.appendChild(dashIconEl);
             const dashSpan = document.createElement('span');
             dashSpan.className = 'menu-text'; // Added class for hiding text
@@ -121,6 +123,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const calLink = document.createElement('a');
             calLink.href = 'calendar.php';
             calLink.className = 'custom-nav-link';
+            calLink.title = calName;
+            calLink.setAttribute('aria-label', calName);
             calLink.appendChild(calIconEl);
             const calSpan = document.createElement('span');
             calSpan.className = 'menu-text'; // Added class for hiding text
@@ -135,6 +139,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const filesLink = document.createElement('a');
             filesLink.href = 'files.php';
             filesLink.className = 'custom-nav-link';
+            filesLink.title = filesName;
+            filesLink.setAttribute('aria-label', filesName);
             if (window.location.pathname.includes('files.php')) {
                 filesLink.classList.add('active');
             }
