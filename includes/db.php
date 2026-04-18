@@ -4,45 +4,77 @@ declare(strict_types=1);
 
 function db_connect(): \PgSql\Connection
 {
-
-    // Path to the configuration file from the admin panel
     $configFile = __DIR__ . '/database.json';
-// Default values (Fallback to environment variables or local values)
+
+    // Default values fallback
     $host = getenv('PGHOST') ?: '';
     $port = getenv('PGPORT') ?: '';
     $dbname = getenv('PGDATABASE') ?: '';
     $user = getenv('PGUSER') ?: '';
     $password = getenv('PGPASSWORD') ?: '';
-// Retrieve data entered in the admin panel if the file exists
+
+    // Load config from JSON file if exists
     if (file_exists($configFile)) {
         $json = file_get_contents($configFile);
         $config = json_decode($json, true);
         if (is_array($config)) {
-        // Using ?: so empty values in JSON don't overwrite defaults
-            $host = $config['host'] ?: $host;
-            $port = $config['port'] ?: $port;
-            $dbname = $config['dbname'] ?: $dbname;
-            $user = $config['user'] ?: $user;
-        // Using ?? here because the password can theoretically be empty
+            $host = !empty($config['host']) ? $config['host'] : $host;
+            $port = !empty($config['port']) ? $config['port'] : $port;
+            $dbname = !empty($config['dbname']) ? $config['dbname'] : $dbname;
+            $user = !empty($config['user']) ? $config['user'] : $user;
             $password = $config['password'] ?? $password;
         }
     }
 
+    // Build connection string
     $connStr = sprintf(
-        "host=%s port=%s dbname=%s user=%s password=%s",
+        "host=%s port=%s dbname=%s user=%s password=%s connect_timeout=5",
         $host,
         $port,
         $dbname,
         $user,
         $password
     );
-// Suppressing (@) native error in case of bad password to throw a custom, cleaner exception
+
+    // Suppress native warnings and throw a safe generic exception
     $conn = @pg_connect($connStr);
+    
     if (!$conn) {
-        throw new RuntimeException('Cannot connect to Postgres: ' . pg_last_error());
+        throw new RuntimeException('Cannot connect to Postgres. Check database credentials or server status.');
     }
 
-    // Set timezone BEFORE returning the connection
+    // Set timezone
     pg_query($conn, "SET TIME ZONE 'Europe/Warsaw'");
+    
     return $conn;
+}
+
+// Returns the schema name for OpenSparrow system tables.
+// Configurable via "schema" key in includes/database.json; defaults to "app".
+function sys_schema(): string
+{
+    static $schema = null;
+    if ($schema !== null) {
+        return $schema;
+    }
+    $schema = getenv('PGSCHEMA') ?: 'app';
+    $configFile = __DIR__ . '/database.json';
+    if (file_exists($configFile)) {
+        $json = @file_get_contents($configFile);
+        $config = @json_decode($json, true);
+        if (is_array($config) && !empty($config['schema'])) {
+            $schema = (string) $config['schema'];
+        }
+    }
+    return $schema;
+}
+
+// Returns a fully-qualified, safely-quoted system table identifier.
+// Usage: sys_table('users') => "app"."spw_users" (with configured schema).
+function sys_table(string $name): string
+{
+    $schema = sys_schema();
+    $table = 'spw_' . $name;
+    $quote = static fn(string $s): string => '"' . str_replace('"', '""', $s) . '"';
+    return $quote($schema) . '.' . $quote($table);
 }

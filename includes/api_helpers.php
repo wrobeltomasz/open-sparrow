@@ -130,6 +130,6 @@ function type_min_value(string $type)
 // Log action to db
 function log_user_action($conn, int $userId, string $action, ?string $targetTable = null, ?int $recordId = null): void
 {
-    $sql = 'INSERT INTO "app"."users_log" (user_id, action, target_table, record_id) VALUES ($1, $2, $3, $4)';
+    $sql = 'INSERT INTO ' . sys_table('users_log') . ' (user_id, action, target_table, record_id) VALUES ($1, $2, $3, $4)';
     @pg_query_params($conn, $sql, [$userId, $action, $targetTable, $recordId]);
 }

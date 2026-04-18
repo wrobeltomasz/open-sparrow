@@ -1,4 +1,13 @@
 <?php
+// Set secure session cookie parameters before starting the session
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => '',
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Strict'
+]);
 session_start();
 
 // Redirect to login if not authenticated
@@ -7,8 +16,44 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Enforce absolute session lifetime (8 hours) regardless of browser state
+$sessionMaxLifetime = 8 * 60 * 60;
+if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > $sessionMaxLifetime) {
+    session_destroy();
+    header("Location: login.php");
+    exit;
+}
+
+// Verify session integrity by comparing the stored User-Agent hash against the current request.
+// Eliminates opportunistic session hijacking with stolen cookies from different clients.
+$sessionUserAgent = $_SESSION['user_agent'] ?? null;
+$currentUserAgent = hash('sha256', $_SERVER['HTTP_USER_AGENT'] ?? '');
+if ($sessionUserAgent !== null && !hash_equals($sessionUserAgent, $currentUserAgent)) {
+    session_destroy();
+    header("Location: login.php");
+    exit;
+}
+
+// Generate a unique nonce for Content Security Policy
+$cspNonce = bin2hex(random_bytes(16));
+
+// Apply essential security headers
+header("X-Frame-Options: DENY");
+header("X-Content-Type-Options: nosniff");
+header("Referrer-Policy: strict-origin-when-cross-origin");
+header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
+// style-src uses nonce instead of unsafe-inline to prevent CSS injection attacks
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'nonce-$cspNonce'; script-src 'self' 'nonce-$cspNonce'");
+
 // Define strict user role
 $userRole = $_SESSION['role'] ?? 'readonly';
+
+// Expose only capability flags to the client instead of the raw role name
+// to reduce attack surface during reconnaissance
+$userCaps = [
+    'canEdit'   => $userRole === 'full',
+    'canExport' => in_array($userRole, ['full', 'export'], true),
+];
 ?>
 <!doctype html>
 <html lang="en">
@@ -17,7 +62,7 @@ $userRole = $_SESSION['role'] ?? 'readonly';
     <title>OpenSparrow | Calendar</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="assets/css/styles.css" rel="stylesheet" />
-    <style>
+    <style nonce="<?php echo $cspNonce; ?>">
         .calendar-header {
             display: flex;
             justify-content: space-between;
@@ -80,13 +125,13 @@ $userRole = $_SESSION['role'] ?? 'readonly';
         .calendar-event:hover {
             opacity: 0.9;
         }
+        /* Inline style attributes are not covered by nonce — moved to a nonce-protected style block */
+        #calendarMain { padding: 20px; width: 100%; overflow-y: auto; }
     </style>
 </head>
 <body>
-
 <?php include 'templates/header_app.php'; ?>
-
-<main style="padding: 20px; width: 100%; overflow-y: auto;">
+<main id="calendarMain">
     <div class="calendar-header">
         <h2 id="calendarTitle">Month Year</h2>
         <div class="calendar-nav">
@@ -94,19 +139,15 @@ $userRole = $_SESSION['role'] ?? 'readonly';
             <button id="btnNext">Next</button>
         </div>
     </div>
-    
+
     <div id="calendarContainer" class="calendar-grid"></div>
-
-<script>
-    // Define global user role state
-    window.USER_ROLE = '<?php echo htmlspecialchars($userRole ?? 'readonly', ENT_QUOTES, 'UTF-8'); ?>';
+<script nonce="<?php echo $cspNonce; ?>">
+    // Expose binary capability flags only — never the raw role string
+    window.USER_CAPS = <?php echo json_encode($userCaps, JSON_THROW_ON_ERROR); ?>;
 </script>
-
-<script type="module" src="assets/js/calendar.js?v=<?php echo @filemtime('assets/js/calendar.js'); ?>"></script>
+<script type="module" src="assets/js/calendar.js?v=<?php echo @filemtime('assets/js/calendar.js'); ?>" nonce="<?php echo $cspNonce; ?>"></script>
 </main>
-
 </div>
 <?php include 'templates/footer.php'; ?>
-
 </body>
 </html>

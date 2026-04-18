@@ -22,7 +22,7 @@
 
 ## Overview
 
-OpenSparrow is a JSON schema-driven platform for building robust internal systems. It is designed to empower SMEs and organizations with **Digital Sovereignty** by providing a high-performance, self-hosted alternative to proprietary SaaS platforms. By decoupling business logic from the infrastructure, OpenSparrow ensures you maintain 100% ownership of your data and tools without vendor lock-in.
+OpenSparrow is a JSON schema-driven platform for building internal systems. Tables, forms, dashboards, and calendars are generated from configuration files, so business logic stays decoupled from infrastructure. Self-hosted on PostgreSQL — no vendor lock-in, full data ownership.
 
 Demo: http://www.demo.opensparrow.org
 
@@ -36,48 +36,42 @@ Demo: http://www.demo.opensparrow.org
 
 ## Features
 
-- **Zero-Configuration Setup:** Configure your PostgreSQL connection and initialize core system tables directly from the admin interface.
-- **JSON-Driven Data Grid (CRUD):** Generate tables and forms from `schema.json` with support for nested relations, constraints, and enum color states.
-- **Inline Editing and Safe API Flow:** Update records directly in the grid using PATCH while keeping request handling centralized in `api.php`.
-- **Dashboard Engine:** Build metrics and grouped summaries using COUNT, SUM, AVG, MIN, MAX, and GROUP BY operations on PostgreSQL data.
-- **Calendar and Notifications:** Map date-based records to calendar views and trigger scheduled reminders through the cron notification runner.
-- **Visual Admin Panel:** Manage schema, dashboards, calendar settings, users, and security options from `/admin`.
-- **Audit Logging:** Data changes are tracked in internal log tables for traceability.
-- **Export and Navigation Tools:** Use CSV export and pagination modules for day-to-day data operations.
-- **Standards-Based Interoperability:** (Planned) Built-in REST API and Webhook engine to prevent data silos and integrate with n8n, Make, or custom scripts.
-- **Inclusive Design:** Focused on WCAG 2.1 compliance to ensure internal tools are accessible to everyone, including users with disabilities.
-- **Workflows Builder:** Construct dynamic, multi-step wizards for complex data entry. Easily link parent and child records across multiple PostgreSQL tables and allow multiple record additions within a single guided process.
-- **Files management:** A module for adding files to specific records, tagging, or searching. Configuration management via the admin panel.
+- **Zero-configuration setup** — configure PostgreSQL and initialize system tables from the admin UI.
+- **JSON-driven CRUD** — tables and forms generated from `schema.json` with nested relations, constraints, and enum color states.
+- **Inline editing** — in-grid PATCH updates routed through a single `api.php` gateway.
+- **Dashboard engine** — COUNT / SUM / AVG / MIN / MAX / GROUP BY widgets defined in `dashboard.json`.
+- **Calendar & notifications** — date-based records on a calendar view, with scheduled reminders via cron.
+- **Admin panel** — visual editors for schema, dashboards, calendar, users, and security at `/admin`.
+- **Audit logging** — data changes tracked in internal log tables.
+- **CSV export & pagination** — built-in grid utilities.
+- **Workflows builder** — multi-step wizards linking parent/child records across tables.
+- **File management** — per-record attachments with tagging and search, configurable via the admin panel.
+- **WCAG 2.1 focus** — accessibility-oriented UI.
+- *(Planned)* REST API and webhook engine for n8n / Make / custom integrations.
 
 ---
 
 ## Project Structure
 
-Below is an overview of the most important directories and files in the OpenSparrow project:
+### Core directories
+- **`admin/`** — management panel (schema editor, users, security settings).
+- **`assets/`** — static frontend resources (`css/`, `js/`, `icons/`, `img/`).
+- **`includes/`** — backend helpers. `db.php` centralizes PostgreSQL access; `api_helpers.php` holds request/response helpers.
+- **`cron/`** — scheduled workers (e.g. `cron_notifications.php`).
+- **`templates/`** — layout wrappers (`template.php`).
+- **`tests/`** — E2E Selenium suite.
+- **`storage/files/`** — user-uploaded files.
 
-### Core Directories
-* **`admin/`** – The administrative heart of the application. It contains the logic for the Management Panel, including database schema editing (`schema.js`), user management (`users.js`), and system security settings (`security.js`).
-* **`assets/`** – Static resources for the frontend.
-    * `css/` & `js/`: Application styles and core JavaScript logic (e.g., data grid, export, pagination).
-    * `icons/` & `img/`: UI assets, logos, and visual elements.
-* **`includes/`** – Essential backend components.
-    * `db.php`: Central PostgreSQL connection and database utility functions.
-    * `api_helpers.php`: Shared helpers for request validation and API responses.
-* **`cron/`** – Background workers and scheduled tasks, such as `cron_notifications.php` for automated alerts.
-* **`templates/`** – UI layout wrappers. The `template.php` file defines the standard look and feel of every page.
-* **`tests/`** – Quality assurance suite, featuring end-to-end (E2E) Selenium tests.
-* **`storage/files/`** – The location where files uploaded by system users are saved.
-
-### Key Files
-* **`api.php`** – The main application API gateway handling all CRUD operations.
-* **`index.php`** – The default landing page and main data entry point for users.
-* **`dashboard.php` / `calendar.php`** – Primary user-facing modules for data visualization and scheduling.
-* **`login.php` / `logout.php`** – Secure session and authentication management.
-* **`create.php` / `edit.php`** – Dedicated forms for creating and updating records.
-* **`Dockerfile` / `docker-compose.yml`** – Containerization config for easy deployment and local development.
-* **`phpcs.xml`** – Configuration for PHP CodeSniffer to ensure PSR-12 coding standards.
-* **`api_schema.php`** – A secure endpoint that provides the necessary database structure to the frontend UI. It actively filters out sensitive, backend-only information (like hidden tables or exact relationship maps) and customizes the data validation rules based on the user's permission level.
-* **`api_fk.php`** – A proxy endpoint designed to securely fetch related data (foreign keys) for dropdowns and inputs. It acts as a middleman, preventing the browser from ever knowing the exact internal database structure or table relationships while still providing the necessary options to the user.
+### Key files
+- **`api.php`** — main API gateway (GET / POST / PATCH / DELETE).
+- **`index.php`** — default landing / data entry page.
+- **`dashboard.php` / `calendar.php`** — user-facing visualization and scheduling modules.
+- **`login.php` / `logout.php`** — session and authentication.
+- **`create.php` / `edit.php`** — record create/update forms.
+- **`api_schema.php`** — filtered schema endpoint for the frontend (hides backend-only structure).
+- **`api_fk.php`** — proxy endpoint for foreign-key dropdowns (never exposes internal relations).
+- **`Dockerfile` / `docker-compose.yml`** — containerized deployment.
+- **`phpcs.xml`** — PSR-12 ruleset.
 
 ---
 
@@ -87,121 +81,105 @@ Below is an overview of the most important directories and files in the OpenSpar
 
 - PHP 8.0+
 - PostgreSQL 14+
-- Web server (Apache or Nginx) or PHP built-in server
+- Apache, Nginx, or the PHP built-in server
 - Git
 
-Cieszę się, że wszystko w końcu działa! 
-
-Zaktualizowałem Twoją instrukcję. Wprowadziłem do niej kilka kluczowych poprawek:
-1. **Dodałem tworzenie folderu `storage/files` i nadawanie mu uprawnień** w sekcji Docker (krok 2) – dzięki temu nowi użytkownicy od razu unikną błędu z wgrywaniem plików, z którym przed chwilą walczyłeś. Ujednoliciłem też komendę `chmod`, by upewnić się, że foldery mają prawa zapisu.
-2. **Ujednoliciłem adresy URL** – w kroku 2 piszesz, że aplikacja startuje na `localhost:8080`, więc poprawiłem ścieżki w kroku 5, aby wskazywały bezpośrednio na ten sam port.
-3. W kroku 7 dopisałem informację, że dotyczy to tylko instalacji **bez użycia Dockera**, co zmniejszy zamieszanie (skoro uruchomili Dockera w kroku 2, to serwer już działa).
-
-Oto gotowy do wklejenia w README (lub dokumentację) zaktualizowany kod w formacie Markdown:
-
-***
-
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/wrobeltomasz/open-sparrow.git
 cd open-sparrow
 ```
 
-### 2. Run with Docker (Quick Start)
-
-If you have Docker installed, you can start the entire stack with a single command. This handles PHP, Nginx, and PostgreSQL for you:
+### 2. Run with Docker (quick start)
 
 ```bash
-# Create required directories if they don't exist
+# Create required directories
 mkdir -p includes storage/files
 
-# Set permissions for the web server (82:82 is www-data in Alpine Linux)
+# Set permissions (82:82 is www-data in Alpine)
 sudo chown -R 82:82 includes/ storage/
 sudo chmod -R 775 includes/ storage/
 
-# Start the containers
+# Start the stack (PHP + Nginx + PostgreSQL)
 docker compose up -d --build
 ```
 
-The app will be available at: **http://localhost:8080**
+Available at **http://localhost:8080**.
 
-### 3. Install dependencies
+### 3. Dependencies
 
-There is no dependency install step required for the current repository state.
+None. The repository has no composer/npm step.
 
-### 4. Set up environment variables (.env example)
+### 4. Environment variables (optional)
 
-OpenSparrow can read PostgreSQL environment variables:
 ```env
 PGHOST=127.0.0.1
 PGPORT=5432
 PGDATABASE=opensparrow
 PGUSER=postgres
 PGPASSWORD=postgres
+PGSCHEMA=app
 ```
-*Important:* there is no `.env` loader in the current codebase. Define these variables in your server or shell environment, or simply use the Admin UI Database tab.
 
-### 5. Configure database connection from Admin
+`PGSCHEMA` controls the schema used for OpenSparrow system tables (`spw_*`). Defaults to `app`. If `includes/database.json` defines a `schema` key, it overrides this variable.
 
-Open the admin panel:
-**http://localhost:8080/admin**
+> There is no `.env` loader in the current codebase. Export these in your shell/container environment or configure everything from the admin UI.
 
-Log in with default credentials:
-* **Password:** `admin` *(no username required — the admin panel only asks for a master password)*
+### 5. Configure the database from Admin
 
-Then go to the **Database** tab:
+Open **http://localhost:8080/admin** and log in with the default master password: `admin` *(no username — the admin panel asks only for a master password)*.
+
+In the **Database** tab:
+
 1. Enter host, port, database, username, and password.
-2. Click **Save configuration**.
+2. *(Optional)* In **System Schema**, set the PostgreSQL schema for OpenSparrow system tables (`spw_users`, `spw_files`, etc.). Defaults to `app`.
+3. Click **Save File**.
 
-*Note: The settings are stored securely in `includes/database.json`.*
+Settings are written to `includes/database.json`. The `schema` key is read by `sys_schema()` in `includes/db.php` and used to qualify every system-table query.
 
-### 6. Run database migrations (system initialization)
+### 6. Initialize system tables
 
-In the Admin Panel -> **System Health** tab, click **Initialize System Tables**.
-This creates required tables in the `app` schema, including:
-* `app.users`
-* `app.users_log`
-* `app.users_notifications`
-* `app.files`
+In the admin panel → **System Health** → **Initialize System Tables**. This creates all `spw_`-prefixed tables in the configured schema:
 
-This is the migration-equivalent step for the current project.
+- `spw_users`
+- `spw_users_log`
+- `spw_users_notifications`
+- `spw_files`
+- `spw_login_attempts`
 
-### 7. Start the development server (Without Docker)
+### 7. Run without Docker
 
-*If you used Docker in Step 2, you can skip this step!*
+*Skip this if you used Docker in step 2.*
 
-**Option A (recommended):** Serve through Apache/Nginx and open:
+**Option A** — serve via Apache/Nginx and open:
+```
 http://localhost/open-sparrow/
+```
 
-**Option B (quick local PHP server):**
+**Option B** — PHP built-in server:
 ```bash
 php -S localhost:8000
 ```
-Then open:
-http://localhost:8000/admin
+Open **http://localhost:8000/admin**.
 
 ---
 
-### Security & Configuration
+## Security & Configuration
 
-Currently, settings are stored in `includes/database.json`. Access is restricted via `.htaccess`. 
+Configuration lives in `includes/database.json`, protected by `.htaccess`.
 
-- **Production Tip:** Ensure your web server is configured to deny public web access to the `includes/` directory. 
-- **Planned Improvement:** Moving towards full Environment Variable (`.env`) support for improved security in containerized and cloud-native environments.
+- **Production:** deny public web access to `includes/` at the web-server level.
+- **Planned:** full `.env` support for containerized and cloud-native deployments.
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and sign the
-[Contributor License Agreement (CLA)](CLA.md) before opening a pull request.
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and sign the [Contributor License Agreement (CLA)](CLA.md) before opening a pull request.
 
 ---
 
 ## License
 
-This project is licensed under the **GNU Lesser General Public License v3.0 (LGPL v3)**.
-You may use OpenSparrow in open-source and closed-source commercial projects.
-If you modify core OpenSparrow files, those modifications must remain under the same license.
-See [LICENCE](LICENCE) for full details.
+Licensed under the **GNU Lesser General Public License v3.0 (LGPL v3)**. You may use OpenSparrow in open-source and closed-source commercial projects. Modifications to core OpenSparrow files must remain under the same license. See [LICENCE](LICENCE) for details.

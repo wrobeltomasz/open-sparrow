@@ -153,9 +153,9 @@ if (!empty($tableCfg['subtables']) && is_array($tableCfg['subtables'])) {
 
 // Fetch related files with tags
 $relatedFiles = [];
-$fileSql = "SELECT uuid, display_name, name, type, size_bytes, created_at, tags 
-            FROM app.files 
-            WHERE related_table = $1 AND related_id = $2 AND deleted_at IS NULL 
+$fileSql = "SELECT uuid, display_name, name, type, size_bytes, created_at, tags
+            FROM " . sys_table('files') . "
+            WHERE related_table = $1 AND related_id = $2 AND deleted_at IS NULL
             ORDER BY created_at DESC";
 $fileRes = @pg_query_params($conn, $fileSql, [$table, $id]);
 if ($fileRes) {

@@ -896,3 +896,17 @@ th.dragging {
 th.drag-over {
   border-left: 3px solid #F59E0B !important;
 }
+/* menu.php — replaces inline styles removed for CSP compliance */
+.menu-icon-span {
+    font-size: 1.2em;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+.menu-list {
+    margin: 0;
+    padding: 1rem 0.5rem;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}

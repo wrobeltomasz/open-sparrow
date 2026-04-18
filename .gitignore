@@ -39,3 +39,4 @@ phpcbf.phar
 # Files storage
 storage/files/*
 !storage/files/.gitkeep
+/.claude
