@@ -16,6 +16,7 @@ export function renderDatabaseEditor(key, itemData, isArray, ctx) {
     workspaceEl.appendChild(createTextInput('dbname', 'Database Name', currentConfig.dbname || '', v => currentConfig.dbname = v));
     workspaceEl.appendChild(createTextInput('user', 'DB User', currentConfig.user || 'postgres', v => currentConfig.user = v));
     workspaceEl.appendChild(createTextInput('password', 'DB Password', currentConfig.password || '', v => currentConfig.password = v));
+    workspaceEl.appendChild(createTextInput('schema', 'System Schema (for spw_* tables, default: app)', currentConfig.schema || 'app', v => currentConfig.schema = v));
 
     const testBtn = document.createElement('button');
     testBtn.innerHTML = '🔌 Test Saved Connection';

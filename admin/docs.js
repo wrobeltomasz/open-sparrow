@@ -110,7 +110,7 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">8. System Health & Backups</h3>
             <p>Ensure your system is running smoothly and data is safe.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Initialize System Tables:</strong> Found in the Health tab, this critical feature builds the base <code>app.users</code>, <code>app.users_log</code>, and <code>app.users_notifications</code> tables. It must be executed on a fresh installation.</li>
+                <li><strong>Initialize System Tables:</strong> Found in the Health tab, this critical feature builds the base <code>spw_users</code>, <code>spw_users_log</code>, <code>spw_users_notifications</code>, <code>spw_files</code>, and <code>spw_login_attempts</code> tables in the configured schema (defaults to <code>app</code>). It must be executed on a fresh installation.</li>
                 <li><strong>System Diagnostics:</strong> Performs live checks on your PHP version, ZIP extensions, directory write permissions, and database connectivity.</li>
                 <li><strong>Export / Import Config:</strong> Use the top navigation buttons to download (Export) or upload (Import) a ZIP archive containing all your JSON settings. This is highly recommended for creating backups or migrating your setup to a production server.</li>
             </ul>

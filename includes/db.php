@@ -48,3 +48,33 @@ function db_connect(): \PgSql\Connection
     
     return $conn;
 }
+
+// Returns the schema name for OpenSparrow system tables.
+// Configurable via "schema" key in includes/database.json; defaults to "app".
+function sys_schema(): string
+{
+    static $schema = null;
+    if ($schema !== null) {
+        return $schema;
+    }
+    $schema = getenv('PGSCHEMA') ?: 'app';
+    $configFile = __DIR__ . '/database.json';
+    if (file_exists($configFile)) {
+        $json = @file_get_contents($configFile);
+        $config = @json_decode($json, true);
+        if (is_array($config) && !empty($config['schema'])) {
+            $schema = (string) $config['schema'];
+        }
+    }
+    return $schema;
+}
+
+// Returns a fully-qualified, safely-quoted system table identifier.
+// Usage: sys_table('users') => "app"."spw_users" (with configured schema).
+function sys_table(string $name): string
+{
+    $schema = sys_schema();
+    $table = 'spw_' . $name;
+    $quote = static fn(string $s): string => '"' . str_replace('"', '""', $s) . '"';
+    return $quote($schema) . '.' . $quote($table);
+}

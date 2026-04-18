@@ -167,7 +167,7 @@ function actionList($conn): void {
 
     $whereSQL = implode(' AND ', $where);
 
-    $countSQL = "SELECT COUNT(*) AS cnt FROM app.files f WHERE {$whereSQL}";
+    $countSQL = "SELECT COUNT(*) AS cnt FROM " . sys_table('files') . " f WHERE {$whereSQL}";
     $resCount = pg_query_params($conn, $countSQL, $params);
     if (!$resCount) {
         error_log('api_files actionList count failed: ' . pg_last_error($conn));
@@ -181,8 +181,8 @@ function actionList($conn): void {
             f.uuid, f.name, f.display_name, f.type, f.mime_type,
             f.size_bytes, f.created_at, f.related_table, f.related_id, f.tags,
             u.username AS uploaded_by_username
-        FROM app.files f
-        LEFT JOIN app.users u ON u.id = f.uploaded_by
+        FROM " . sys_table('files') . " f
+        LEFT JOIN " . sys_table('users') . " u ON u.id = f.uploaded_by
         WHERE {$whereSQL}
         ORDER BY f.created_at DESC
         LIMIT $" . (count($paramsList) + 1) . "
@@ -315,7 +315,7 @@ function actionUpload($conn): void {
     }
 
     $sql = "
-        INSERT INTO app.files
+        INSERT INTO " . sys_table('files') . "
             (uuid, name, display_name, type, mime_type, extension, size_bytes, storage_path, uploaded_by, related_table, related_id, tags)
         VALUES
             ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
@@ -359,7 +359,7 @@ function actionDelete($conn, array $body): void {
         jsonError('uuid is required.', 400);
     }
 
-    $sql = "UPDATE app.files SET deleted_at = NOW() WHERE uuid = $1 AND deleted_at IS NULL RETURNING id";
+    $sql = "UPDATE " . sys_table('files') . " SET deleted_at = NOW() WHERE uuid = $1 AND deleted_at IS NULL RETURNING id";
     $res = pg_query_params($conn, $sql, [$uuid]);
 
     if (!$res) {

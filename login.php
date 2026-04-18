@@ -70,13 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Check rate limit by IP hash and username in a single round-trip.
         // The OR condition combined with two conditional SUMs lets PostgreSQL
-        // use both indexes (idx_login_attempts_ip_hash, idx_login_attempts_username)
+        // use both indexes (idx_spw_login_attempts_ip, idx_spw_login_attempts_username)
         // and return both counters at once.
         $sqlCheck = "
             SELECT
                 SUM(CASE WHEN ip_hash  = \$1 THEN 1 ELSE 0 END) AS cnt_ip,
                 SUM(CASE WHEN username = \$2 THEN 1 ELSE 0 END) AS cnt_user
-            FROM \"app\".\"login_attempts\"
+            FROM " . sys_table('login_attempts') . "
             WHERE attempted_at > now() - (\$3 * interval '1 minute')
               AND (ip_hash = \$1 OR username = \$2)
         ";
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($error)) {
-            $sqlUser = 'SELECT id, username, password_hash, role FROM "app"."users" WHERE username = $1';
+            $sqlUser = 'SELECT id, username, password_hash, role FROM ' . sys_table('users') . ' WHERE username = $1';
             $resUser = pg_query_params($conn, $sqlUser, [$username]);
 
             if (!$resUser) {
@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 } else {
                     // Log failed attempt
-                    $sqlInsert = 'INSERT INTO "app"."login_attempts" (username, ip_hash) VALUES ($1, $2)';
+                    $sqlInsert = 'INSERT INTO ' . sys_table('login_attempts') . ' (username, ip_hash) VALUES ($1, $2)';
                     pg_query_params($conn, $sqlInsert, [$username, $ipHash]);
                     $error = 'Invalid credentials.';
                 }

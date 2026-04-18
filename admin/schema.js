@@ -85,6 +85,8 @@ export async function syncSchemaTables(currentConfig, schemaName, onSuccess, onE
             if (!currentConfig.tables || Array.isArray(currentConfig.tables)) currentConfig.tables = {};
             
             data.tables.forEach(tbl => {
+                // Skip OpenSparrow system tables — they must never appear as user tables.
+                if (tbl.startsWith('spw_')) return;
                 if (!currentConfig.tables[tbl]) {
                     currentConfig.tables[tbl] = { display_name: tbl.replace(/_/g, ' ').toUpperCase(), schema: schemaName, columns: {} };
                     addedCount++;

@@ -39,8 +39,8 @@ $conn = db_connect();
 
 // Fetch record from database
 $sql = "
-    SELECT name, storage_path, mime_type, deleted_at 
-    FROM app.files 
+    SELECT name, storage_path, mime_type, deleted_at
+    FROM " . sys_table('files') . "
     WHERE uuid = $1
 ";
 

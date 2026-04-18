@@ -83,7 +83,7 @@ try {
             foreach ($notifiedUsers as $userId) {
                 $userId = (int)$userId;
                 $insertSql = "
-                    INSERT INTO app.users_notifications (user_id, title, link, source_table, source_id, notify_date)
+                    INSERT INTO " . sys_table('users_notifications') . " (user_id, title, link, source_table, source_id, notify_date)
                     VALUES ($1, $2, $3, $4, $5, $6)
                     ON CONFLICT (user_id, source_table, source_id, notify_date) DO NOTHING
                 ";
