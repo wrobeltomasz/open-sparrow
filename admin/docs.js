@@ -65,7 +65,7 @@ export function renderDocumentation(ctx) {
                         <li><strong>Phone (9-15 digits, optional +):</strong> <code>^\+?[0-9]{9,15}$</code></li>
                         <li><strong>Postal code (XX-XXX):</strong> <code>^[0-9]{2}-[0-9]{3}$</code></li>
                         <li><strong>URL (http/https):</strong> <code>^https?:\/\/.*$</code></li>
-                        <li><strong>Username (3-16 chars, letters/digits/underscore):</strong> <code>^[a-zA-Z0-9_]{3,16}$</code></li>
+                        <li><strong>Username (3-16 chars, letters/digits/_ ):</strong> <code>^[a-zA-Z0-9_]{3,16}$</code></li>
                         <li><strong>Price / decimal (up to 2 places):</strong> <code>^\d+(\.\d{1,2})?$</code></li>
                         <li><strong>Date (YYYY-MM-DD):</strong> <code>^\d{4}-\d{2}-\d{2}$</code></li>
                         <li><strong>Time (HH:MM, 24h):</strong> <code>^([01]\\d|2[0-3]):[0-5]\\d$</code></li>
@@ -166,7 +166,7 @@ export function renderDocumentation(ctx) {
             <ul style="padding-left: 20px;">
                 <li><strong>Deny public access to <code>includes/</code>:</strong> Configure your web server so <code>database.json</code>, <code>security.json</code> and <code>schema.json</code> cannot be fetched directly.</li>
                 <li><strong>Environment variables:</strong> <code>PGHOST</code>, <code>PGPORT</code>, <code>PGDATABASE</code>, <code>PGUSER</code>, <code>PGPASSWORD</code>, <code>PGSCHEMA</code>. <code>PGSCHEMA</code> is the fallback for the system schema when <code>database.json</code> does not define <code>schema</code>.</li>
-                <li><strong>Storage permissions:</strong> Under Docker, <code>includes/</code> and <code>storage/</code> must be writable by the web-server user (UID/GID <code>82:82</code> for Alpine-based images).</li>
+                <li><strong>Storage permissions:</strong> Under Docker, <code>includes/</code> and <code>storage/</code> must be writable by the web-server user (UID/GID <code>82:82</code> for musl-based slim PHP images).</li>
                 <li><strong>Backups:</strong> Export the config ZIP before every upgrade and keep regular <code>pg_dump</code> snapshots of both application and <code>spw_*</code> tables.</li>
             </ul>
         </div>
