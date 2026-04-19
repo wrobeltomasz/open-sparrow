@@ -910,3 +910,8 @@ th.drag-over {
     flex-direction: column;
     gap: 5px;
 }
+
+.search-highlight {
+    background-color: yellow;
+    font-weight: bold;
+}
