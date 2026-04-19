@@ -188,8 +188,12 @@ export async function renderGrid(schema) {
     displayedColumns.forEach(col => {
         const th = document.createElement('th');
         const colCfg = schema.tables[currentTable].columns[col] || {};
-        th.textContent = colCfg.display_name || col;
-        th.dataset.col = col; 
+        th.dataset.col = col;
+
+        const thLabel = document.createElement('span');
+        thLabel.className = 'th-label';
+        thLabel.textContent = colCfg.display_name || col;
+        th.appendChild(thLabel);
 
         th.style.cursor = 'pointer';
         th.addEventListener('click', (e) => {
@@ -213,7 +217,7 @@ export async function renderGrid(schema) {
         });
 
         if (sortState.column === col) {
-            th.textContent += sortState.asc ? ' ↑' : ' ↓';
+            thLabel.textContent += sortState.asc ? ' ↑' : ' ↓';
         }
 
         const resizer = document.createElement('div');
@@ -285,7 +289,10 @@ export async function renderGrid(schema) {
 
     if (!isReadOnly) {
         const thActions = document.createElement('th');
-        thActions.textContent = 'Actions';
+        const actLabel = document.createElement('span');
+        actLabel.className = 'th-label';
+        actLabel.textContent = 'Actions';
+        thActions.appendChild(actLabel);
         headRow.appendChild(thActions);
     }
     

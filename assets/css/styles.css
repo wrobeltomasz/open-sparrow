@@ -336,19 +336,30 @@ thead th {
   top: 0;
   z-index: 10;
   text-align: left;
-  padding: 0.7rem 0.85rem;
-  background: var(--accent-mid);
+  padding: 0.55rem 0.4rem;
+  background: #fff;
   border-bottom: 2px solid var(--border);
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing: .04em;
-  text-transform: none;
-  color: var(--accent-dark);
   white-space: nowrap;
   user-select: none;
 }
 
-thead th:first-child { padding-left: 1.25rem; }
+thead th:first-child { padding-left: 0.6rem; }
+thead th:last-child  { padding-right: 0.6rem; }
+
+.th-label {
+  display: block;
+  background: var(--accent-mid);
+  color: var(--accent-dark);
+  border-radius: 8px;
+  padding: 0.3rem 0.85rem;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
 
 tbody td {
   padding: 0.4rem 0.85rem;
@@ -890,11 +901,15 @@ th {
 
 th.dragging {
   opacity: 0.4;
-  background-color: var(--accent-light) !important;
 }
 
-th.drag-over {
-  border-left: 3px solid #F59E0B !important;
+th.dragging .th-label {
+  background-color: var(--accent-light);
+}
+
+th.drag-over .th-label {
+  outline: 2px solid #F59E0B;
+  outline-offset: 1px;
 }
 /* menu.php — replaces inline styles removed for CSP compliance */
 .menu-icon-span {
