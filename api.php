@@ -1,7 +1,15 @@
 <?php
 declare(strict_types=1);
 
-session_start();
+// Guarded session start — this file is both called directly (e.g. PATCH from
+// inline grid edits) and require'd from index.php, which already calls
+// session_start(). Without the guard, PHP emits an "Ignoring session_start()"
+// Notice that gets echoed as HTML before the JSON body, silently corrupting
+// every response (client res.json() throws, deleteRow returns null, the grid
+// refresh after DELETE never runs, etc.).
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
 // Block access without active session
 if (!isset($_SESSION['user_id'])) {

@@ -92,7 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             log_user_action($conn, $_SESSION['user_id'], 'INSERT', $table, (int)$newId);
         }
 
-        header("Location: index.php");
+        // Return to the grid of the source table. $table is validated against
+        // schema above (line 23) and app.js honours ?table=<name>.
+        header("Location: index.php?table=" . urlencode($table));
         exit;
     } else {
         $error = pg_last_error($conn);
@@ -113,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <img src="assets/img/logo-blue.png" alt="OpenSparrow Logo" />
     </a>
     <div class="header-user-menu">
-        <button onclick="window.history.back()" class="btn-logout">Back</button>
+        <button onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'" class="btn-logout">Back</button>
     </div>
 </header>
 
@@ -233,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php else : ?>
                     <button type="submit" class="btn-save" style="padding: 10px 20px; background: #007ACC; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px;">Add Record</button>
                 <?php endif; ?>
-                <button type="button" class="btn-cancel" onclick="window.history.back()" style="padding: 10px 20px; background: #eee; color: #333; border: 1px solid #ccc; cursor: pointer; border-radius: 4px;">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'" style="padding: 10px 20px; background: #eee; color: #333; border: 1px solid #ccc; cursor: pointer; border-radius: 4px;">Cancel</button>
             </div>
         </form>
     </div>

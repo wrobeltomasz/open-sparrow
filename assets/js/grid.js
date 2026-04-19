@@ -633,10 +633,16 @@ export async function renderGrid(schema) {
                 if (confirm("Are you sure you want to delete this record? This operation cannot be undone.")) {
                     const result = await deleteRow(row['id']);
                     if (result?.ok) {
-                        fullData = fullData.filter(r => String(r.id) !== String(row['id']));
-                        filteredData = filteredData.filter(r => String(r.id) !== String(row['id']));
-                        unsortedFilteredData = unsortedFilteredData.filter(r => String(r.id) !== String(row['id']));
-                        renderGrid(schema);
+                        // Full reload from server — keeps pagination, counts,
+                        // and any server-side aggregates in sync after delete.
+                        // Previously we filtered rows client-side, which could
+                        // diverge from the DB state on concurrent edits.
+                        await loadTable(
+                            schema,
+                            currentTable,
+                            document.getElementById('gridTitle'),
+                            document.getElementById('addRow')
+                        );
                     }
                 }
             });

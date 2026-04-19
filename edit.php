@@ -90,7 +90,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Log manual edit
         log_user_action($conn, $_SESSION['user_id'], 'UPDATE', $table, (int)$id);
 
-        header("Location: index.php");
+        // Return to the grid of the edited record's source table. The table
+        // name is already validated against schema above (line 25), and
+        // app.js honours ?table=<name> when picking the initial table.
+        header("Location: index.php?table=" . urlencode($table));
         exit;
     } else {
         $error = pg_last_error($conn);
@@ -301,7 +304,7 @@ if ($fileRes) {
                 <?php else : ?>
                     <button type="submit" class="btn-save">Save Changes</button>
                 <?php endif; ?>
-                <button type="button" class="btn-cancel" onclick="window.history.back()">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'">Cancel</button>
             </div>
         </form>
     </div>
