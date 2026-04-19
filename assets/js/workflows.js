@@ -34,8 +34,13 @@ function createIconElement(iconPath, fallbackColor = 'var(--accent)') {
 // Main initialization function to be called from app.js
 export async function initWorkflows(menuListEl, containerEl, titleEl, appSchema) {
     const config = await fetchWorkflowsConfig();
-    
+
     if (!config || !config.workflows || config.workflows.length === 0) {
+        return;
+    }
+
+    // Respect the "Hide from Sidebar Menu" flag from admin Global Settings
+    if (config.hidden === true) {
         return;
     }
 

@@ -1,5 +1,5 @@
 // admin/dashboard.js
-import { createTextInput, createSelectInput, createColorInput, createIconPicker } from './ui.js';
+import { createTextInput, createSelectInput, createColorInput, createIconPicker, createCheckbox, renderGlobalSettings } from './ui.js';
 
 // Added new widget types for vertical bar and pie charts
 export const WIDGET_TYPES = [
@@ -17,22 +17,20 @@ export function initDashboardUI() {
 }
 
 export function renderDashboardLayout(ctx) {
-    const { workspaceEl, currentConfig } = ctx;
-    workspaceEl.innerHTML = '<h3>Dashboard Global Settings</h3>';
-    
-    workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Dashboard', v => currentConfig.menu_name = v));
-    workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
-        if (v && v.trim() !== '') currentConfig.menu_icon = v;
-        else delete currentConfig.menu_icon;
-    }));
+    renderGlobalSettings(ctx, {
+        title: 'Dashboard Global Settings',
+        defaultMenuName: 'Dashboard',
+        includeHidden: true,
+        onAfter: ({ workspaceEl, currentConfig }) => {
+            const layoutTitle = document.createElement('h4');
+            layoutTitle.textContent = 'Grid Layout (CSS)';
+            layoutTitle.style.marginTop = '20px';
+            workspaceEl.appendChild(layoutTitle);
 
-    const layoutTitle = document.createElement('h4');
-    layoutTitle.textContent = 'Grid Layout (CSS)';
-    layoutTitle.style.marginTop = '20px';
-    workspaceEl.appendChild(layoutTitle);
-
-    workspaceEl.appendChild(createTextInput('layout_cols', 'Grid Columns (CSS)', currentConfig.layout.columns, v => currentConfig.layout.columns = v));
-    workspaceEl.appendChild(createTextInput('layout_gap', 'Grid Gap (CSS)', currentConfig.layout.gap, v => currentConfig.layout.gap = v));
+            workspaceEl.appendChild(createTextInput('layout_cols', 'Grid Columns (CSS)', currentConfig.layout.columns, v => currentConfig.layout.columns = v));
+            workspaceEl.appendChild(createTextInput('layout_gap', 'Grid Gap (CSS)', currentConfig.layout.gap, v => currentConfig.layout.gap = v));
+        },
+    });
 }
 
 export function renderDashboardEditor(key, itemData, isArray, ctx) {

@@ -67,8 +67,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             let dashName = 'Dashboard';
             let dashIconEl = renderIconElement('', 'assets/icons/dashboard.png');
+            let dashHidden = false;
             let calName = 'Calendar';
             let calIconEl = renderIconElement('', 'assets/icons/calendar.png');
+            let calHidden = false;
             let filesName = 'Files';
             let filesIconEl = renderIconElement('', 'assets/icons/folder_open.png');
 
@@ -78,6 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const dashCfg = await dashRes.json();
                     if (dashCfg.menu_name) dashName = dashCfg.menu_name;
                     dashIconEl = renderIconElement(dashCfg.menu_icon, 'assets/icons/dashboard.png');
+                    dashHidden = dashCfg.hidden === true;
                 }
             } catch(e) { console.warn('Could not load dashboard config', e); }
 
@@ -87,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const calCfg = await calRes.json();
                     if (calCfg.menu_name) calName = calCfg.menu_name;
                     calIconEl = renderIconElement(calCfg.menu_icon, 'assets/icons/calendar.png');
+                    calHidden = calCfg.hidden === true;
                 }
             } catch(e) { console.warn('Could not load calendar config', e); }
 
@@ -154,14 +158,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             filesItem.appendChild(filesLink);
 
             // Prepend in reverse order to achieve: Dashboard, Calendar, Files
+            // Skip modules flagged as hidden in their Global Settings
             if (navList.tagName === 'UL') {
                 navList.prepend(filesItem);
-                navList.prepend(calItem);
-                navList.prepend(dashItem);
+                if (!calHidden) navList.prepend(calItem);
+                if (!dashHidden) navList.prepend(dashItem);
             } else {
                 menuEl.prepend(filesLink);
-                menuEl.prepend(calLink);
-                menuEl.prepend(dashLink);
+                if (!calHidden) menuEl.prepend(calLink);
+                if (!dashHidden) menuEl.prepend(dashLink);
             }
             
             // Dynamically create a container for Active Filter Pills

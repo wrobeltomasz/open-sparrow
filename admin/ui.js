@@ -223,6 +223,111 @@ export function createCheckbox(key, labelText, value, onChange, defaultValue = t
     return container;
 }
 
+// Small visual preview that mirrors how a menu item will be rendered in the FE
+// sidebar. Kept in-sync with templates/menu.php semantics (image when the value
+// looks like a path, text glyph otherwise, dimmed when hidden).
+export function createMenuPreview() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'form-group menu-preview';
+
+    const label = document.createElement('label');
+    label.textContent = 'Live sidebar preview';
+    wrapper.appendChild(label);
+
+    const item = document.createElement('div');
+    item.className = 'menu-preview-item';
+    item.style.cssText = 'display:flex; align-items:center; gap:10px; padding:10px 14px; background:#0f172a; color:#e2e8f0; border-radius:6px; font-size:14px; min-width:220px; max-width:320px; transition:opacity .15s;';
+
+    const iconEl = document.createElement('span');
+    iconEl.style.cssText = 'width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;';
+
+    const nameEl = document.createElement('span');
+    nameEl.style.cssText = 'flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+
+    const badgeEl = document.createElement('span');
+    badgeEl.textContent = 'HIDDEN';
+    badgeEl.style.cssText = 'font-size:10px; background:#ef4444; color:#fff; padding:2px 6px; border-radius:3px; display:none; letter-spacing:.5px;';
+
+    item.appendChild(iconEl);
+    item.appendChild(nameEl);
+    item.appendChild(badgeEl);
+    wrapper.appendChild(item);
+
+    const update = ({ name, icon, hidden }) => {
+        nameEl.textContent = name || '';
+        iconEl.innerHTML = '';
+        if (icon) {
+            const looksLikePath = icon.includes('/') || icon.includes('.');
+            if (looksLikePath) {
+                const img = document.createElement('img');
+                img.src = '../' + icon;
+                img.alt = '';
+                img.style.cssText = 'max-width:20px; max-height:20px; filter:brightness(0) invert(1);';
+                img.onerror = () => { iconEl.innerHTML = ''; iconEl.textContent = '?'; };
+                iconEl.appendChild(img);
+            } else {
+                iconEl.textContent = icon;
+            }
+        }
+        item.style.opacity = hidden ? '0.4' : '1';
+        badgeEl.style.display = hidden ? 'inline-block' : 'none';
+    };
+
+    return { el: wrapper, update };
+}
+
+// Shared renderer for per-section global menu settings (Dashboard/Calendar/
+// Workflows/Files). Replaces four near-identical copies and keeps the live
+// sidebar preview consistent across sections.
+export function renderGlobalSettings(ctx, options = {}) {
+    const { workspaceEl, currentConfig } = ctx;
+    const {
+        title = 'Global Settings',
+        defaultMenuName = '',
+        includeHidden = true,
+        onAfter,
+    } = options;
+
+    workspaceEl.innerHTML = '';
+    const heading = document.createElement('h3');
+    heading.textContent = title;
+    workspaceEl.appendChild(heading);
+
+    const preview = createMenuPreview();
+    workspaceEl.appendChild(preview.el);
+
+    const refreshPreview = () => preview.update({
+        name: currentConfig.menu_name || defaultMenuName,
+        icon: currentConfig.menu_icon || '',
+        hidden: !!currentConfig.hidden,
+    });
+    refreshPreview();
+
+    workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name',
+        currentConfig.menu_name || defaultMenuName, v => {
+            currentConfig.menu_name = v;
+            refreshPreview();
+        }));
+
+    workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon',
+        currentConfig.menu_icon || '', v => {
+            if (v && v.trim() !== '') currentConfig.menu_icon = v;
+            else delete currentConfig.menu_icon;
+            refreshPreview();
+        }));
+
+    if (includeHidden) {
+        workspaceEl.appendChild(createCheckbox('hidden', 'Hide from Sidebar Menu',
+            currentConfig.hidden, v => {
+                if (v) currentConfig.hidden = true;
+                else delete currentConfig.hidden;
+                refreshPreview();
+            }, false));
+    }
+
+    if (typeof onAfter === 'function') onAfter(ctx);
+}
+
 // New function to handle multiple choices via checkboxes list
 export function createMultiSelect(key, labelText, options, selectedValues, onChange) {
     const wrapper = document.createElement('div');

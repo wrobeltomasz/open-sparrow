@@ -11,6 +11,37 @@ session_set_cookie_params([
 
 session_start();
 
+// Resolve the landing page after login by walking the sidebar order.
+// When an administrator hides a module from the sidebar (hidden: true in
+// the matching JSON config), we skip it so the user lands on the first
+// item that is actually visible in the navigation. Order mirrors the
+// prepend sequence in assets/js/app.js: Dashboard, Calendar, Files,
+// then the first table in the schema.
+function resolve_landing_page(): string {
+    $isHidden = static function (string $configFile): bool {
+        $path = __DIR__ . '/includes/' . $configFile;
+        if (!is_file($path)) {
+            return false;
+        }
+        $raw = @file_get_contents($path);
+        if ($raw === false) {
+            return false;
+        }
+        $cfg = json_decode($raw, true);
+        return is_array($cfg) && !empty($cfg['hidden']);
+    };
+
+    if (!$isHidden('dashboard.json')) {
+        return 'dashboard.php';
+    }
+    if (!$isHidden('calendar.json')) {
+        return 'calendar.php';
+    }
+    // Files module is always visible; index.php renders the first
+    // non-hidden table for any remaining case.
+    return 'index.php';
+}
+
 // Generate a unique nonce for Content Security Policy
 $cspNonce = bin2hex(random_bytes(16));
 
@@ -22,7 +53,7 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' 'nonce-$cs
 
 // Redirect if already authenticated
 if (isset($_SESSION['user_id'])) {
-    header("Location: dashboard.php");
+    header("Location: " . resolve_landing_page());
     exit;
 }
 
@@ -118,7 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     log_user_action($conn, $user['id'], 'LOGIN');
 
-                    header("Location: dashboard.php");
+                    header("Location: " . resolve_landing_page());
                     exit;
                 } else {
                     // Log failed attempt

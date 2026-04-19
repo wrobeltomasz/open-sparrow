@@ -81,6 +81,7 @@ try {
         $response = [
             'menu_name' => $dashboard['menu_name'] ?? 'Dashboard',
             'menu_icon' => $dashboard['menu_icon'] ?? '',
+            'hidden' => !empty($dashboard['hidden']),
             'layout' => $dashboard['layout'] ?? [],
             'widgets' => []
         ];
@@ -307,6 +308,7 @@ try {
         echo json_encode([
             'menu_name' => $calendar['menu_name'] ?? 'Calendar',
             'menu_icon' => $calendar['menu_icon'] ?? '',
+            'hidden' => !empty($calendar['hidden']),
             'events' => $events
         ]);
         exit;
