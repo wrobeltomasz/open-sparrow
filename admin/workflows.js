@@ -1,17 +1,11 @@
 // admin/workflows.js
 import { createTextInput, createSelectInput, createIconPicker } from './ui.js';
 
-// Render the multi-step wizard configuration interface
+// Render the multi-step wizard configuration interface. Global Workflow
+// settings (menu_name/menu_icon/hidden) are handled centrally in app.js via
+// the shared renderGlobalSettings helper.
 export function renderWorkflowsEditor(key, itemData, isArray, ctx) {
     const { workspaceEl, getTableOptions, getColumnOptionsForTable, renderEditor } = ctx;
-
-    // Check if editing the global root configuration object
-    if (itemData.workflows !== undefined) {
-        workspaceEl.innerHTML = '<h3>Global Workflow Settings</h3>';
-        workspaceEl.appendChild(createTextInput('menu_name', 'Menu Name', itemData.menu_name || 'Workflows', v => itemData.menu_name = v));
-        workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', itemData.menu_icon || '', v => itemData.menu_icon = v));
-        return;
-    }
 
     // Ensure array structure for workflow steps
     if (!itemData.steps) itemData.steps = [];

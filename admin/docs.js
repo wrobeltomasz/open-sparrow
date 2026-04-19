@@ -19,7 +19,8 @@ export function renderDocumentation(ctx) {
                 <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files.</li>
                 <li><strong>System drop-down:</strong> Database, Security, Users, System Health.</li>
                 <li><strong>Configuration drop-down:</strong> Export / Import the entire configuration as a ZIP archive (recommended before every production deployment).</li>
-                <li><strong>Save config:</strong> Persists the currently edited JSON file to <code>includes/</code>. You must click it before switching tabs or testing the database connection.</li>
+                <li><strong>Save config:</strong> Persists the currently edited JSON file to <code>includes/</code>. After a successful save a green status pill appears next to the button confirming which file was written. Error pills stay visible for 6 seconds so they are not missed.</li>
+                <li><strong>Unsaved-changes guard:</strong> The admin panel tracks whether any field has been modified since the last save. Switching to a different tab while there are pending changes shows a confirmation prompt so edits are not silently discarded. The browser also intercepts page reloads and closures when changes are pending.</li>
                 <li><strong>Debug FE mode:</strong> Toggle in the header. When enabled, the frontend exposes a <code>#debug</code> panel with raw payloads for schema/API responses — useful when building new tables or troubleshooting grids.</li>
                 <li><strong>Docs icon (book):</strong> Opens this documentation page.</li>
             </ul>
@@ -53,6 +54,7 @@ export function renderDocumentation(ctx) {
                 <li><strong>Add new tables:</strong> Use <em>+ Add Table</em> to create new physical tables in PostgreSQL. You specify the schema and table name; the system automatically creates the mandatory <code>id</code> primary key.</li>
                 <li><strong>Add new columns:</strong> Inside a table's configuration, click <em>+ Add Column</em> to append a physical column to the database. Specify name and native SQL type (e.g. <code>varchar(255)</code>, <code>boolean</code>, <code>int4</code>).</li>
                 <li><strong>Sync DB Tables:</strong> Fetches all tables and columns from the connected database and merges them into your schema configuration. System tables with the <code>spw_</code> prefix are skipped automatically.</li>
+                <li><strong>Live sidebar preview:</strong> When editing a table's Display Name, Icon or the <em>Hide from Sidebar Menu</em> flag, a small dark preview strip updates in real time showing exactly how the entry will appear in the frontend navigation — including the icon image, the display name, and a red <em>HIDDEN</em> badge when the table is hidden.</li>
                 <li><strong>Smart type mapping:</strong> Native PostgreSQL types (<code>int4</code>, <code>varchar</code>, <code>boolean</code>, etc.) are mapped to clean frontend types (Text, Number, Date, Boolean, Enum). You can override the mapping with the provided dropdowns.</li>
                 <li><strong>Remove tables:</strong> The red <em>Delete Table</em> button removes a table from your JSON configuration <strong>only</strong> — it does not drop the physical table from PostgreSQL.</li>
                 <li><strong>Foreign-key search &amp; display:</strong> Assign multiple display columns to a foreign key (e.g. <code>first_name, last_name</code>). The frontend grid renders them as searchable inputs — practical across thousands of records.</li>
@@ -84,7 +86,7 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">3. Dashboard Builder</h3>
             <p>The <strong>Dashboard</strong> tab composes analytical views from your database.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Global settings:</strong> Define the main layout grid using CSS grid properties (e.g. <code>repeat(auto-fit, minmax(300px, 1fr))</code>).</li>
+                <li><strong>Global settings:</strong> Define the menu name, icon, visibility and the main layout grid (CSS grid properties, e.g. <code>repeat(auto-fit, minmax(300px, 1fr))</code>). A live sidebar preview updates as you type so you can see the final menu entry before saving.</li>
                 <li><strong>Stat cards:</strong> Simple metric widgets showing the total row count of a selected table.</li>
                 <li><strong>KPI cards:</strong> Single aggregate numbers based on specific columns (COUNT, SUM, AVG, MIN, MAX).</li>
                 <li><strong>Bar charts:</strong> Group by X-axis column and aggregate on the Y-axis column.</li>
@@ -103,6 +105,7 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">4. Calendar Module</h3>
             <p>The <strong>Calendar</strong> tab binds date columns from your database directly to a visual calendar.</p>
             <ul style="padding-left: 20px;">
+                <li><strong>Global settings:</strong> The <em>Global Settings</em> sidebar item lets you set the menu name, icon and visibility of the Calendar entry in the frontend navigation. A live sidebar preview reflects changes immediately.</li>
                 <li><strong>Data sources:</strong> Overlay multiple tables on a single calendar. For each source select the table, the date column and the title column.</li>
                 <li><strong>Color coding:</strong> Assign a color per source to distinguish events at a glance.</li>
                 <li><strong>Row context:</strong> The full database row is attached to each calendar event, enabling click-through modals or custom actions.</li>
@@ -111,7 +114,7 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">5. Workflows Builder</h3>
             <p>The <strong>Workflows</strong> tab composes multi-step wizards that guide users through structured data entry across related tables.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Global settings:</strong> Click the root <code>workflows.json</code> item to set the main menu name and menu icon for the frontend.</li>
+                <li><strong>Global settings:</strong> Click <em>Global Settings</em> in the sidebar to set the menu name, icon and visibility of the Workflows entry. A live sidebar preview shows the result immediately, including a <em>HIDDEN</em> badge when the section is hidden.</li>
                 <li><strong>Workflow details:</strong> Each workflow requires Title, short description and icon — rendered as a card in the frontend workflows grid.</li>
                 <li><strong>Steps setup:</strong> Add sequential steps and select a target table per step. Each step can have its own description.</li>
                 <li><strong>Relational linking:</strong> Link child records to parents by selecting the foreign-key column in the current step and mapping it to a previously completed step.</li>
@@ -153,6 +156,7 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">9. Files Module</h3>
             <p>The <strong>Files</strong> tab is a central repository for documents and media, backed by the <code>spw_files</code> table.</p>
             <ul style="padding-left: 20px;">
+                <li><strong>Global settings:</strong> The <em>Global Settings</em> sidebar item lets you set the menu name, icon and visibility of the Files entry. A live sidebar preview updates as you change these values.</li>
                 <li><strong>Configuration:</strong> Set maximum file size (MB), allowed file types (images, PDFs, docs, spreadsheets, archives) and the storage path. The storage path must <strong>not</strong> be web-accessible — downloads are streamed through <code>file_download.php</code>.</li>
                 <li><strong>Record relations:</strong> Optionally link uploads to specific rows in a target table, so files appear attached to business records (e.g. contracts on a client).</li>
                 <li><strong>File library:</strong> Upload, search, filter by type, preview images and delete files from the admin UI. Deletions are logged to the audit trail.</li>

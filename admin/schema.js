@@ -1,5 +1,6 @@
 // admin/schema.js
-import { createTextInput, createSelectInput, createCheckbox, createColorInput, createIconPicker, moveObjectKey } from './ui.js';
+import { createTextInput, createSelectInput, createCheckbox, createColorInput, createIconPicker, moveObjectKey, createMenuPreview } from './ui.js';
+import { showStatusPill, markDirty } from './app.js';
 
 // Utility function to escape HTML strings safely against XSS
 function escapeHtml(str) {
@@ -18,7 +19,7 @@ export function createAddTableButton(currentConfig, defaultSchema, onSuccess, on
 
     btnAddTable.onclick = async (e) => {
         e.preventDefault();
-        
+
         const tableName = prompt('Enter new table name (lowercase, no spaces):');
         if (!tableName) return;
 
@@ -27,7 +28,7 @@ export function createAddTableButton(currentConfig, defaultSchema, onSuccess, on
 
         // Prevent duplicates
         if (currentConfig.tables && currentConfig.tables[formattedName]) {
-            alert('Table already exists in configuration.');
+            onError('Table already exists in configuration.');
             return;
         }
 
@@ -140,10 +141,9 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
             }
             workspaceEl.innerHTML = '<h3 style="color: #ef4444;">Table removed from configuration. Please click "Save File" to apply changes.</h3>';
             
+            markDirty();
             if (typeof ctx.renderSidebar === 'function') {
                 ctx.renderSidebar();
-            } else {
-                alert('Table removed. Please save the file and refresh the page to update the sidebar.');
             }
         }
     };
@@ -178,21 +178,22 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
             });
 
             const rawText = await res.text();
-            
+
             if (!res.ok) {
-                alert("HTTP Error " + res.status + ":\n" + rawText);
+                showStatusPill(btnSyncCols, `HTTP Error ${res.status}`, 'error');
+                console.error('Sync columns HTTP error:', res.status, rawText);
                 return;
             }
-            
+
             let data;
             try {
                 data = JSON.parse(rawText);
             } catch (parseErr) {
-                alert("Server returned PHP error instead of JSON:\n\n" + rawText);
-                console.error("RAW RESPONSE:", rawText);
+                showStatusPill(btnSyncCols, 'Server returned invalid JSON. Check console.', 'error');
+                console.error('RAW RESPONSE:', rawText);
                 return;
             }
-            
+
             if (data.status === 'success') {
                 let added = 0;
                 data.columns.forEach(col => {
@@ -231,14 +232,15 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
                         added++;
                     }
                 });
-                alert(`Added ${added} new columns.`);
+                if (added > 0) markDirty();
+                showStatusPill(btnSyncCols, `Added ${added} new column${added === 1 ? '' : 's'}.`, added > 0 ? 'success' : 'info');
                 renderEditor(tableName, tableData, false);
             } else {
-                alert("API Error:\n" + (data.error || 'Failed to sync columns.'));
+                showStatusPill(btnSyncCols, 'API Error: ' + (data.error || 'Failed to sync columns.'), 'error');
             }
         } catch (err) {
             console.error(err);
-            alert('Communication error. Check console.');
+            showStatusPill(btnSyncCols, 'Communication error. Check console.', 'error');
         }
     };
     workspaceEl.appendChild(btnSyncCols);
@@ -253,7 +255,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
 
     btnAddCol.onclick = async (e) => {
         e.preventDefault();
-        
+
         const colName = prompt('Enter new column name (lowercase, no spaces):');
         if (!colName) return;
 
@@ -262,7 +264,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
 
         // Prevent duplicates
         if (tableData.columns && tableData.columns[formattedColName]) {
-            alert('Column already exists.');
+            showStatusPill(btnAddCol, 'Column already exists.', 'error');
             return;
         }
 
@@ -282,30 +284,50 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
 
             const result = await response.json();
             if (result.status === 'success') {
-                // Update configuration object in memory
                 tableData.columns[formattedColName] = {
                     display_name: formattedColName.replace(/_/g, ' ').charAt(0).toUpperCase() + formattedColName.replace(/_/g, ' ').slice(1),
                     type: 'text'
                 };
-                
-                // Re-render the schema editor view
+                markDirty();
                 renderEditor(tableName, tableData, false);
             } else {
-                alert('Error adding column: ' + result.error);
+                showStatusPill(btnAddCol, 'Error adding column: ' + result.error, 'error');
             }
         } catch (err) {
             console.error(err);
-            alert('Network error occurred.');
+            showStatusPill(btnAddCol, 'Network error occurred.', 'error');
         }
     };
     workspaceEl.appendChild(btnAddCol);
 
-    workspaceEl.appendChild(createTextInput('display_name', 'Display Name', tableData.display_name, (val) => tableData.display_name = val));
+    // Live FE sidebar preview — mirrors the menu entry produced by this table
+    // in templates/menu.php so changes to display_name/icon/hidden are visible
+    // immediately without saving.
+    const preview = createMenuPreview();
+    workspaceEl.appendChild(preview.el);
+    const refreshPreview = () => preview.update({
+        name: tableData.display_name || tableName,
+        icon: tableData.icon || '',
+        hidden: !!tableData.hidden,
+    });
+    refreshPreview();
+
+    workspaceEl.appendChild(createTextInput('display_name', 'Display Name', tableData.display_name, (val) => {
+        tableData.display_name = val;
+        refreshPreview();
+    }));
     workspaceEl.appendChild(createTextInput('schema', 'Database Schema', tableData.schema || 'app', (val) => tableData.schema = val));
-    
-    workspaceEl.appendChild(createIconPicker('icon', 'Icon Path', tableData.icon, (val) => { if(val) tableData.icon = val; else delete tableData.icon; }));
-    
-    workspaceEl.appendChild(createCheckbox('hidden', 'Hide from Sidebar Menu', tableData.hidden, (val) => tableData.hidden = val, false));
+
+    workspaceEl.appendChild(createIconPicker('icon', 'Icon Path', tableData.icon, (val) => {
+        if (val) tableData.icon = val;
+        else delete tableData.icon;
+        refreshPreview();
+    }));
+
+    workspaceEl.appendChild(createCheckbox('hidden', 'Hide from Sidebar Menu', tableData.hidden, (val) => {
+        tableData.hidden = val;
+        refreshPreview();
+    }, false));
 
     const colsTitle = document.createElement('h3');
     colsTitle.textContent = 'Columns Configuration';

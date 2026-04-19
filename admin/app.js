@@ -1,25 +1,59 @@
 // admin/app.js
-import { moveArrayItem, moveObjectKey, createTextInput, createIconPicker } from './ui.js';
+import { moveArrayItem, moveObjectKey, renderGlobalSettings } from './ui.js';
 import { syncSchemaTables, renderSchemaEditor, createAddTableButton } from './schema.js';
 import { renderDashboardLayout, renderDashboardEditor, initDashboardUI } from './dashboard.js';
 import { renderCalendarEditor } from './calendar.js';
-import { renderDatabaseEditor } from './database.js'; 
-import { renderSecurityEditor } from './security.js'; 
-import { renderHealthDashboard } from './health.js';  
+import { renderDatabaseEditor } from './database.js';
+import { renderSecurityEditor } from './security.js';
+import { renderHealthDashboard } from './health.js';
 import { renderDocumentation } from './docs.js';
 import { renderUsersEditor } from './users.js';
 import { renderWorkflowsEditor } from './workflows.js';
 import { renderFilesEditor } from './files_render.js';
 
 let currentConfig = null;
-let currentFile = 'schema'; 
+let currentFile = 'schema';
 let currentItemKey = null;
 let globalSchemaObj = null;
+let isDirty = false;
 
 const itemListEl = document.getElementById('itemList');
 const workspaceEl = document.getElementById('editorForm');
 const btnSave = document.getElementById('btnSave');
 const tabs = document.querySelectorAll('.admin-tab');
+
+// Dirty-state guards: every edit marks the config dirty; navigation and reload
+// refuse to drop pending changes silently.
+export function markDirty() { isDirty = true; }
+export function markClean() { isDirty = false; }
+function confirmDiscard() {
+    return !isDirty || confirm('You have unsaved changes that will be lost. Continue?');
+}
+
+// Inline status pill — lightweight replacement for alert() after async
+// operations. The pill fades out on its own so the workflow is not blocked.
+export function showStatusPill(anchor, message, variant = 'success') {
+    if (!anchor) return;
+    const existing = anchor.parentNode && anchor.parentNode.querySelector(':scope > .status-pill');
+    if (existing) existing.remove();
+
+    const pill = document.createElement('span');
+    pill.className = 'status-pill status-pill-' + variant;
+    pill.textContent = message;
+    const colors = {
+        success: { bg: '#dcfce7', fg: '#166534', border: '#86efac' },
+        error:   { bg: '#fee2e2', fg: '#991b1b', border: '#fca5a5' },
+        info:    { bg: '#e0f2fe', fg: '#075985', border: '#7dd3fc' },
+    }[variant] || { bg: '#e2e8f0', fg: '#0f172a', border: '#cbd5e1' };
+    pill.style.cssText = `display:inline-flex; align-items:center; gap:6px; margin-left:10px; padding:4px 10px; background:${colors.bg}; color:${colors.fg}; border:1px solid ${colors.border}; border-radius:999px; font-size:12px; font-weight:600; transition:opacity .3s;`;
+    anchor.insertAdjacentElement('afterend', pill);
+
+    const ttl = variant === 'error' ? 6000 : 3000;
+    setTimeout(() => {
+        pill.style.opacity = '0';
+        setTimeout(() => pill.remove(), 300);
+    }, ttl);
+}
 
 // Utility function to escape HTML strings safely against XSS
 function escapeHtml(str) {
@@ -52,11 +86,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     tabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
+            if (!confirmDiscard()) return;
             tabs.forEach(t => t.classList.remove('active'));
-            e.currentTarget.classList.add('active'); // Poprawka z currentTarget
+            e.currentTarget.classList.add('active');
             currentFile = e.currentTarget.dataset.file;
+            markClean();
             loadConfigFile(currentFile);
         });
+    });
+
+    // Any keyboard or widget change anywhere in the workspace counts as dirty.
+    workspaceEl.addEventListener('input', markDirty);
+    workspaceEl.addEventListener('change', markDirty);
+
+    window.addEventListener('beforeunload', (e) => {
+        if (isDirty) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
     });
 
     document.getElementById('btnExport').addEventListener('click', () => {
@@ -76,19 +123,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         formData.append('backup_file', file);
 
         try {
-            const res = await fetch('api.php?action=import', { 
-                method: 'POST', 
+            const res = await fetch('api.php?action=import', {
+                method: 'POST',
                 headers: { 'X-CSRF-Token': getCsrfToken() },
-                body: formData 
+                body: formData
             });
             const data = await res.json();
             if (data.status === 'success') {
-                alert('Configuration imported successfully! Refreshing page...');
-                window.location.reload();
+                markClean();
+                showStatusPill(importBtn, 'Imported. Reloading…', 'success');
+                setTimeout(() => window.location.reload(), 900);
             } else {
-                alert('Import error: ' + (data.error || 'Unknown error'));
+                showStatusPill(importBtn, 'Import error: ' + (data.error || 'Unknown error'), 'error');
             }
-        } catch (err) { alert('Failed to upload file.'); }
+        } catch (err) {
+            showStatusPill(importBtn, 'Failed to upload file.', 'error');
+        }
         importInput.value = '';
     });
 });
@@ -155,7 +205,11 @@ async function loadConfigFile(fileName) {
         if (fileName === 'database' || fileName === 'security') {
             renderEditor('SETTINGS', currentConfig, false);
         }
-    } catch (err) { alert(`Failed to load ${fileName}.json`); }
+        // Freshly loaded config is clean; any subsequent edit flips the flag.
+        markClean();
+    } catch (err) {
+        showStatusPill(btnSave, `Failed to load ${fileName}.json`, 'error');
+    }
 }
 
 function addNewItem() {
@@ -172,8 +226,9 @@ function addNewItem() {
     }
     
     currentItemKey = newIndex;
+    markDirty();
     renderSidebar();
-    
+
     const items = currentFile === 'dashboard' ? currentConfig.widgets : currentFile === 'workflows' ? currentConfig.workflows : currentConfig.sources;
     renderEditor(newIndex, items[newIndex], true);
 }
@@ -185,7 +240,8 @@ function clearConfig() {
         else if (currentFile === 'calendar') currentConfig = { sources: [], menu_name: 'Calendar' };
         else if (currentFile === 'workflows') currentConfig = { workflows: [], menu_name: 'Workflows' };
         else if (currentFile === 'files') currentConfig = { menu_name: 'Files' };
-        
+
+        markDirty();
         renderSidebar();
         workspaceEl.innerHTML = `<h2>Configuration cleared. Click "Save File" to apply!</h2>`;
     }
@@ -222,12 +278,13 @@ function renderSidebar() {
     // Append the button only if the active tab is 'schema'
     if (currentFile === 'schema') {
         const btnAddTable = createAddTableButton(currentConfig, 'app', (newTableName) => {
-            alert('Table created successfully. Please click "Save File" to apply.');
-            if (typeof renderSidebar === 'function') renderSidebar(); 
+            markDirty();
+            showStatusPill(btnSave, `Table "${newTableName}" created. Remember to Save config.`, 'success');
+            renderSidebar();
         }, (err) => {
-            alert(err);
+            showStatusPill(btnSave, err, 'error');
         });
-        
+
         btnAddTable.id = 'addTableBtn';
         btnAddTable.style.fontSize = '12px';
         btnAddTable.style.float = 'right';
@@ -246,9 +303,14 @@ function renderSidebar() {
         btnSync.className = 'btn-add'; btnSync.style.width = '100%'; btnSync.innerHTML = 'Sync DB Tables';
         btnSync.onclick = () => {
             const schemaName = prompt("Enter database schema name to sync:", "public");
-            if (schemaName) syncSchemaTables(currentConfig, schemaName, 
-                (added) => { alert(`Added ${added} new tables!`); renderSidebar(); fetchGlobalSchema(); }, 
-                (err) => alert(err));
+            if (schemaName) syncSchemaTables(currentConfig, schemaName,
+                (added) => {
+                    if (added > 0) markDirty();
+                    showStatusPill(btnSync, `Added ${added} new table${added === 1 ? '' : 's'}.`, added > 0 ? 'success' : 'info');
+                    renderSidebar();
+                    fetchGlobalSchema();
+                },
+                (err) => showStatusPill(btnSync, err, 'error'));
         };
         actionDiv.appendChild(btnSync);
     } else if (currentFile !== 'files') {
@@ -312,11 +374,12 @@ function renderSidebar() {
         btnUp.innerHTML = '^'; btnUp.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; padding:0 2px;';
         if (index === 0) { btnUp.disabled = true; btnUp.style.opacity = '0.3'; btnUp.style.cursor = 'default'; }
         btnUp.onclick = (e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             if (isArray) {
                 moveArrayItem(itemsToIterate, key, -1);
                 if (currentItemKey === key) currentItemKey = key - 1; else if (currentItemKey === key - 1) currentItemKey = key;
             } else { currentConfig.tables = moveObjectKey(itemsToIterate, key, -1); }
+            markDirty();
             renderSidebar();
         };
 
@@ -329,6 +392,7 @@ function renderSidebar() {
                 moveArrayItem(itemsToIterate, key, 1);
                 if (currentItemKey === key) currentItemKey = key + 1; else if (currentItemKey === key + 1) currentItemKey = key;
             } else { currentConfig.tables = moveObjectKey(itemsToIterate, key, 1); }
+            markDirty();
             renderSidebar();
         };
 
@@ -361,28 +425,13 @@ function renderEditor(key, itemData, isArray) {
     if (key === 'LAYOUT') {
         if (currentFile === 'dashboard') return renderDashboardLayout(ctx);
         if (currentFile === 'calendar') {
-            workspaceEl.innerHTML = `<h3>Calendar Global Settings</h3>`;
-            workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Calendar', v => currentConfig.menu_name = v));
-            workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
-                if (v && v.trim() !== '') currentConfig.menu_icon = v; else delete currentConfig.menu_icon;
-            }));
-            return;
+            return renderGlobalSettings(ctx, { title: 'Calendar Global Settings', defaultMenuName: 'Calendar' });
         }
         if (currentFile === 'workflows') {
-            workspaceEl.innerHTML = `<h3>Workflows Global Settings</h3>`;
-            workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Workflows', v => currentConfig.menu_name = v));
-            workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
-                if (v && v.trim() !== '') currentConfig.menu_icon = v; else delete currentConfig.menu_icon;
-            }));
-            return;
+            return renderGlobalSettings(ctx, { title: 'Workflows Global Settings', defaultMenuName: 'Workflows' });
         }
         if (currentFile === 'files') {
-            workspaceEl.innerHTML = `<h3>Files Global Settings</h3>`;
-            workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name', currentConfig.menu_name || 'Files', v => currentConfig.menu_name = v));
-            workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon', currentConfig.menu_icon || '', v => {
-                if (v && v.trim() !== '') currentConfig.menu_icon = v; else delete currentConfig.menu_icon;
-            }));
-            return;
+            return renderGlobalSettings(ctx, { title: 'Files Global Settings', defaultMenuName: 'Files' });
         }
     }
     
@@ -401,7 +450,8 @@ function renderEditor(key, itemData, isArray) {
             if (currentFile === 'dashboard') currentConfig.widgets.splice(key, 1);
             else if (currentFile === 'workflows') currentConfig.workflows.splice(key, 1);
             else currentConfig.sources.splice(key, 1);
-            currentItemKey = null; 
+            currentItemKey = null;
+            markDirty();
             workspaceEl.innerHTML = '<h2>Item deleted. Save file to apply.</h2>';
             renderSidebar();
         }
@@ -418,20 +468,23 @@ btnSave.addEventListener('click', async () => {
     if (!currentConfig) return;
     try {
         const response = await fetch(`api.php?action=save&file=${currentFile}`, {
-            method: 'POST', 
-            headers: { 
+            method: 'POST',
+            headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-Token': getCsrfToken()
-            }, 
+            },
             body: JSON.stringify(currentConfig)
         });
         const result = await response.json();
-        
-        if (result.status === 'success') { 
-            alert(`${currentFile}.json saved!`); 
-            fetchGlobalSchema(); 
+
+        if (result.status === 'success') {
+            markClean();
+            showStatusPill(btnSave, `${currentFile}.json saved`, 'success');
+            fetchGlobalSchema();
         } else {
-            alert('Error saving: ' + (result.error || 'Unknown error'));
+            showStatusPill(btnSave, 'Error saving: ' + (result.error || 'Unknown error'), 'error');
         }
-    } catch (err) { alert('Failed to save changes.'); }
+    } catch (err) {
+        showStatusPill(btnSave, 'Failed to save changes.', 'error');
+    }
 });

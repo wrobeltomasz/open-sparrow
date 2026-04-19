@@ -14,6 +14,16 @@ $action = $_GET['action'] ?? '';
 $file = $_GET['file'] ?? '';
 // Set this to false for GitHub public release
 $isDemoMode = false;
+
+// Never leak raw Postgres errors (schema names, constraint names, column lists)
+// into the HTTP response. Details go to the PHP error log; the client gets a
+// stable, generic message so the operator knows to check the server logs.
+function admin_db_fail($conn, string $context): void
+{
+    $raw = $conn !== null ? pg_last_error($conn) : 'no connection';
+    error_log('[admin_api][' . $context . '] ' . $raw);
+    throw new RuntimeException('Database operation failed. Check server logs for details.');
+}
 // CSRF Protection for state-changing POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? $_POST['csrf_token'] ?? '';
@@ -71,7 +81,7 @@ if ($action === 'init_db') {
         foreach ($queries as $q) {
             $res = @pg_query($conn, $q);
             if (!$res) {
-                throw new Exception(pg_last_error($conn));
+                admin_db_fail($conn, 'init_db');
             }
         }
 
@@ -97,7 +107,7 @@ if ($action === 'users_list') {
             if (str_contains($err, 'is_active') || str_contains($err, 'does not exist')) {
                 throw new Exception("Database schema is outdated or missing. Please initialize tables.");
             }
-            throw new Exception($err);
+            admin_db_fail($conn, 'users_list');
         }
 
         $users = [];
@@ -138,7 +148,7 @@ if ($action === 'users_add') {
         $sql = "INSERT INTO " . sys_table('users') . " (username, password_hash, is_active, role) VALUES ($1, $2, true, $3)";
         $res = @pg_query_params($conn, $sql, [$username, $hash, $role]);
         if (!$res) {
-            throw new Exception(pg_last_error($conn));
+            admin_db_fail($conn, 'users_add');
         }
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
@@ -169,7 +179,7 @@ if ($action === 'users_toggle') {
         $sql = "UPDATE " . sys_table('users') . " SET is_active = $1 WHERE id = $2";
         $res = @pg_query_params($conn, $sql, [$isActive ? 'true' : 'false', $userId]);
         if (!$res) {
-            throw new Exception(pg_last_error($conn));
+            admin_db_fail($conn, 'users_toggle');
         }
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
@@ -201,7 +211,7 @@ if ($action === 'users_update_role') {
         $sql = "UPDATE " . sys_table('users') . " SET role = $1 WHERE id = $2";
         $res = @pg_query_params($conn, $sql, [$role, $userId]);
         if (!$res) {
-            throw new Exception(pg_last_error($conn));
+            admin_db_fail($conn, 'users_update_role');
         }
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
@@ -237,7 +247,7 @@ if ($action === 'create_table') {
         $res = @pg_query($conn, $sql);
 
         if (!$res) {
-            throw new Exception(pg_last_error($conn));
+            admin_db_fail($conn, 'create_table');
         }
 
         echo json_encode(['status' => 'success']);
@@ -282,7 +292,7 @@ if ($action === 'add_column') {
         $res = @pg_query($conn, $sql);
 
         if (!$res) {
-            throw new Exception(pg_last_error($conn));
+            admin_db_fail($conn, 'add_column');
         }
 
         echo json_encode(['status' => 'success']);
@@ -507,7 +517,7 @@ if ($action === 'sync_schema') {
         $sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_type = 'BASE TABLE' AND table_name NOT LIKE 'spw\\_%' ESCAPE '\\'";
         $res = @pg_query_params($conn, $sql, [$schemaName]);
         if (!$res) {
-            throw new Exception(pg_last_error($conn));
+            admin_db_fail($conn, 'sync_schema');
         }
 
         $tables = [];
@@ -537,7 +547,7 @@ if ($action === 'get_db_columns') {
         $sql = "SELECT column_name, data_type, is_nullable, udt_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2";
         $res = @pg_query_params($conn, $sql, [$schemaName, $tableName]);
         if (!$res) {
-            throw new Exception(pg_last_error($conn));
+            admin_db_fail($conn, 'get_db_columns');
         }
 
         $columns = [];
