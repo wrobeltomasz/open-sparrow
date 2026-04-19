@@ -577,8 +577,23 @@ export async function renderGrid(schema) {
                     a.addEventListener('click', (e) => e.stopPropagation());
                     td.appendChild(a);
                 } else {
-                    td.textContent = value;
-                }
+    const searchInput = document.getElementById('globalSearch');
+    const searchTerm = searchInput ? searchInput.value.trim() : '';
+
+    if (searchTerm) {
+        const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // ✅ fix
+        const regex = new RegExp(`(${escaped})`, 'gi');
+
+        const highlighted = String(value).replace(
+            regex,
+            '<mark class="search-highlight">$1</mark>'
+        );
+
+        td.innerHTML = highlighted;
+    } else {
+        td.textContent = value;
+    }
+}
 
                 if (!isReadOnly) attachCellEvents(td);
 
@@ -706,6 +721,15 @@ export async function resetFilters(schema) {
 
 // Setup export event listener
 document.addEventListener('DOMContentLoaded', () => {
+    // Search highlight trigger
+    const searchInput = document.getElementById('globalSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            renderGrid(window.schema); // or just renderGrid(schema) if needed
+        });
+    }
+
+    // Existing export button logic
     const btn = document.getElementById('exportCsv');
     if (btn) btn.addEventListener('click', exportCSV);
 });
