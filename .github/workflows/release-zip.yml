@@ -71,6 +71,22 @@ jobs:
           echo "ZIP_NAME=${PKG}.zip" >> "$GITHUB_ENV"
 
       - name: Attach ZIP to release
-        run: gh release upload "${RELEASE_TAG}" "dist/${ZIP_NAME}" --clobber
+        run: |
+          if gh release upload "${RELEASE_TAG}" "dist/${ZIP_NAME}" --clobber 2>/dev/null; then
+            echo "Asset uploaded directly."
+          else
+            echo "Direct upload failed (immutable release). Recreating release with asset..."
+            BODY=$(gh release view "${RELEASE_TAG}" --json body --jq '.body')
+            NAME=$(gh release view "${RELEASE_TAG}" --json name --jq '.name')
+            PRERELEASE=$(gh release view "${RELEASE_TAG}" --json isPrerelease --jq '.isPrerelease')
+            gh release delete "${RELEASE_TAG}" --yes
+            EXTRA=""
+            [ "$PRERELEASE" = "true" ] && EXTRA="--prerelease"
+            gh release create "${RELEASE_TAG}" "dist/${ZIP_NAME}" \
+              --title "${NAME}" \
+              --notes "${BODY}" \
+              --verify-tag \
+              $EXTRA
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
