@@ -1,6 +1,6 @@
 <div align="center">
  
-![Banner](https://github.com/user-attachments/assets/5a1e24e3-f916-4222-aa1a-502b5e8988d6)
+ <img width="1477" height="222" alt="20260420_banner-wide" src="https://github.com/user-attachments/assets/9c139bc1-f3c0-4631-a745-0a0e509a7510" />
 
   <h1>OpenSparrow</h1>
 
@@ -31,7 +31,7 @@ Demo: http://www.demo.opensparrow.org
 
 ## Preview
 
-<img width="1536" height="1024" alt="opensparrow_screen" src="https://github.com/user-attachments/assets/d162cb35-a572-4cc8-aa16-6592b885a7ef" />
+<img width="1720" height="692" alt="20260420_banner" src="https://github.com/user-attachments/assets/0da4a0c6-667f-4559-87fc-1cb0a729473f" />
 
 ---
 
