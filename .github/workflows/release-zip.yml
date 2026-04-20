@@ -1,6 +1,11 @@
 name: Release ZIP
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. 1.0.1)'
+        required: true
   release:
     # `created` fires before GitHub locks the release as immutable;
     # `published` fires after the lock is applied and upload returns 422.
@@ -14,13 +19,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Resolve release tag
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
 
       - name: Stamp VERSION file with release tag
-        run: echo "${GITHUB_REF_NAME}" > includes/VERSION
+        run: echo "${RELEASE_TAG}" > includes/VERSION
 
       - name: Assemble and zip release package
         run: |
-          VERSION="${GITHUB_REF_NAME}"
+          VERSION="${RELEASE_TAG}"
           PKG="opensparrow-${VERSION}"
 
           mkdir -p "dist/${PKG}"
@@ -57,6 +69,6 @@ jobs:
           echo "ZIP_NAME=${PKG}.zip" >> "$GITHUB_ENV"
 
       - name: Attach ZIP to release
-        run: gh release upload "${GITHUB_REF_NAME}" "dist/${ZIP_NAME}" --clobber
+        run: gh release upload "${RELEASE_TAG}" "dist/${ZIP_NAME}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
