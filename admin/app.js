@@ -106,6 +106,46 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    document.getElementById('btnRunCron').addEventListener('click', async () => {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        const box = document.createElement('div');
+        box.style.cssText = 'background:#fff;border-radius:8px;padding:24px;width:680px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;gap:12px;';
+        const header = document.createElement('div');
+        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;';
+        const title = document.createElement('strong');
+        title.textContent = 'Run Notifications Cron';
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = 'background:none;border:none;font-size:18px;cursor:pointer;line-height:1;';
+        closeBtn.addEventListener('click', () => overlay.remove());
+        header.append(title, closeBtn);
+        const content = document.createElement('div');
+        content.style.cssText = 'overflow-y:auto;flex:1;font-size:13px;line-height:1.6;border:1px solid #e2e8f0;border-radius:4px;padding:12px;background:#f8fafc;';
+        content.textContent = 'Running…';
+        box.append(header, content);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+        try {
+            const res = await fetch('api.php?action=run_cron_notifications', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': getCsrfToken() }
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                content.innerHTML = data.output;
+            } else {
+                content.textContent = 'Error: ' + (data.error || 'Unknown error');
+                content.style.color = '#991b1b';
+            }
+        } catch (err) {
+            content.textContent = 'Request failed: ' + err.message;
+            content.style.color = '#991b1b';
+        }
+    });
+
     document.getElementById('btnExport').addEventListener('click', () => {
         window.location.href = 'api.php?action=export';
     });

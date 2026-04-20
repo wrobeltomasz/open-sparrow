@@ -17,7 +17,7 @@ export function renderDocumentation(ctx) {
             <p>The admin header exposes the main configuration tabs plus two drop-downs:</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files.</li>
-                <li><strong>System drop-down:</strong> Database, Security, Users, System Health.</li>
+                <li><strong>System drop-down:</strong> Database, Security, Users, System Health, Run Notifications Cron.</li>
                 <li><strong>Configuration drop-down:</strong> Export / Import the entire configuration as a ZIP archive (recommended before every production deployment).</li>
                 <li><strong>Save config:</strong> Persists the currently edited JSON file to <code>includes/</code>. After a successful save a green status pill appears next to the button confirming which file was written. Error pills stay visible for 6 seconds so they are not missed.</li>
                 <li><strong>Unsaved-changes guard:</strong> The admin panel tracks whether any field has been modified since the last save. Switching to a different tab while there are pending changes shows a confirmation prompt so edits are not silently discarded. The browser also intercepts page reloads and closures when changes are pending.</li>
@@ -41,6 +41,7 @@ export function renderDocumentation(ctx) {
                 <li><code>spw_users</code> — frontend user accounts (id, username, password hash, role, active flag).</li>
                 <li><code>spw_users_log</code> — audit trail of user actions (LOGIN, LOGOUT, CRUD operations).</li>
                 <li><code>spw_users_notifications</code> — per-user in-app notifications, produced by the cron runner.</li>
+                <li><code>spw_users_notifications_log</code> — execution log for the notifications cron: start/end time, status (<code>running</code> / <code>success</code> / <code>error</code>), trigger source (<code>cron</code> or <code>admin</code>), number of sources processed and notifications created, and error message on failure.</li>
                 <li><code>spw_files</code> — metadata for files uploaded through the Files module.</li>
                 <li><code>spw_login_attempts</code> — rolling log used by the DB-backed rate limiter on <code>login.php</code> (IP-hash and username counters).</li>
             </ul>
@@ -145,11 +146,13 @@ export function renderDocumentation(ctx) {
                 <li><strong>Login protection:</strong> <code>login.php</code> applies a DB-backed rate limiter (IP-hash: 20 attempts / 15 min, username: 5 attempts / 15 min) plus CSRF tokens and strict session cookies.</li>
             </ul>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">8. System Health &amp; Backups</h3>
+            <h3 style="color: #2563eb; margin-top: 30px;">8. System Health, Cron &amp; Backups</h3>
             <p>Keep the environment healthy and configuration portable.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Initialize System Tables:</strong> In the Health tab this creates <code>spw_users</code>, <code>spw_users_log</code>, <code>spw_users_notifications</code>, <code>spw_files</code> and <code>spw_login_attempts</code> inside the configured schema (default <code>app</code>). Run it once on a fresh installation. The call is CSRF-protected via the <code>X-CSRF-Token</code> header.</li>
+                <li><strong>Initialize System Tables:</strong> In the Health tab this creates <code>spw_users</code>, <code>spw_users_log</code>, <code>spw_users_notifications</code>, <code>spw_users_notifications_log</code>, <code>spw_files</code> and <code>spw_login_attempts</code> inside the configured schema (default <code>app</code>). Run it once on a fresh installation and after every upgrade that adds new system tables. The call is CSRF-protected via the <code>X-CSRF-Token</code> header.</li>
                 <li><strong>System diagnostics:</strong> Live checks for PHP version, ZIP / pgsql extensions, write permissions on <code>includes/</code>, and database connectivity.</li>
+                <li><strong>Run Notifications Cron</strong> (System drop-down): Executes <code>cron/cron_notifications.php</code> ad-hoc from the admin panel without waiting for the scheduled task. A modal displays the full execution log in real time. Each run (whether triggered here or by the system scheduler) is recorded in <code>spw_users_notifications_log</code> with timestamp, status, trigger source (<code>admin</code> vs <code>cron</code>), sources processed, notifications created, and any error message. Only users that exist and are active in <code>spw_users</code> receive notifications — stale IDs in the calendar source configuration are silently skipped.</li>
+                <li><strong>Scheduling the cron automatically:</strong> Add a system cron job (e.g. daily at 07:00) to run <code>php /path/to/cron/cron_notifications.php</code>. The script sets the <code>triggered_by</code> flag to <code>cron</code> automatically when called from the command line.</li>
                 <li><strong>Export / Import config:</strong> The <em>Configuration</em> drop-down downloads or uploads a ZIP of all JSON settings. Recommended for backups and migrations to production.</li>
             </ul>
 

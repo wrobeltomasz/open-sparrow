@@ -36,11 +36,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Ensure state-changing actions use POST method to prevent CSRF via GET
-$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'create_table', 'add_column'];
+$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'create_table', 'add_column', 'run_cron_notifications'];
 if (in_array($action, $postActions, true) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Content-Type: application/json');
     http_response_code(405);
     echo json_encode(['status' => 'error', 'error' => 'Method Not Allowed. Use POST.']);
+    exit;
+}
+
+// Run cron_notifications.php ad-hoc and return captured output
+if ($action === 'run_cron_notifications') {
+    header('Content-Type: application/json');
+    $cronScript = realpath(__DIR__ . '/../cron/cron_notifications.php');
+    if ($cronScript === false || !is_readable($cronScript)) {
+        echo json_encode(['status' => 'error', 'error' => 'Cron script not found.']);
+        exit;
+    }
+    if (!function_exists('exec')) {
+        echo json_encode(['status' => 'error', 'error' => 'exec() is disabled on this server.']);
+        exit;
+    }
+    $lines = [];
+    $returnCode = 0;
+    exec(PHP_BINARY . ' ' . escapeshellarg($cronScript) . ' admin 2>&1', $lines, $returnCode);
+    echo json_encode(['status' => 'success', 'output' => implode("\n", $lines)]);
     exit;
 }
 
@@ -54,6 +73,7 @@ if ($action === 'init_db') {
         $tUsers = sys_table('users');
         $tUsersLog = sys_table('users_log');
         $tUsersNotifications = sys_table('users_notifications');
+        $tCronLog = sys_table('users_notifications_log');
         $tFiles = sys_table('files');
         $tLoginAttempts = sys_table('login_attempts');
 
@@ -75,6 +95,8 @@ if ($action === 'init_db') {
             "CREATE TABLE IF NOT EXISTS $tLoginAttempts ( id serial4 NOT NULL, username varchar(50) NOT NULL, ip_hash varchar(64) NOT NULL, attempted_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, CONSTRAINT spw_login_attempts_pkey PRIMARY KEY (id) )",
             "CREATE INDEX IF NOT EXISTS idx_spw_login_attempts_username ON $tLoginAttempts USING btree (username, attempted_at)",
             "CREATE INDEX IF NOT EXISTS idx_spw_login_attempts_ip ON $tLoginAttempts USING btree (ip_hash, attempted_at)",
+            "CREATE TABLE IF NOT EXISTS $tCronLog ( id serial4 NOT NULL, started_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, finished_at timestamp NULL, status varchar(20) NOT NULL DEFAULT 'running', triggered_by varchar(20) NOT NULL DEFAULT 'cron', sources_processed int4 NULL, notifications_created int4 NULL, error_message text NULL, CONSTRAINT spw_users_notifications_log_pkey PRIMARY KEY (id) )",
+            "CREATE INDEX IF NOT EXISTS idx_spw_cron_log_started_at ON $tCronLog USING btree (started_at)",
             "INSERT INTO $tUsers (username, password_hash, is_active, role) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', true, 'full' WHERE NOT EXISTS (SELECT 1 FROM $tUsers WHERE username = 'test')"
         ];
         
