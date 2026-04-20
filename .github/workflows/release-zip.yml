@@ -4,30 +4,39 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (e.g. 1.0.1)'
+        description: 'Release tag (e.g. 1.0.2)'
         required: true
-  release:
-    # `created` fires before GitHub locks the release as immutable;
-    # `published` fires after the lock is applied and upload returns 422.
-    types: [created]
+  push:
+    tags: ['*']
 
 jobs:
   build-zip:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # required to attach assets to the release
+      contents: write   # required to create draft release and upload assets
 
     steps:
+      - name: Resolve release tag
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-      - name: Resolve release tag
+      # includes/*.json is gitignored — generate clean empty starter configs
+      # so the user can open the admin panel right after uploading via FTP.
+      - name: Generate empty starter configs
         run: |
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
-          echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
+          echo '{"tables":{}}' > includes/schema.json
+          echo '{"menu_name":"Dashboard","layout":{"columns":"repeat(auto-fit, minmax(300px, 1fr))","gap":"20px"},"widgets":[]}' \
+            > includes/dashboard.json
+          echo '{"menu_name":"Calendar","sources":[]}' > includes/calendar.json
+          echo '{"menu_name":"Workflows","workflows":[]}' > includes/workflows.json
+          echo '{"menu_name":"Files"}' > includes/files.json
 
       - name: Stamp VERSION file with release tag
         run: echo "${RELEASE_TAG}" > includes/VERSION
@@ -57,7 +66,8 @@ jobs:
             --exclude='CODE_OF_CONDUCT.md'\
             --exclude='CONTRIBUTING.md'   \
             --exclude='SECURITY.md'       \
-            --exclude='*.json'            \
+            --exclude='includes/database.json' \
+            --exclude='includes/security.json' \
             --exclude='storage/files/*'   \
             . "dist/${PKG}/"
 
@@ -70,9 +80,18 @@ jobs:
           zip -r "${PKG}.zip" "${PKG}/"
           echo "ZIP_NAME=${PKG}.zip" >> "$GITHUB_ENV"
 
-      - name: Attach ZIP to release
-        # Requires the release to be in draft state — published releases are immutable.
-        # Workflow: create draft in GitHub UI → this action uploads ZIP → publish the draft.
-        run: gh release upload "${RELEASE_TAG}" "dist/${ZIP_NAME}" --clobber
+      - name: Create draft release with ZIP or upload to existing draft
+        # With release immutability enabled, assets cannot be added after publishing.
+        # This step runs on tag push (before any release exists) and creates a draft
+        # with the ZIP attached. The operator then adds release notes and publishes.
+        run: |
+          if gh release view "${RELEASE_TAG}" > /dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" "dist/${ZIP_NAME}" --clobber
+          else
+            gh release create "${RELEASE_TAG}" "dist/${ZIP_NAME}" \
+              --title "${RELEASE_TAG}" \
+              --draft \
+              --verify-tag
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
