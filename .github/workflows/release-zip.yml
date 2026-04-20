@@ -25,17 +25,6 @@ jobs:
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-      # includes/*.json is gitignored — generate clean empty starter configs
-      # so the user can open the admin panel right after uploading via FTP.
-      - name: Generate empty starter configs
-        run: |
-          echo '{"tables":{}}' > includes/schema.json
-          echo '{"menu_name":"Dashboard","layout":{"columns":"repeat(auto-fit, minmax(300px, 1fr))","gap":"20px"},"widgets":[]}' \
-            > includes/dashboard.json
-          echo '{"menu_name":"Calendar","sources":[]}' > includes/calendar.json
-          echo '{"menu_name":"Workflows","workflows":[]}' > includes/workflows.json
-          echo '{"menu_name":"Files"}' > includes/files.json
-
       - name: Stamp VERSION file with release tag
         run: echo "${RELEASE_TAG}" > includes/VERSION
 
@@ -55,19 +44,35 @@ jobs:
             --exclude='Dockerfile'        \
             --exclude='docker-compose.yml'\
             --exclude='docker-php-dev.ini'\
+            --exclude='docker-compose.override.yml' \
             --exclude='nginx.conf'        \
+            --exclude='.dockerignore'     \
             --exclude='phpcs.phar'        \
             --exclude='phpcbf.phar'       \
             --exclude='phpcs.xml'         \
             --exclude='.gitignore'        \
+            --exclude='CLAUDE.md'         \
             --exclude='CLA.md'            \
             --exclude='CODE_OF_CONDUCT.md'\
             --exclude='CONTRIBUTING.md'   \
             --exclude='SECURITY.md'       \
-            --exclude='includes/database.json' \
-            --exclude='includes/security.json' \
+            --exclude='*.json'            \
             --exclude='storage/files/*'   \
             . "dist/${PKG}/"
+
+          # Write empty starter configs directly to dist — never copy from source.
+          # includes/*.json is gitignored so source may contain real operator data.
+          mkdir -p "dist/${PKG}/includes"
+          echo '{"tables":{}}' \
+            > "dist/${PKG}/includes/schema.json"
+          echo '{"menu_name":"Dashboard","layout":{"columns":"repeat(auto-fit, minmax(300px, 1fr))","gap":"20px"},"widgets":[]}' \
+            > "dist/${PKG}/includes/dashboard.json"
+          echo '{"menu_name":"Calendar","sources":[]}' \
+            > "dist/${PKG}/includes/calendar.json"
+          echo '{"menu_name":"Workflows","workflows":[]}' \
+            > "dist/${PKG}/includes/workflows.json"
+          echo '{"menu_name":"Files"}' \
+            > "dist/${PKG}/includes/files.json"
 
           # Guarantee storage/files exists — PHP will write here on first upload.
           # The directory is required; its contents are never distributed.
