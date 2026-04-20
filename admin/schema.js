@@ -222,14 +222,17 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
                         tableData.columns[col.column_name] = {
                             display_name: col.column_name.replace(/_/g, ' ').toUpperCase(),
                             type: mappedType,
-                            show_in_grid: true, 
-                            show_in_edit: true, 
+                            show_in_grid: true,
+                            show_in_edit: true,
                             not_null: isNotNull,
                             readonly: isIdColumn
                         };
-                        
+
                         if (isEnum) tableData.columns[col.column_name].options = col.enum_values;
+                        if (col.description) tableData.columns[col.column_name].description = col.description;
                         added++;
+                    } else if (col.description) {
+                        tableData.columns[col.column_name].description = col.description;
                     }
                 });
                 if (added > 0) markDirty();
@@ -393,7 +396,11 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         block.appendChild(headerDiv);
 
         block.appendChild(createTextInput('display_name', 'Display Name', colCfg.display_name, (val) => colCfg.display_name = val));
-        
+        block.appendChild(createTextInput('description', 'Column Description (tooltip)', colCfg.description || '', (val) => {
+            if (val) colCfg.description = val;
+            else delete colCfg.description;
+        }));
+
         // Clean up any rogue legacy DB types just in case they slipped through earlier
         let currentType = String(colCfg.type || 'text').toLowerCase();
         if (!['text', 'number', 'boolean', 'date', 'enum'].includes(currentType)) {

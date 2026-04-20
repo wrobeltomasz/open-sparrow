@@ -193,6 +193,11 @@ export async function renderGrid(schema) {
         const thLabel = document.createElement('span');
         thLabel.className = 'th-label';
         thLabel.textContent = colCfg.display_name || col;
+        if (colCfg.description) {
+            th.title = colCfg.description;
+            thLabel.style.borderBottom = '1px dotted currentColor';
+            thLabel.style.cursor = 'help';
+        }
         th.appendChild(thLabel);
 
         th.style.cursor = 'pointer';

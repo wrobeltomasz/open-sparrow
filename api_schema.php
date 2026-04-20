@@ -81,6 +81,10 @@ foreach ($schemaData['tables'] as $tableName => $tableConfig) {
             }
         }
 
+        if (!empty($colDef['description'])) {
+            $pub['description'] = $colDef['description'];
+        }
+
         // Keep dropdown options for UI
         if (!empty($colDef['options'])) {
             $pub['options'] = $colDef['options'];

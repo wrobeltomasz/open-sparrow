@@ -580,7 +580,22 @@ if ($action === 'get_db_columns') {
         $body = json_decode((string) file_get_contents('php://input'), true) ?: [];
         $tableName = $body['table'] ?? $_POST['table'] ?? $_GET['table'] ?? '';
         $schemaName = $body['schema_name'] ?? $_POST['schema_name'] ?? $_GET['schema_name'] ?? 'public';
-        $sql = "SELECT column_name, data_type, is_nullable, udt_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2";
+        $sql = "
+            SELECT
+                c.column_name,
+                c.data_type,
+                c.is_nullable,
+                c.udt_name,
+                c.ordinal_position,
+                pgd.description
+            FROM information_schema.columns c
+            LEFT JOIN pg_catalog.pg_statio_all_tables st
+                ON st.schemaname = c.table_schema AND st.relname = c.table_name
+            LEFT JOIN pg_catalog.pg_description pgd
+                ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
+            WHERE c.table_schema = \$1 AND c.table_name = \$2
+            ORDER BY c.ordinal_position
+        ";
         $res = @pg_query_params($conn, $sql, [$schemaName, $tableName]);
         if (!$res) {
             admin_db_fail($conn, 'get_db_columns');
@@ -613,6 +628,9 @@ if ($action === 'get_db_columns') {
                 'not_null' => ($row['is_nullable'] === 'NO'),
                 'display_name' => ucfirst(str_replace('_', ' ', $colName))
             ];
+            if (!empty($row['description'])) {
+                $colData['description'] = $row['description'];
+            }
             if ($enumValues !== null) {
                 $colData['enum_values'] = $enumValues;
             }
