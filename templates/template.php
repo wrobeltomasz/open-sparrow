@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <title>OpenSparrow | Open source | PHP + vanilla JS + Postgres</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" />
     <link href="/assets/css/styles.css" rel="stylesheet" />
     <link href="/assets/css/mobile.css" rel="stylesheet" media="only screen and (max-width: 768px)" />
     <link rel="icon" type="image/x-icon" href="favicon.ico">

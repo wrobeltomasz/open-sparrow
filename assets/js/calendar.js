@@ -1,3 +1,7 @@
+function getCsrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
+
 // Store current date state
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
@@ -164,7 +168,7 @@ function renderCalendar() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-CSRF-Token': getCsrfToken()
                     },
                     body: JSON.stringify({
                         api: 'calendar',

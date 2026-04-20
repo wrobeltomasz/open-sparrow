@@ -100,8 +100,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Fetch existing data
-$sql = sprintf('SELECT * FROM "%s"."%s" WHERE %s = $1', $schemaName, $table, pg_ident($idCol));
+// Fetch existing data — select only columns declared in schema plus the PK;
+// avoids exposing columns that the schema deliberately omits.
+$colsToFetch = array_unique(array_merge([$idCol], array_keys($tableCfg['columns'])));
+$selectList  = implode(', ', array_map('pg_ident', $colsToFetch));
+$sql = sprintf('SELECT %s FROM "%s"."%s" WHERE %s = $1', $selectList, $schemaName, $table, pg_ident($idCol));
 $res = pg_query_params($conn, $sql, [$id]);
 $row = pg_fetch_assoc($res);
 
