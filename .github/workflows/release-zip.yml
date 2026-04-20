@@ -60,20 +60,6 @@ jobs:
             --exclude='storage/files/*'   \
             . "dist/${PKG}/"
 
-          # Write empty starter configs directly to dist — never copy from source.
-          # includes/*.json is gitignored so source may contain real operator data.
-          mkdir -p "dist/${PKG}/includes"
-          echo '{"tables":{}}' \
-            > "dist/${PKG}/includes/schema.json"
-          echo '{"menu_name":"Dashboard","layout":{"columns":"repeat(auto-fit, minmax(300px, 1fr))","gap":"20px"},"widgets":[]}' \
-            > "dist/${PKG}/includes/dashboard.json"
-          echo '{"menu_name":"Calendar","sources":[]}' \
-            > "dist/${PKG}/includes/calendar.json"
-          echo '{"menu_name":"Workflows","workflows":[]}' \
-            > "dist/${PKG}/includes/workflows.json"
-          echo '{"menu_name":"Files"}' \
-            > "dist/${PKG}/includes/files.json"
-
           # Guarantee storage/files exists — PHP will write here on first upload.
           # The directory is required; its contents are never distributed.
           mkdir -p "dist/${PKG}/storage/files"
