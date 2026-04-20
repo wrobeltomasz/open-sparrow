@@ -92,7 +92,26 @@ git clone https://github.com/wrobeltomasz/open-sparrow.git
 cd open-sparrow
 ```
 
-### 2. Run with Docker (quick start)
+### 2. Install via ZIP (FTP / shared hosting)
+
+If you are deploying to shared hosting or any server without Docker, download the pre-built ZIP from the [Releases page](https://github.com/wrobeltomasz/open-sparrow/releases/latest) instead of cloning.
+
+Each release ZIP is built automatically by GitHub Actions and includes:
+- All PHP, JS, and CSS files ready to serve
+- `includes/VERSION` stamped with the release tag (e.g. `v1.2.3`) — used by the admin System Health panel to display the current version
+- An empty `storage/files/` directory placeholder
+
+**Steps:**
+
+1. Download `opensparrow-vX.Y.Z.zip` from the Releases page.
+2. Extract and upload the contents to your server root (e.g. `public_html/`) via FTP.
+3. Create the `includes/` directory and make it writable by the web server.
+4. Open `/admin` in your browser and configure the database connection.
+5. Run **Initialize System Tables** from the System Health tab.
+
+> **Note:** The ZIP contains no JSON configuration files. Your `includes/*.json` files are never overwritten during an upload — existing configuration is always preserved.
+
+### 3. Run with Docker (quick start)
 
 ```bash
 # Create required directories
@@ -108,11 +127,11 @@ docker compose up -d --build
 
 Available at **http://localhost:8080**.
 
-### 3. Dependencies
+### 4. Dependencies
 
 None. The repository has no composer/npm step.
 
-### 4. Environment variables (optional)
+### 5. Environment variables (optional)
 
 ```env
 PGHOST=127.0.0.1
@@ -127,7 +146,7 @@ PGSCHEMA=app
 
 > There is no `.env` loader in the current codebase. Export these in your shell/container environment or configure everything from the admin UI.
 
-### 5. Configure the database from Admin
+### 6. Configure the database from Admin
 
 Open **http://localhost:8080/admin** and log in with the default master password: `admin` *(no username — the admin panel asks only for a master password)*.
 
@@ -139,17 +158,20 @@ In the **Database** tab:
 
 Settings are written to `includes/database.json`. The `schema` key is read by `sys_schema()` in `includes/db.php` and used to qualify every system-table query.
 
-### 6. Initialize system tables
+### 7. Initialize system tables
 
 In the admin panel → **System Health** → **Initialize System Tables**. This creates all `spw_`-prefixed tables in the configured schema:
 
 - `spw_users`
 - `spw_users_log`
 - `spw_users_notifications`
+- `spw_users_notifications_log`
 - `spw_files`
 - `spw_login_attempts`
 
-### 7. Run without Docker
+Re-run this after every upgrade — it uses `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE … ADD COLUMN IF NOT EXISTS`, so it is safe to execute on an existing database.
+
+### 8. Run without Docker
 
 *Skip this if you used Docker in step 2.*
 
@@ -163,6 +185,17 @@ http://localhost/open-sparrow/
 php -S localhost:8000
 ```
 Open **http://localhost:8000/admin**.
+
+---
+
+## Updating via FTP
+
+1. Go to the [Releases page](https://github.com/wrobeltomasz/open-sparrow/releases/latest) and download the latest `opensparrow-vX.Y.Z.zip`.
+2. **Before uploading** — export your configuration from the admin panel: **Configuration → Export config files**. Keep this backup safe.
+3. Extract the ZIP and upload all files to your server via FTP, overwriting existing files.
+4. Your `includes/*.json` files are **not included** in the ZIP, so your database connection, schema, dashboards, and all other settings are preserved automatically.
+5. Log in to `/admin` → **System Health** → **Initialize System Tables** to apply any new system table migrations.
+6. Check **System Health** — the version shown should match the release tag you just uploaded.
 
 ---
 
