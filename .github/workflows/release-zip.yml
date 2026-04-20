@@ -22,8 +22,6 @@ jobs:
           echo "RELEASE_TAG=${TAG}" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.inputs.tag || github.ref }}
         env:
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
