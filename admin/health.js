@@ -9,7 +9,10 @@ export async function renderHealthDashboard(ctx) {
         
         let html = `
             <h3>Server Diagnostics (System Health)</h3>
-            <p style="color: #777; margin-bottom: 20px;">This panel helps diagnose issues with your hosting environment after installing Sparrow CRM.</p>
+            <p style="color: #777; margin-bottom: 20px;">This panel helps diagnose issues with your hosting environment after installing OpenSparrow.</p>
+            <div style="padding:12px 18px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:20px; font-size:14px;">
+                <strong style="color:#0f172a;">OpenSparrow</strong>&nbsp;&nbsp;v${data.app_version}
+            </div>
             <div style="display:grid; gap: 15px;">
         `;
 
@@ -21,6 +24,7 @@ export async function renderHealthDashboard(ctx) {
         `;
 
         html += renderCard('PHP Version', data.php_version_ok, `Installed: <strong>${data.php_version}</strong> (Required: PHP >= 8.0)`);
+        html += renderCard('PostgreSQL Version', data.db_connected, data.pg_version ? `Connected: <strong>PostgreSQL ${data.pg_version}</strong>` : 'Version unavailable — check database connection.');
         html += renderCard('PostgreSQL Module', data.pgsql_ok, data.pgsql_ok ? 'Installed and active (pdo_pgsql / pgsql)' : 'Extension missing! Database will not work. Enable it in your hosting panel.');
         
         if (data.db_connected) {

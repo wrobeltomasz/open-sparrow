@@ -306,25 +306,39 @@ if ($action === 'add_column') {
 if ($action === 'health') {
     $db_connected = false;
     $db_error = 'Unknown error';
+    $pg_version = null;
     try {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
         if ($conn) {
             $db_connected = true;
             $db_error = '';
+            $vr = @pg_query($conn, 'SELECT version()');
+            if ($vr) {
+                $row = pg_fetch_row($vr);
+                // Extract short version number from the verbose string e.g. "PostgreSQL 14.11 on ..."
+                if (preg_match('/PostgreSQL\s+([\d.]+)/i', $row[0] ?? '', $m)) {
+                    $pg_version = $m[1];
+                }
+            }
             pg_close($conn);
         }
     } catch (Exception $e) {
         $db_error = $e->getMessage();
     }
 
+    $versionFile = __DIR__ . '/../includes/VERSION';
+    $appVersion = file_exists($versionFile) ? trim((string) file_get_contents($versionFile)) : 'unknown';
+
     $data = [
+        'app_version' => $appVersion,
         'php_version' => PHP_VERSION,
         'php_version_ok' => version_compare(PHP_VERSION, '8.0.0', '>='),
         'pgsql_ok' => extension_loaded('pgsql') || extension_loaded('pdo_pgsql'),
         'dir_writable' => is_writable(__DIR__ . '/../includes'),
         'db_connected' => $db_connected,
-        'db_error' => $db_error
+        'db_error' => $db_error,
+        'pg_version' => $pg_version,
     ];
     header('Content-Type: application/json');
     echo json_encode($data);

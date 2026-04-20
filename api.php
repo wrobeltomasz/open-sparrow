@@ -20,6 +20,15 @@ if (!isset($_SESSION['user_id'])) {
 $method = $_SERVER['REQUEST_METHOD'];
 $role = $_SESSION['role'] ?? 'full';
 
+// Validate CSRF token for all state-changing requests
+if (in_array($method, ['POST', 'PATCH', 'DELETE'], true)) {
+    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
+        http_response_code(403);
+        exit(json_encode(['error' => 'CSRF token mismatch.']));
+    }
+}
+
 // Block data modification requests for readonly users
 if ($role === 'readonly' && in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
     http_response_code(403);

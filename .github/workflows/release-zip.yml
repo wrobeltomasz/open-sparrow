@@ -1,0 +1,69 @@
+name: Release ZIP
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-zip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # required to attach assets to the release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # includes/*.json is gitignored — generate clean empty starter configs
+      # so the user can open the admin panel right after uploading via FTP.
+      - name: Generate empty starter configs
+        run: |
+          echo '{"tables":{}}' > includes/schema.json
+          echo '{"menu_name":"Dashboard","layout":{"columns":"repeat(auto-fit, minmax(300px, 1fr))","gap":"20px"},"widgets":[]}' \
+            > includes/dashboard.json
+          echo '{"menu_name":"Calendar","sources":[]}' > includes/calendar.json
+          echo '{"menu_name":"Workflows","workflows":[]}' > includes/workflows.json
+          echo '{"menu_name":"Files"}' > includes/files.json
+
+      - name: Assemble and zip release package
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          PKG="opensparrow-${VERSION}"
+
+          mkdir -p "dist/${PKG}"
+
+          rsync -a \
+            --exclude='.git'              \
+            --exclude='.github'           \
+            --exclude='.claude'           \
+            --exclude='tests'             \
+            --exclude='dist'              \
+            --exclude='Dockerfile'        \
+            --exclude='docker-compose.yml'\
+            --exclude='docker-php-dev.ini'\
+            --exclude='nginx.conf'        \
+            --exclude='phpcs.phar'        \
+            --exclude='phpcbf.phar'       \
+            --exclude='phpcs.xml'         \
+            --exclude='.gitignore'        \
+            --exclude='CLA.md'            \
+            --exclude='CODE_OF_CONDUCT.md'\
+            --exclude='CONTRIBUTING.md'   \
+            --exclude='SECURITY.md'       \
+            --exclude='includes/database.json' \
+            --exclude='includes/security.json' \
+            --exclude='storage/files/*'   \
+            . "dist/${PKG}/"
+
+          # Guarantee storage/files exists — PHP will write here on first upload.
+          # The directory is required; its contents are never distributed.
+          mkdir -p "dist/${PKG}/storage/files"
+          touch    "dist/${PKG}/storage/files/.gitkeep"
+
+          cd dist
+          zip -r "${PKG}.zip" "${PKG}/"
+          echo "ZIP_NAME=${PKG}.zip" >> "$GITHUB_ENV"
+
+      - name: Attach ZIP to release
+        run: gh release upload "${GITHUB_REF_NAME}" "dist/${ZIP_NAME}" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

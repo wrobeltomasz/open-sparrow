@@ -1,5 +1,10 @@
 // grid_actions.js
 import { debugLog } from './debug.js';
+import { showToast } from './toast.js';
+
+function getCsrfToken() {
+  return document.querySelector('meta[name="csrf-token"]')?.content || '';
+}
 
 // Show errors in debug panel
 function debugError(message, data = {}) {
@@ -80,7 +85,7 @@ async function performUpdate(el, table, id, column, value) {
   try {
     const res = await fetch('index.php?api=update', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
       body: JSON.stringify({ table, id, column, value })
     });
 
@@ -143,8 +148,8 @@ export function onCellBlur(e) {
           const regex = new RegExp(pattern);
           if (!regex.test(String(value))) {
               const msg = el.dataset.message || 'Invalid input format';
-              alert(msg);
-              
+              showToast(msg, 'error');
+
               // Revert visual change back to original value
               if (el.isContentEditable) el.textContent = original ?? '';
               else el.value = original ?? '';
@@ -176,7 +181,7 @@ export async function deleteRow(id) {
   try {
     const res = await fetch('index.php?api=delete', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
       body: JSON.stringify({ table, id })
     });
 
@@ -189,7 +194,7 @@ export async function deleteRow(id) {
         status: res.status,
         error: payload?.error || "Unknown error"
       });
-      alert(`Delete failed (${res.status})`);
+      showToast(`Delete failed (${res.status})`, 'error');
       return;
     }
 
@@ -208,7 +213,7 @@ export async function addRow() {
   try {
     const res = await fetch('index.php?api=insert', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
       body: JSON.stringify({ table, data: {} })
     });
 
@@ -221,7 +226,7 @@ export async function addRow() {
         status: res.status,
         error: payload?.error || "Unknown error"
       });
-      alert(`Insert failed (${res.status})`);
+      showToast(`Insert failed (${res.status})`, 'error');
       return;
     }
 

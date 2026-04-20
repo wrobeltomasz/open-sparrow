@@ -1,3 +1,5 @@
+import { showToast } from './toast.js';
+
 // Fetch workflows configuration from backend
 async function fetchWorkflowsConfig() {
     try {
@@ -528,7 +530,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema) {
                 }
             } catch (err) {
                 console.error(err);
-                alert(`Error saving data: \n${err.message}`);
+                showToast(`Error saving data: ${err.message}`, 'error');
                 submitBtn.disabled = false;
                 if (finishBtn) finishBtn.disabled = false;
                 submitBtn.textContent = step.allow_multiple ? 'Save & Add Another' : 'Next step';
