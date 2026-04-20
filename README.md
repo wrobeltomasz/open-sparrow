@@ -15,6 +15,7 @@
   ![E2E Tests](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/e2e-tests.yml/badge.svg)
   ![CodeQL Analysis](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/codeql.yml/badge.svg)
   ![Docker Lint](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/docker-lint.yml/badge.svg)
+  [![Release ZIP](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/release-zip.yml/badge.svg)](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/release-zip.yml)
 
 </div>
 
