@@ -2,7 +2,9 @@ name: Release ZIP
 
 on:
   release:
-    types: [published]
+    # `created` fires before GitHub locks the release as immutable;
+    # `published` fires after the lock is applied and upload returns 422.
+    types: [created]
 
 jobs:
   build-zip:
