@@ -13,17 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # includes/*.json is gitignored — generate clean empty starter configs
-      # so the user can open the admin panel right after uploading via FTP.
-      - name: Generate empty starter configs
-        run: |
-          echo '{"tables":{}}' > includes/schema.json
-          echo '{"menu_name":"Dashboard","layout":{"columns":"repeat(auto-fit, minmax(300px, 1fr))","gap":"20px"},"widgets":[]}' \
-            > includes/dashboard.json
-          echo '{"menu_name":"Calendar","sources":[]}' > includes/calendar.json
-          echo '{"menu_name":"Workflows","workflows":[]}' > includes/workflows.json
-          echo '{"menu_name":"Files"}' > includes/files.json
-
       - name: Assemble and zip release package
         run: |
           VERSION="${GITHUB_REF_NAME}"
@@ -49,8 +38,7 @@ jobs:
             --exclude='CODE_OF_CONDUCT.md'\
             --exclude='CONTRIBUTING.md'   \
             --exclude='SECURITY.md'       \
-            --exclude='includes/database.json' \
-            --exclude='includes/security.json' \
+            --exclude='*.json'            \
             --exclude='storage/files/*'   \
             . "dist/${PKG}/"
 
