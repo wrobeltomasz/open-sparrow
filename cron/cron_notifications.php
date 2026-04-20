@@ -24,6 +24,7 @@ function print_log(string $msg): void
 }
 
 require_once __DIR__ . '/../includes/db.php';
+$triggeredBy = (isset($argv[1]) && $argv[1] === 'admin') ? 'admin' : 'cron';
 print_log("<h3>Start CRON - Diagnostics</h3>");
 $configFile = __DIR__ . '/../includes/calendar.json';
 if (!file_exists($configFile)) {
@@ -42,7 +43,11 @@ try {
     print_log("Connecting to the database...");
     $conn = db_connect();
     print_log("Database connected successfully.<br><hr>");
+    $tCronLog = sys_table('users_notifications_log');
+    $logRes = pg_query_params($conn, "INSERT INTO $tCronLog (triggered_by) VALUES ($1) RETURNING id", [$triggeredBy]);
+    $logId = $logRes ? (int) pg_fetch_result($logRes, 0, 0) : null;
     $insertedCount = 0;
+    $sourcesProcessed = 0;
     foreach ($config['sources'] as $source) {
         $table = $source['table'] ?? '';
         $dateCol = $source['date_column'] ?? '';
@@ -55,6 +60,7 @@ try {
             print_log("Skipping source <b>$table</b> (missing required columns or no users assigned).");
             continue;
         }
+        $sourcesProcessed++;
 
         $targetDate = date('Y-m-d', strtotime("+$days days"));
         print_log("Analyzing table: <b>$table</b> (looking for date: <b>$targetDate</b> in column <b>$dateCol</b>)");
@@ -72,6 +78,15 @@ try {
             continue;
         }
 
+        // Resolve only user IDs that actually exist and are active
+        $uidList = '{' . implode(',', array_map('intval', $notifiedUsers)) . '}';
+        $validRes = pg_query_params($conn, "SELECT id FROM " . sys_table('users') . " WHERE id = ANY($1::int[]) AND is_active = TRUE", [$uidList]);
+        $validUserIds = $validRes ? array_map('intval', array_column(pg_fetch_all($validRes) ?: [], 'id')) : [];
+        if (empty($validUserIds)) {
+            print_log("Skipping source <b>$table</b> (none of the configured users exist or are active).");
+            continue;
+        }
+
         $rowCount = pg_num_rows($result);
         print_log("Found matching records in database: <b>$rowCount</b>");
         while ($row = pg_fetch_assoc($result)) {
@@ -79,8 +94,8 @@ try {
         // Prepend target date to the title
             $titleText = $targetDate . ": " . $row['title'];
             $link = str_replace('{id}', (string)$recordId, $urlTemplate);
-        // Insert a notification for every user defined in the array
-            foreach ($notifiedUsers as $userId) {
+        // Insert a notification for every valid user
+            foreach ($validUserIds as $userId) {
                 $userId = (int)$userId;
                 $insertSql = "
                     INSERT INTO " . sys_table('users_notifications') . " (user_id, title, link, source_table, source_id, notify_date)
@@ -100,6 +115,20 @@ try {
     }
 
     print_log("<h3>Finished. NEW notifications generated: $insertedCount</h3>");
+    if ($logId) {
+        pg_query_params(
+            $conn,
+            "UPDATE $tCronLog SET status='success', finished_at=NOW(), sources_processed=$1, notifications_created=$2 WHERE id=$3",
+            [$sourcesProcessed, $insertedCount, $logId]
+        );
+    }
 } catch (Throwable $e) {
     print_log("<span style='color:red;'>Critical error: " . htmlspecialchars($e->getMessage()) . "</span>");
+    if (!empty($logId) && !empty($conn)) {
+        pg_query_params(
+            $conn,
+            "UPDATE $tCronLog SET status='error', finished_at=NOW(), error_message=$1 WHERE id=$2",
+            [substr($e->getMessage(), 0, 2000), $logId]
+        );
+    }
 }

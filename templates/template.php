@@ -208,13 +208,23 @@
             .then(data => {
                 if (!notifList) return;
                 notifList.innerHTML = '';
-                if (data.length > 0) {
-                    data.forEach(notification => {
+                if (data.notifications && data.notifications.length > 0) {
+                    data.notifications.forEach(notification => {
                         const li = document.createElement('li');
-                        li.style.padding = '15px';
-                        li.style.textAlign = 'center';
-                        li.style.color = '#777';
+                        li.style.cssText = 'padding:10px 15px;border-bottom:1px solid #f0f0f0;font-weight:' + (notification.is_read === 't' ? 'normal' : 'bold') + ';';
                         li.textContent = notification.title;
+                        if (notification.link) {
+                            li.style.cursor = 'pointer';
+                            li.title = notification.link;
+                            li.addEventListener('click', async () => {
+                                await fetch('api_notifications.php?action=mark_read', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                    body: JSON.stringify({ id: parseInt(notification.id) })
+                                }).catch(() => {});
+                                window.location.href = notification.link;
+                            });
+                        }
                         notifList.appendChild(li);
                     });
                 } else {
