@@ -25,7 +25,7 @@
 
 OpenSparrow is a JSON schema-driven platform for building internal systems. Tables, forms, dashboards, and calendars are generated from configuration files, so business logic stays decoupled from infrastructure. Self-hosted on PostgreSQL — no vendor lock-in, full data ownership.
 
-Demo: http://www.demo.opensparrow.org
+Demo: https://demo.opensparrow.org
 
 ---
 
