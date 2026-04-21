@@ -103,5 +103,31 @@ export function getPageRows() {
 
   const start = (currentPage - 1) * pageSize;
   const end = start + pageSize;
+   renderPaginationInfo(filteredData);
   return filteredData.slice(start, end);
+}
+  
+
+function renderPaginationInfo(filteredData) {
+  const totalRecords = filteredData.length;
+
+  const start = totalRecords === 0
+    ? 0
+    : (currentPage - 1) * pageSize + 1;
+
+  const end = Math.min(currentPage * pageSize, totalRecords);
+
+  let infoEl = document.getElementById('pagination-info');
+
+  if (!infoEl) {
+    infoEl = document.createElement('span');
+    infoEl.id = 'pagination-info';
+
+    const paginationEl = document.getElementById('pagination');
+    if (paginationEl) {
+      paginationEl.prepend(infoEl);
+    }
+  }
+
+  infoEl.textContent = `Showing ${start} to ${end} of ${totalRecords} records`;
 }
