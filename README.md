@@ -1,6 +1,4 @@
 <div align="center">
- 
- <img width="1477" height="222" alt="20260420_banner-wide" src="https://github.com/user-attachments/assets/9c139bc1-f3c0-4631-a745-0a0e509a7510" />
 
   <h1>OpenSparrow</h1>
 
