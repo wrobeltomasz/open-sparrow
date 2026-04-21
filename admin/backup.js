@@ -1,0 +1,195 @@
+// admin/backup.js
+
+export async function renderBackupPage(ctx) {
+    const { workspaceEl } = ctx;
+
+    workspaceEl.innerHTML = '<p style="color:#64748b;padding:20px;">Loading tables…</p>';
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    let userTables = [];
+    let systemTables = [];
+
+    try {
+        const [schemaRes, sysRes] = await Promise.all([
+            fetch('api.php?action=get&file=schema'),
+            fetch('api.php?action=list_system_tables')
+        ]);
+        const schemaData = await schemaRes.json();
+        const sysData    = await sysRes.json();
+
+        if (schemaData.tables) {
+            for (const [name, cfg] of Object.entries(schemaData.tables)) {
+                userTables.push({
+                    name,
+                    schema:  cfg.schema || 'public',
+                    display: cfg.display_name || name,
+                    group:   'Application Tables'
+                });
+            }
+        }
+        if (sysData.status === 'success') {
+            sysData.tables.forEach(t => systemTables.push({
+                name:    t.name,
+                schema:  t.schema,
+                display: t.name,
+                group:   'System Tables (spw_*)'
+            }));
+        }
+    } catch (e) {
+        workspaceEl.innerHTML = '<p style="color:#ef4444;padding:20px;">Failed to load tables.</p>';
+        return;
+    }
+
+    const allTables = [...userTables, ...systemTables];
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'max-width:720px;padding:4px 0;';
+
+    const heading = document.createElement('h2');
+    heading.style.marginTop = '0';
+    heading.textContent = 'Backup Tables';
+    wrap.appendChild(heading);
+
+    const desc = document.createElement('p');
+    desc.style.color = '#64748b';
+    desc.innerHTML = 'Creates a copy of selected tables in the same schema using <code>CREATE TABLE prefix_name AS SELECT * FROM name</code>.'
+        + ' The prefix is the current date and time — e.g. <code>202604211709_tablename</code>.'
+        + ' Data and column structure are copied; indexes and constraints are not.';
+    wrap.appendChild(desc);
+
+    if (allTables.length === 0) {
+        const empty = document.createElement('p');
+        empty.style.color = '#94a3b8';
+        empty.textContent = 'No tables found. Configure the database connection and define tables in the Schema tab.';
+        wrap.appendChild(empty);
+        workspaceEl.innerHTML = '';
+        workspaceEl.appendChild(wrap);
+        return;
+    }
+
+    // Select-all / deselect-all controls
+    const selRow = document.createElement('div');
+    selRow.style.cssText = 'margin-bottom:14px;display:flex;gap:10px;';
+    const btnAll  = document.createElement('button');
+    const btnNone = document.createElement('button');
+    const btnStyle = 'background:none;border:1px solid #cbd5e1;border-radius:4px;padding:4px 12px;cursor:pointer;font-size:13px;';
+    btnAll.type  = 'button'; btnAll.textContent  = 'Select all';   btnAll.style.cssText  = btnStyle;
+    btnNone.type = 'button'; btnNone.textContent = 'Deselect all'; btnNone.style.cssText = btnStyle;
+    selRow.append(btnAll, btnNone);
+    wrap.appendChild(selRow);
+
+    // Group → table checkboxes
+    const groups = {};
+    allTables.forEach(t => {
+        if (!groups[t.group]) groups[t.group] = [];
+        groups[t.group].push(t);
+    });
+
+    const checkboxes = [];
+
+    for (const [groupName, tables] of Object.entries(groups)) {
+        const groupLabel = document.createElement('div');
+        groupLabel.style.cssText = 'font-weight:600;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 6px;';
+        groupLabel.textContent = groupName;
+        wrap.appendChild(groupLabel);
+
+        tables.forEach(t => {
+            const label = document.createElement('label');
+            label.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid #e2e8f0;border-radius:4px;margin-bottom:4px;cursor:pointer;background:#fff;user-select:none;';
+
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.dataset.name   = t.name;
+            cb.dataset.schema = t.schema;
+            cb.style.cssText  = 'width:15px;height:15px;flex-shrink:0;cursor:pointer;';
+            checkboxes.push(cb);
+
+            const nameSpan = document.createElement('span');
+            nameSpan.style.flex = '1';
+            nameSpan.textContent = t.display !== t.name ? `${t.display}  (${t.name})` : t.name;
+
+            const schemaTag = document.createElement('span');
+            schemaTag.style.cssText = 'font-size:11px;color:#94a3b8;font-family:monospace;';
+            schemaTag.textContent = t.schema;
+
+            label.append(cb, nameSpan, schemaTag);
+            wrap.appendChild(label);
+        });
+    }
+
+    btnAll.addEventListener('click',  () => checkboxes.forEach(cb => cb.checked = true));
+    btnNone.addEventListener('click', () => checkboxes.forEach(cb => cb.checked = false));
+
+    // Backup button + result area
+    const actionRow = document.createElement('div');
+    actionRow.style.cssText = 'margin-top:22px;display:flex;align-items:center;gap:14px;';
+    const btnBackup = document.createElement('button');
+    btnBackup.type = 'button';
+    btnBackup.textContent = 'Backup selected tables';
+    btnBackup.style.cssText = 'background:#0f172a;color:#fff;border:none;padding:10px 22px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;';
+    actionRow.appendChild(btnBackup);
+    wrap.appendChild(actionRow);
+
+    const resultArea = document.createElement('div');
+    resultArea.style.marginTop = '16px';
+    wrap.appendChild(resultArea);
+
+    btnBackup.addEventListener('click', async () => {
+        const selected = checkboxes
+            .filter(cb => cb.checked)
+            .map(cb => ({ name: cb.dataset.name, schema: cb.dataset.schema }));
+
+        if (selected.length === 0) {
+            resultArea.innerHTML = '<p style="color:#f59e0b;margin:0;">No tables selected.</p>';
+            return;
+        }
+
+        btnBackup.disabled = true;
+        btnBackup.textContent = 'Running…';
+        resultArea.innerHTML = '';
+
+        try {
+            const res = await fetch('api.php?action=backup_tables', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ tables: selected })
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                const ul = document.createElement('ul');
+                ul.style.cssText = 'list-style:none;padding:0;margin:0;';
+                data.results.forEach(r => {
+                    const li = document.createElement('li');
+                    li.style.cssText = 'padding:8px 12px;border-radius:4px;margin-bottom:4px;font-size:13px;display:flex;gap:8px;align-items:baseline;';
+                    if (r.status === 'success') {
+                        li.style.background = '#dcfce7';
+                        li.innerHTML = `<span style="color:#166534;font-weight:700;">✓</span>`
+                            + ` <strong>${r.table}</strong> → <code style="background:#bbf7d0;padding:1px 5px;border-radius:3px;">${r.backup}</code>`
+                            + ` <span style="color:#4ade80;font-size:11px;">(${r.rows} row${r.rows !== 1 ? 's' : ''})</span>`;
+                    } else {
+                        li.style.background = '#fee2e2';
+                        li.innerHTML = `<span style="color:#991b1b;font-weight:700;">✗</span>`
+                            + ` <strong>${r.table}</strong>: <span style="color:#991b1b;">${r.message}</span>`;
+                    }
+                    ul.appendChild(li);
+                });
+                resultArea.appendChild(ul);
+            } else {
+                resultArea.innerHTML = `<p style="color:#ef4444;margin:0;">Error: ${data.error || 'Unknown error'}</p>`;
+            }
+        } catch (e) {
+            resultArea.innerHTML = `<p style="color:#ef4444;margin:0;">Request failed: ${e.message}</p>`;
+        }
+
+        btnBackup.disabled = false;
+        btnBackup.textContent = 'Backup selected tables';
+    });
+
+    workspaceEl.innerHTML = '';
+    workspaceEl.appendChild(wrap);
+}

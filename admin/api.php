@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Ensure state-changing actions use POST method to prevent CSRF via GET
-$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'create_table', 'add_column', 'run_cron_notifications'];
+$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'create_table', 'add_column', 'run_cron_notifications', 'backup_tables'];
 if (in_array($action, $postActions, true) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Content-Type: application/json');
     http_response_code(405);
@@ -469,6 +469,73 @@ if ($action === 'list_icons') {
     }
     header('Content-Type: application/json');
     echo json_encode(['status' => 'success', 'icons' => array_values(array_unique($icons))]);
+    exit;
+}
+
+// List spw_* system tables from the database for the backup page
+if ($action === 'list_system_tables') {
+    header('Content-Type: application/json');
+    try {
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = db_connect();
+        $sysSchema = sys_schema();
+        $sql = "SELECT table_name, table_schema FROM information_schema.tables
+                WHERE table_schema = \$1 AND table_name LIKE 'spw\\_%' ESCAPE '\\'
+                AND table_type = 'BASE TABLE' ORDER BY table_name";
+        $res = @pg_query_params($conn, $sql, [$sysSchema]);
+        if (!$res) {
+            admin_db_fail($conn, 'list_system_tables');
+        }
+        $tables = [];
+        while ($row = pg_fetch_assoc($res)) {
+            $tables[] = ['name' => $row['table_name'], 'schema' => $row['table_schema']];
+        }
+        echo json_encode(['status' => 'success', 'tables' => $tables]);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// Create a timestamped copy of selected tables (structure + data, no indexes/constraints)
+if ($action === 'backup_tables') {
+    header('Content-Type: application/json');
+    $input = json_decode(file_get_contents('php://input'), true);
+    $tables = $input['tables'] ?? [];
+    if (empty($tables) || !is_array($tables)) {
+        echo json_encode(['status' => 'error', 'error' => 'No tables provided.']);
+        exit;
+    }
+    try {
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = db_connect();
+        $prefix = date('YmdHi');
+        $results = [];
+        foreach ($tables as $t) {
+            $tableName  = $t['name']   ?? '';
+            $schemaName = $t['schema'] ?? '';
+            if (empty($tableName) || empty($schemaName)) {
+                $results[] = ['table' => $tableName, 'status' => 'error', 'message' => 'Missing table or schema name.'];
+                continue;
+            }
+            $backupName  = $prefix . '_' . $tableName;
+            $safeSchema  = pg_escape_identifier($conn, $schemaName);
+            $safeSource  = pg_escape_identifier($conn, $tableName);
+            $safeBackup  = pg_escape_identifier($conn, $backupName);
+            $sql = "CREATE TABLE $safeSchema.$safeBackup AS SELECT * FROM $safeSchema.$safeSource";
+            $res = @pg_query($conn, $sql);
+            if ($res) {
+                $rows = pg_affected_rows($res);
+                $results[] = ['table' => $tableName, 'backup' => $backupName, 'status' => 'success', 'rows' => $rows];
+            } else {
+                error_log('[admin_api][backup_tables] ' . pg_last_error($conn));
+                $results[] = ['table' => $tableName, 'status' => 'error', 'message' => 'Database error. Check server logs.'];
+            }
+        }
+        echo json_encode(['status' => 'success', 'results' => $results]);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    }
     exit;
 }
 

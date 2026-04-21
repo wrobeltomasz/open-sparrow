@@ -10,6 +10,7 @@ import { renderDocumentation } from './docs.js';
 import { renderUsersEditor } from './users.js';
 import { renderWorkflowsEditor } from './workflows.js';
 import { renderFilesEditor } from './files_render.js';
+import { renderBackupPage } from './backup.js';
 
 let currentConfig = null;
 let currentFile = 'schema';
@@ -208,7 +209,7 @@ function getColumnOptionsForTable(tableName) {
 }
 
 async function loadConfigFile(fileName) {
-    if (fileName === 'health' || fileName === 'docs' || fileName === 'users') {
+    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup') {
         currentConfig = null;
         renderSidebar();
         renderEditor(fileName.toUpperCase(), null, false);
@@ -290,7 +291,7 @@ function clearConfig() {
 function renderSidebar() {
     itemListEl.innerHTML = '';
     
-    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users') {
+    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup') {
         document.getElementById('sidebarTitle').textContent = currentFile.charAt(0).toUpperCase() + currentFile.slice(1);
         const actionDiv = document.getElementById('sidebarActions');
         if (actionDiv) actionDiv.innerHTML = ''; 
@@ -300,6 +301,7 @@ function renderSidebar() {
         if (currentFile === 'health') title = "View Diagnostics";
         if (currentFile === 'docs') title = "Read Documentation";
         if (currentFile === 'users') title = "System Users";
+        if (currentFile === 'backup') title = "Backup Tables";
         
         li.textContent = title; 
         li.style.fontWeight = 'bold'; 
@@ -449,7 +451,7 @@ function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    if (['health', 'docs', 'users'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
+    if (['health', 'docs', 'users', 'backup'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -460,6 +462,7 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'health') return renderHealthDashboard(ctx);
     if (currentFile === 'docs') return renderDocumentation(ctx);
     if (currentFile === 'users') return renderUsersEditor(ctx);
+    if (currentFile === 'backup') return renderBackupPage(ctx);
     if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
 
     if (key === 'LAYOUT') {

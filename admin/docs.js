@@ -148,7 +148,20 @@ export function renderDocumentation(ctx) {
                 <li><strong>Login protection:</strong> <code>login.php</code> applies a DB-backed rate limiter (IP-hash: 20 attempts / 15 min, username: 5 attempts / 15 min) plus CSRF tokens and strict session cookies.</li>
             </ul>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">8. System Health, Cron &amp; Backups</h3>
+            <h3 style="color: #2563eb; margin-top: 30px;">8. Backup Tables</h3>
+            <p><strong>System → Backup Tables</strong> creates timestamped copies of selected tables directly in PostgreSQL.</p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Table selection:</strong> The page lists all tables from <code>schema.json</code> (Application Tables) and all <code>spw_*</code> system tables fetched live from the database. Use <em>Select all</em> / <em>Deselect all</em> or tick individual tables.</li>
+                <li><strong>Backup name format:</strong> <code>YYYYMMDDHHII_tablename</code> — e.g. <code>202604211709_contact_log</code>. The prefix is the server time at the moment of execution.</li>
+                <li><strong>What is copied:</strong> Column structure and all data rows (<code>CREATE TABLE … AS SELECT * FROM …</code>). Indexes, primary keys, foreign keys, and constraints are <strong>not</strong> copied — the backup is a plain data snapshot, not a full schema clone.</li>
+                <li><strong>Schema:</strong> Each backup table is created in the same PostgreSQL schema as its source (e.g. <code>app</code> for system tables, <code>public</code> for application tables).</li>
+                <li><strong>Results:</strong> After each run the page shows a per-table result — backup name and row count on success, or an error message if the operation failed (e.g. table already exists for that minute).</li>
+            </ul>
+            <p style="background:#fef3c7;padding:10px 14px;border-left:3px solid #f59e0b;border-radius:4px;font-size:14px;">
+                <strong>Tip:</strong> Run <em>Backup Tables</em> before applying schema changes or upgrading OpenSparrow. Pair it with a <code>pg_dump</code> snapshot and a config ZIP export for a complete backup.
+            </p>
+
+            <h3 style="color: #2563eb; margin-top: 30px;">9. System Health, Cron &amp; Config</h3>
             <p>Keep the environment healthy and configuration portable.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Initialize System Tables:</strong> In the Health tab this creates <code>spw_users</code>, <code>spw_users_log</code>, <code>spw_users_notifications</code>, <code>spw_users_notifications_log</code>, <code>spw_files</code> and <code>spw_login_attempts</code> inside the configured schema (default <code>app</code>). Run it once on a fresh installation and after every upgrade that adds new system tables. The call is CSRF-protected via the <code>X-CSRF-Token</code> header.</li>
@@ -158,7 +171,7 @@ export function renderDocumentation(ctx) {
                 <li><strong>Export / Import config:</strong> The <em>Configuration</em> drop-down downloads or uploads a ZIP of all JSON settings. Recommended for backups and migrations to production.</li>
             </ul>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">9. Files Module</h3>
+            <h3 style="color: #2563eb; margin-top: 30px;">10. Files Module</h3>
             <p>The <strong>Files</strong> tab is a central repository for documents and media, backed by the <code>spw_files</code> table.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Global settings:</strong> The <em>Global Settings</em> sidebar item lets you set the menu name, icon and visibility of the Files entry. A live sidebar preview updates as you change these values.</li>
@@ -167,7 +180,7 @@ export function renderDocumentation(ctx) {
                 <li><strong>File library:</strong> Upload, search, filter by type, preview images and delete files from the admin UI. Deletions are logged to the audit trail.</li>
             </ul>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">10. Deployment Notes</h3>
+            <h3 style="color: #2563eb; margin-top: 30px;">11. Deployment Notes</h3>
             <ul style="padding-left: 20px;">
                 <li><strong>Deny public access to <code>includes/</code>:</strong> Configure your web server so <code>database.json</code>, <code>security.json</code> and <code>schema.json</code> cannot be fetched directly.</li>
                 <li><strong>Environment variables:</strong> <code>PGHOST</code>, <code>PGPORT</code>, <code>PGDATABASE</code>, <code>PGUSER</code>, <code>PGPASSWORD</code>, <code>PGSCHEMA</code>. <code>PGSCHEMA</code> is the fallback for the system schema when <code>database.json</code> does not define <code>schema</code>.</li>
