@@ -29,8 +29,7 @@ export function setupPagination(schema) {
 export function renderPagination(schema) {
   const { filteredData } = getState();
 
-  let totalPages = Math.ceil(filteredData.length / pageSize);
-  if (totalPages === 0) totalPages = 1;
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
 
   if (currentPage > totalPages) {
     currentPage = totalPages;
@@ -74,7 +73,7 @@ export function renderPagination(schema) {
 
   paginationEl.appendChild(nextBtn);
 
-  // ✅ Pagination info (correct placement AFTER UI is built)
+  // Pagination info (correct placement AFTER UI is built)
   renderPaginationInfo(filteredData);
 
   debugLog("Pagination rendered", { currentPage, totalPages });
@@ -127,7 +126,7 @@ function renderPaginationInfo(filteredData) {
 
     const paginationEl = document.getElementById('pagination');
     if (paginationEl) {
-      paginationEl.prepend(infoEl);
+      paginationEl.appendChild(infoEl);
     }
   }
 
