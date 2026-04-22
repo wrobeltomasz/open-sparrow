@@ -8,12 +8,12 @@ let currentPage = 1;
 // --- Setup pagination container and render controls ---
 export function setupPagination(schema) {
   let paginationEl = document.getElementById('pagination');
+
   if (!paginationEl) {
     paginationEl = document.createElement('div');
     paginationEl.id = 'pagination';
     paginationEl.className = 'pagination';
-    
-    // Fallback in case the gridSection element is missing
+
     const gridSection = document.getElementById('gridSection');
     if (gridSection) {
       gridSection.appendChild(paginationEl);
@@ -21,63 +21,65 @@ export function setupPagination(schema) {
       document.body.appendChild(paginationEl);
     }
   }
+
   renderPagination(schema);
 }
 
 // --- Render pagination controls ---
 export function renderPagination(schema) {
   const { filteredData } = getState();
-  
-  // Prevent displaying a weird "Page 1 of 0" when the table is empty
-  let totalPages = Math.ceil(filteredData.length / pageSize);
-  if (totalPages === 0) totalPages = 1; 
 
-  // Auto-correction: If records were deleted and we fell out of page bounds, go back
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+
   if (currentPage > totalPages) {
     currentPage = totalPages;
   }
 
   const paginationEl = document.getElementById('pagination');
   if (!paginationEl) return;
-  
+
   paginationEl.innerHTML = '';
 
+  // Prev button
   const prevBtn = document.createElement('button');
   prevBtn.textContent = 'Prev';
   prevBtn.disabled = currentPage <= 1;
-  
-  // Added async to handle grid rendering promises
+
   prevBtn.addEventListener('click', async () => {
     if (currentPage > 1) {
       currentPage--;
-      // Added await and removed redundant renderPagination call (renderGrid does it internally)
       await renderGrid(schema);
     }
   });
+
   paginationEl.appendChild(prevBtn);
 
+  // Page info
   const info = document.createElement('span');
   info.textContent = `Page ${currentPage} of ${totalPages}`;
   paginationEl.appendChild(info);
 
+  // Next button
   const nextBtn = document.createElement('button');
   nextBtn.textContent = 'Next';
   nextBtn.disabled = currentPage >= totalPages;
-  
-  // Added async to handle grid rendering promises
+
   nextBtn.addEventListener('click', async () => {
     if (currentPage < totalPages) {
       currentPage++;
-      // Same as above: await renderGrid handles the pagination re-render
       await renderGrid(schema);
     }
   });
+
   paginationEl.appendChild(nextBtn);
+
+  // Pagination info (correct placement AFTER UI is built)
+  renderPaginationInfo(filteredData);
 
   debugLog("Pagination rendered", { currentPage, totalPages });
 }
 
-// --- Helpers to expose ---
+// --- Helpers ---
 export function getPageState() {
   return { currentPage, pageSize };
 }
@@ -87,15 +89,14 @@ export function setPageSize(size) {
   currentPage = 1;
 }
 
-// Essential function for correct searching logic (called in app.js)
 export function resetPagination() {
   currentPage = 1;
 }
 
+// --- Get paginated rows ---
 export function getPageRows() {
   const { filteredData } = getState();
-  
-  // Final check before slicing rows to ensure we are strictly on a valid page
+
   const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
   if (currentPage > totalPages) {
     currentPage = totalPages;
@@ -103,5 +104,31 @@ export function getPageRows() {
 
   const start = (currentPage - 1) * pageSize;
   const end = start + pageSize;
+
   return filteredData.slice(start, end);
+}
+
+// --- Pagination info renderer ---
+function renderPaginationInfo(filteredData) {
+  const totalRecords = filteredData.length;
+
+  const start = totalRecords === 0
+    ? 0
+    : (currentPage - 1) * pageSize + 1;
+
+  const end = Math.min(currentPage * pageSize, totalRecords);
+
+  let infoEl = document.getElementById('pagination-info');
+
+  if (!infoEl) {
+    infoEl = document.createElement('span');
+    infoEl.id = 'pagination-info';
+
+    const paginationEl = document.getElementById('pagination');
+    if (paginationEl) {
+      paginationEl.appendChild(infoEl);
+    }
+  }
+
+  infoEl.textContent = `Showing ${start} to ${end} of ${totalRecords} records`;
 }
