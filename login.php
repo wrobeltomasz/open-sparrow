@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($error)) {
-            $sqlUser = 'SELECT id, username, password_hash, role FROM ' . sys_table('users') . ' WHERE username = $1';
+            $sqlUser = 'SELECT id, username, password_hash, salt, role FROM ' . sys_table('users') . ' WHERE username = $1';
             $resUser = pg_query_params($conn, $sqlUser, [$username]);
 
             if (!$resUser) {
@@ -136,7 +136,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $user = pg_fetch_assoc($resUser);
 
-                if ($user && password_verify($password, $user['password_hash'])) {
+                $storedSalt = $user['salt'] ?? '';
+                $toVerify = $storedSalt !== '' ? $storedSalt . $password : $password;
+
+                if ($user && password_verify($toVerify, $user['password_hash'])) {
                     // Reset session and token after login
                     session_regenerate_id(true);
                     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -146,6 +149,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Assign user role to session for authorization control
                     $_SESSION['role'] = $user['role'] ?? 'full';
+
+                    // Rehash on login if parameters changed; generate new salt when rehashing
+                    $newOptions = [
+                        'memory_cost' => 1<<17,
+                        'time_cost' => 4,
+                        'threads' => 2
+                    ];
+                    if (password_needs_rehash($user['password_hash'], PASSWORD_ARGON2ID, $newOptions)) {
+                        $newSalt = bin2hex(random_bytes(32));
+                        $newHash = password_hash($newSalt . $password, PASSWORD_ARGON2ID, $newOptions);
+                        $sqlUpdate = 'UPDATE ' . sys_table('users') . ' SET password_hash = $1, salt = $2 WHERE id = $3';
+                        pg_query_params($conn, $sqlUpdate, [$newHash, $newSalt, $user['id']]);
+                    }
 
                     log_user_action($conn, $user['id'], 'LOGIN');
 

@@ -80,9 +80,12 @@ if ($action === 'init_db') {
         // Prepare missing DB updates and tables creation
         $queries = [
             "CREATE SCHEMA IF NOT EXISTS $schemaIdent",
-            "CREATE TABLE IF NOT EXISTS $tUsers ( id serial4 NOT NULL, username varchar(50) NOT NULL, password_hash varchar(255) NOT NULL, is_active bool DEFAULT true, role varchar(20) DEFAULT 'full' NOT NULL, CONSTRAINT spw_users_pkey PRIMARY KEY (id), CONSTRAINT spw_users_username_key UNIQUE (username) )",
+			"CREATE TABLE IF NOT EXISTS $tUsers ( id serial4 NOT NULL, username varchar(50) NOT NULL, password_hash varchar(255) NOT NULL, salt varchar(64), password_algo varchar(32) DEFAULT 'argon2id' NOT NULL, password_params jsonb DEFAULT '{}'::jsonb, is_active bool DEFAULT true, role varchar(20) DEFAULT 'full' NOT NULL, CONSTRAINT spw_users_pkey PRIMARY KEY (id), CONSTRAINT spw_users_username_key UNIQUE (username) )",
             "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS is_active bool DEFAULT true",
             "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS \"role\" varchar(20) DEFAULT 'full' NOT NULL",
+			"ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS salt varchar(64)",
+			"ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS password_algo varchar(32) DEFAULT 'argon2id' NOT NULL",
+			"ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS password_params jsonb DEFAULT '{}'::jsonb",
             "CREATE TABLE IF NOT EXISTS $tUsersLog ( id serial4 NOT NULL, user_id int4 NOT NULL, \"action\" varchar(50) NOT NULL, target_table varchar(100), record_id int4, created_at timestamp DEFAULT CURRENT_TIMESTAMP, CONSTRAINT spw_users_log_pkey PRIMARY KEY (id) )",
             "CREATE TABLE IF NOT EXISTS $tUsersNotifications ( id serial4 NOT NULL, user_id int8 NOT NULL, title varchar(255) NOT NULL, link varchar(255), source_table varchar(100), source_id int8, is_read bool DEFAULT false, notify_date date NOT NULL, created_at timestamp DEFAULT CURRENT_TIMESTAMP, CONSTRAINT spw_users_notifications_pkey PRIMARY KEY (id), CONSTRAINT spw_users_notifications_user_id_source_table_source_id_notify_d_key UNIQUE (user_id, source_table, source_id, notify_date) )",
             "CREATE TABLE IF NOT EXISTS $tFiles ( id serial4 NOT NULL, \"uuid\" uuid DEFAULT gen_random_uuid() NOT NULL, \"name\" varchar(255) NOT NULL, display_name varchar(255) NULL, \"type\" varchar(50) NOT NULL, mime_type varchar(100) NOT NULL, \"extension\" varchar(20) NOT NULL, size_bytes int8 DEFAULT 0 NOT NULL, storage_path text NOT NULL, related_table varchar(100) NULL, related_id int4 NULL, related_field varchar(100) NULL, uploaded_by int4 NULL, created_at timestamp DEFAULT now() NOT NULL, updated_at timestamp DEFAULT now() NOT NULL, deleted_at timestamp NULL, description text NULL, tags _text NULL, metadata jsonb NULL, CONSTRAINT spw_files_pkey PRIMARY KEY (id), CONSTRAINT spw_files_uuid_key UNIQUE (uuid), CONSTRAINT spw_files_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES $tUsers(id) ON DELETE SET NULL)",
@@ -97,7 +100,7 @@ if ($action === 'init_db') {
             "CREATE INDEX IF NOT EXISTS idx_spw_login_attempts_ip ON $tLoginAttempts USING btree (ip_hash, attempted_at)",
             "CREATE TABLE IF NOT EXISTS $tCronLog ( id serial4 NOT NULL, started_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, finished_at timestamp NULL, status varchar(20) NOT NULL DEFAULT 'running', triggered_by varchar(20) NOT NULL DEFAULT 'cron', sources_processed int4 NULL, notifications_created int4 NULL, error_message text NULL, CONSTRAINT spw_users_notifications_log_pkey PRIMARY KEY (id) )",
             "CREATE INDEX IF NOT EXISTS idx_spw_cron_log_started_at ON $tCronLog USING btree (started_at)",
-            "INSERT INTO $tUsers (username, password_hash, is_active, role) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', true, 'full' WHERE NOT EXISTS (SELECT 1 FROM $tUsers WHERE username = 'test')"
+			"INSERT INTO $tUsers (username, password_hash, salt, password_algo, password_params, is_active, role) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', NULL, 'argon2id', '{}'::jsonb, true, 'full' WHERE NOT EXISTS (SELECT 1 FROM $tUsers WHERE username = 'test')"
         ];
         
         foreach ($queries as $q) {
