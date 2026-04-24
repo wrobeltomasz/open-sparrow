@@ -150,7 +150,6 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
     
     <link rel="stylesheet" href="../assets/css/styles.css">
     <link rel="stylesheet" href="style.css?v=<?php echo @filemtime('style.css'); ?>">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
     <header>
