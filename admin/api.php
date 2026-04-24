@@ -100,7 +100,8 @@ if ($action === 'init_db') {
             "CREATE INDEX IF NOT EXISTS idx_spw_login_attempts_ip ON $tLoginAttempts USING btree (ip_hash, attempted_at)",
             "CREATE TABLE IF NOT EXISTS $tCronLog ( id serial4 NOT NULL, started_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, finished_at timestamp NULL, status varchar(20) NOT NULL DEFAULT 'running', triggered_by varchar(20) NOT NULL DEFAULT 'cron', sources_processed int4 NULL, notifications_created int4 NULL, error_message text NULL, CONSTRAINT spw_users_notifications_log_pkey PRIMARY KEY (id) )",
             "CREATE INDEX IF NOT EXISTS idx_spw_cron_log_started_at ON $tCronLog USING btree (started_at)",
-			"INSERT INTO $tUsers (username, password_hash, salt, password_algo, password_params, is_active, role) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', NULL, 'argon2id', '{}'::jsonb, true, 'full' WHERE NOT EXISTS (SELECT 1 FROM $tUsers WHERE username = 'test')"
+			"INSERT INTO $tUsers (username, password_hash, salt, password_algo, password_params, is_active, role) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', NULL, 'argon2id', '{}'::jsonb, true, 'full' WHERE NOT EXISTS (SELECT 1 FROM $tUsers WHERE username = 'test')",
+            "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS avatar_id smallint"
         ];
         
         foreach ($queries as $q) {

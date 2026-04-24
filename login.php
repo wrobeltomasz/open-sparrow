@@ -128,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($error)) {
-            $sqlUser = 'SELECT id, username, password_hash, salt, role FROM ' . sys_table('users') . ' WHERE username = $1';
+            $sqlUser = 'SELECT id, username, password_hash, salt, role, avatar_id FROM ' . sys_table('users') . ' WHERE username = $1';
             $resUser = pg_query_params($conn, $sqlUser, [$username]);
 
             if (!$resUser) {
@@ -149,6 +149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Assign user role to session for authorization control
                     $_SESSION['role'] = $user['role'] ?? 'full';
+                    $_SESSION['avatar_id'] = ($user['avatar_id'] !== '' && $user['avatar_id'] !== null) ? (int)$user['avatar_id'] : null;
 
                     // Rehash on login if parameters changed; generate new salt when rehashing
                     $newOptions = [

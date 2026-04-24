@@ -75,12 +75,36 @@
         <?php endif; ?>
         
         <?php if (isset($_SESSION['username'])) : ?>
-            <span class="header-username"><?= htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8') ?></span>
+        <?php
+            $avatarId  = $_SESSION['avatar_id'] ?? null;
+            $uname     = $_SESSION['username'];
+            $initial   = htmlspecialchars(strtoupper(substr($uname, 0, 1)), ENT_QUOTES, 'UTF-8');
+            $unameEsc  = htmlspecialchars($uname, ENT_QUOTES, 'UTF-8');
+        ?>
+        <div class="user-avatar-wrap">
+            <button class="user-avatar-btn" id="userAvatarBtn"
+                    aria-label="User menu" aria-expanded="false" aria-haspopup="true">
+                <?php if ($avatarId): ?>
+                    <img class="avatar avatar-border"
+                         src="assets/img/avatar-<?= (int)$avatarId ?>.png"
+                         alt="Avatar <?= (int)$avatarId ?>" />
+                <?php else: ?>
+                    <svg class="avatar avatar-border avatar-initial" viewBox="0 0 32 32" aria-hidden="true">
+                        <circle cx="16" cy="16" r="16" fill="#364B60"/>
+                        <text x="16" y="21" text-anchor="middle" fill="#fff"
+                              font-size="14" font-family="Inter,sans-serif" font-weight="600"><?= $initial ?></text>
+                    </svg>
+                <?php endif; ?>
+                <span class="user-avatar-tooltip"><?= $unameEsc ?></span>
+            </button>
+            <div class="user-avatar-menu" id="userAvatarMenu" role="menu" aria-hidden="true">
+                <button class="user-avatar-menu-item" id="changeAvatarBtn" role="menuitem">Change avatar</button>
+                <button class="user-avatar-menu-item" id="changePasswordBtn" role="menuitem">Change password</button>
+                <div class="user-avatar-menu-divider"></div>
+                <button class="user-avatar-menu-item danger" id="logoutBtn" role="menuitem">Logout</button>
+            </div>
+        </div>
         <?php endif; ?>
-        
-        <button onclick="window.location.href='logout.php'" class="btn-logout">
-            Logout
-        </button>
     </div>
 </header>
 <div class="app-container">
@@ -245,6 +269,7 @@
 </script>
 
 <script type="module" src="assets/js/app.js?v=<?php echo @filemtime('assets/js/app.js'); ?>"></script>
+<script type="module" src="assets/js/user-menu.js?v=<?php echo @filemtime('assets/js/user-menu.js'); ?>"></script>
 
 </body>
 </html>

@@ -190,12 +190,267 @@ header input.date-filter:focus {
   border-color: white;
 }
 
-.header-username {
-  font-size: 0.9rem;
+/* ===== AVATAR ===== */
+.avatar {
+  width: 32px;
+  height: 32px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.avatar-border {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+  object-fit: cover;
+}
+
+.avatar-muted {
+  opacity: 0.7;
+}
+
+/* ===== USER AVATAR BUTTON + TOOLTIP ===== */
+.user-avatar-btn {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+  outline-offset: 2px;
+}
+
+.user-avatar-btn:focus-visible {
+  outline: 2px solid rgba(255,255,255,0.8);
+}
+
+.user-avatar-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.75);
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition);
+  z-index: 201;
+}
+
+.user-avatar-btn:hover .user-avatar-tooltip,
+.user-avatar-btn:focus .user-avatar-tooltip {
+  opacity: 1;
+}
+
+/* ===== USER AVATAR DROPDOWN ===== */
+.user-avatar-wrap {
+  position: relative;
+}
+
+.user-avatar-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  min-width: 160px;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.user-avatar-menu.open {
+  display: block;
+}
+
+.user-avatar-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13.5px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.user-avatar-menu-item:hover {
+  background: var(--accent-light);
+}
+
+.user-avatar-menu-item.danger {
+  color: var(--danger);
+}
+
+.user-avatar-menu-item.danger:hover {
+  background: #fef2f2;
+}
+
+.user-avatar-menu-divider {
+  height: 1px;
+  background: var(--border-light);
+  margin: 4px 0;
+}
+
+/* ===== USER AVATAR MODAL ===== */
+.um-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.um-overlay.open {
+  display: flex;
+}
+
+.um-box {
+  background: var(--panel);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  width: 100%;
+  max-width: 440px;
+  padding: 1.5rem;
+}
+
+.um-box h3 {
+  margin: 0 0 1rem;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.um-close {
+  float: right;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--muted);
+  line-height: 1;
+  padding: 0;
+}
+
+.um-close:hover {
+  color: var(--text);
+}
+
+/* avatar picker grid */
+.um-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.um-picker-btn {
+  background: none;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  padding: 2px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  display: flex;
+}
+
+.um-picker-btn:hover,
+.um-picker-btn:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.um-picker-btn.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-mid);
+}
+
+/* password change form */
+.um-form label {
+  display: block;
+  font-size: 13px;
   font-weight: 500;
-  color: #e2e8f0;
-  margin-right: 12px;
-  vertical-align: middle;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.um-form input[type="password"] {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  margin-bottom: 0.85rem;
+  transition: border-color var(--transition);
+}
+
+.um-form input[type="password"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0,90,158,0.15);
+}
+
+.um-form .um-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 0.5rem;
+}
+
+.um-btn {
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background var(--transition), opacity var(--transition);
+}
+
+.um-btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.um-btn-primary:hover {
+  background: var(--accent-dark);
+}
+
+.um-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.um-btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.um-btn-secondary:hover {
+  background: var(--accent-light);
+}
+
+.um-error {
+  font-size: 13px;
+  color: var(--danger);
+  margin-bottom: 0.75rem;
+  display: none;
+}
+
+.um-error.visible {
+  display: block;
 }
 
 /* ===== LAYOUT CONTAINER ===== */
