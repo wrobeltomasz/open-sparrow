@@ -29,6 +29,97 @@ if (in_array($method, ['POST', 'PATCH', 'DELETE'], true)) {
     }
 }
 
+// Self-service profile actions — permitted for every authenticated user regardless of role
+$profileAction = $_GET['action'] ?? '';
+if (in_array($profileAction, ['update_avatar', 'change_password'], true)) {
+    header('Content-Type: application/json; charset=utf-8');
+    require __DIR__ . '/includes/db.php';
+    $conn = db_connect();
+    require __DIR__ . '/includes/api_helpers.php';
+
+    $body = json_decode(file_get_contents('php://input'), true) ?? [];
+    $uid  = (int)$_SESSION['user_id'];
+
+    // POST: save chosen avatar (1-24) or clear it (null)
+    if ($profileAction === 'update_avatar' && $method === 'POST') {
+        $avatarId = array_key_exists('avatar_id', $body) ? $body['avatar_id'] : false;
+        if ($avatarId === false) {
+            http_response_code(400);
+            exit(json_encode(['error' => 'avatar_id required']));
+        }
+        if ($avatarId !== null && (!is_int($avatarId) || $avatarId < 1 || $avatarId > 24)) {
+            http_response_code(400);
+            exit(json_encode(['error' => 'avatar_id must be 1-24 or null']));
+        }
+
+        $sql = 'UPDATE ' . sys_table('users') . ' SET avatar_id = $1 WHERE id = $2';
+        $res = @pg_query_params($conn, $sql, [$avatarId, $uid]);
+        if (!$res) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'Database error']));
+        }
+
+        $_SESSION['avatar_id'] = $avatarId;
+        exit(json_encode(['ok' => true]));
+    }
+
+    // POST: change own password — verify current, enforce minimum length, rehash
+    if ($profileAction === 'change_password' && $method === 'POST') {
+        $current = $body['current_password'] ?? '';
+        $new     = $body['new_password'] ?? '';
+
+        if ($current === '' || $new === '') {
+            http_response_code(400);
+            exit(json_encode(['error' => 'Both passwords are required.']));
+        }
+        if (strlen($new) < 8) {
+            http_response_code(422);
+            exit(json_encode(['error' => 'New password must be at least 8 characters.']));
+        }
+
+        $sqlFetch = 'SELECT password_hash, salt FROM ' . sys_table('users') . ' WHERE id = $1';
+        $resFetch = @pg_query_params($conn, $sqlFetch, [$uid]);
+        if (!$resFetch) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'Database error']));
+        }
+
+        $row      = pg_fetch_assoc($resFetch);
+        $salt     = $row['salt'] ?? '';
+        $toVerify = $salt !== '' ? $salt . $current : $current;
+
+        if (!password_verify($toVerify, $row['password_hash'])) {
+            http_response_code(422);
+            exit(json_encode(['error' => 'Current password is incorrect.']));
+        }
+
+        $newSalt    = bin2hex(random_bytes(32));
+        $newOptions = ['memory_cost' => 1 << 17, 'time_cost' => 4, 'threads' => 2];
+        $newHash    = password_hash($newSalt . $new, PASSWORD_ARGON2ID, $newOptions);
+
+        $sqlUpd = 'UPDATE ' . sys_table('users')
+            . ' SET password_hash = $1, salt = $2, password_algo = $3, password_params = $4 WHERE id = $5';
+        $params = [
+            $newHash,
+            $newSalt,
+            'argon2id',
+            json_encode(['memory_cost' => 1 << 17, 'time_cost' => 4, 'threads' => 2]),
+            $uid,
+        ];
+        $resUpd = @pg_query_params($conn, $sqlUpd, $params);
+        if (!$resUpd) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'Database error']));
+        }
+
+        log_user_action($conn, $uid, 'CHANGE_PASSWORD');
+        exit(json_encode(['ok' => true]));
+    }
+
+    http_response_code(405);
+    exit(json_encode(['error' => 'Method not allowed']));
+}
+
 // Block data modification requests for readonly users
 if ($role === 'readonly' && in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
     http_response_code(403);

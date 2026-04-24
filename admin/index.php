@@ -1,5 +1,16 @@
 <?php
 // admin/index.php
+
+// Set secure session cookie parameters before starting the session
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => '',
+    'secure' => true,
+    'httponly' => true,
+    'samesite' => 'Strict'
+]);
+
 session_start();
 
 // Generate CSRF token for secure form submission and API requests
@@ -20,6 +31,20 @@ if (file_exists($securityFile)) {
         $info = password_get_info($storedPass);
         if ($info['algoName'] === 'unknown') {
             $admin_password_hash = password_hash($storedPass, PASSWORD_DEFAULT);
+
+            // Persist hashed password back to security.json so plaintext isn't stored
+            // Prefer storing only the hash; file should be kept out of VCS and with restricted perms
+            $secData['admin_password'] = $admin_password_hash;
+            $encoded = json_encode($secData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if ($encoded !== false) {
+                $tmp = $securityFile . '.tmp';
+                if (@file_put_contents($tmp, $encoded, LOCK_EX) !== false) {
+                    @chmod($tmp, 0600);
+                    @rename($tmp, $securityFile);
+                } else {
+                    // If persisting fails, continue using the in-memory hash but do not expose details
+                }
+            }
         } else {
             $admin_password_hash = $storedPass;
         }
@@ -28,7 +53,25 @@ if (file_exists($securityFile)) {
 
 // Handle user logout
 if (isset($_GET['logout'])) {
-    unset($_SESSION['sparrow_admin_logged_in']);
+    // Fully destroy session and clear session cookie
+    $_SESSION = [];
+
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params['path'],
+            $params['domain'],
+            $params['secure'],
+            $params['httponly']
+        );
+    }
+
+    session_unset();
+    session_destroy();
+
     header("Location: index.php");
     exit;
 }
@@ -152,9 +195,9 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
                 <input type="file" id="importFileInput" accept=".zip" style="display: none;">
             </div>
 
-		<button class="admin-tab" data-file="docs" title="Admin panel documentation" style="background: transparent; border: none; cursor: pointer; padding: 0; margin-right: 10px; display: flex; align-items: center;">
-			<img src="../assets/icons/book_3s.png" alt="Docs" style="width: 24px; height: 24px; filter: brightness(0) invert(1); opacity: 0.9; pointer-events: none;">
-		</button>
+        <button class="admin-tab" data-file="docs" title="Admin panel documentation" style="background: transparent; border: none; cursor: pointer; padding: 0; margin-right: 10px; display: flex; align-items: center;">
+            <img src="../assets/icons/book_3s.png" alt="Docs" style="width: 24px; height: 24px; filter: brightness(0) invert(1); opacity: 0.9; pointer-events: none;">
+        </button>
             
             <button onclick="window.location.href='index.php?logout=1'" class="btn-logout" style="background: #ef4444; border-color: #ef4444;">Logout</button>
         </div>
