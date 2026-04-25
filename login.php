@@ -155,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $newOptions = [
                         'memory_cost' => 1<<17,
                         'time_cost' => 4,
-                        'threads' => 2
+                        'threads' => 1
                     ];
                     if (password_needs_rehash($user['password_hash'], PASSWORD_ARGON2ID, $newOptions)) {
                         $newSalt = bin2hex(random_bytes(32));
