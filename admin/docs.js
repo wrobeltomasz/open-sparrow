@@ -44,6 +44,7 @@ export function renderDocumentation(ctx) {
                 <li><code>spw_users_notifications_log</code> — execution log for the notifications cron: start/end time, status (<code>running</code> / <code>success</code> / <code>error</code>), trigger source (<code>cron</code> or <code>admin</code>), number of sources processed and notifications created, and error message on failure.</li>
                 <li><code>spw_files</code> — metadata for files uploaded through the Files module.</li>
                 <li><code>spw_login_attempts</code> — rolling log used by the DB-backed rate limiter on <code>login.php</code> (IP-hash and username counters).</li>
+                <li><code>spw_comments</code> — user comments attached to any record. Each row links to a specific record via <code>related_table</code> + <code>related_id</code>, stores the author (<code>user_id</code>), body text (max 4000 chars), and a soft-delete timestamp.</li>
             </ul>
             <p style="background: #fef3c7; padding: 10px 14px; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 14px;">
                 <strong>Note:</strong> Tables starting with <code>spw_</code> are treated as system tables. They are <strong>filtered out</strong> from the <em>Sync DB Tables</em> list in the Schema tab and will not appear in your application schema, even if they live in the same PostgreSQL schema as your business tables.

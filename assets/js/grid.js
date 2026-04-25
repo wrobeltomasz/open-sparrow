@@ -2,12 +2,16 @@ import { debugLog } from './debug.js';
 import { onCellBlur, onInputChange, deleteRow, addRow, attachCellEvents } from './grid_actions.js';
 import { setupPagination, getPageRows } from './pagination.js';
 import { exportCSV } from './export_csv.js';
+import { renderAvatar } from './avatar.js';
 
 // Retrieve global user role with safe fallback
 const userRole = window.USER_ROLE || 'readonly';
 const isReadOnly = userRole === 'readonly';
 
 const fkCache = {};
+const previewCache = new Map();
+let cPreviewPopup  = null;
+let cPreviewTimer  = null;
 
 let currentTable = null;
 let fullData = [];
@@ -95,6 +99,7 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
         const data = await res.json();
 
         currentTable = table;
+        previewCache.clear();
         window.AppState = window.AppState || {};
         window.AppState.currentTable = currentTable;
 
@@ -292,6 +297,13 @@ export async function renderGrid(schema) {
         headRow.appendChild(th);
     });
 
+    const thComments = document.createElement('th');
+    const commLabel = document.createElement('span');
+    commLabel.className = 'th-label';
+    commLabel.textContent = 'Comments';
+    thComments.appendChild(commLabel);
+    headRow.appendChild(thComments);
+
     if (!isReadOnly) {
         const thActions = document.createElement('th');
         const actLabel = document.createElement('span');
@@ -300,7 +312,7 @@ export async function renderGrid(schema) {
         thActions.appendChild(actLabel);
         headRow.appendChild(thActions);
     }
-    
+
     thead.appendChild(headRow);
     table.appendChild(thead);
 
@@ -326,7 +338,7 @@ export async function renderGrid(schema) {
                     const ddTr = document.createElement('tr');
                     ddTr.className = 'drilldown-row';
                     const ddTd = document.createElement('td');
-                    ddTd.colSpan = displayedColumns.length + (isReadOnly ? 1 : 2); 
+                    ddTd.colSpan = displayedColumns.length + (isReadOnly ? 2 : 3);
                     
                     // Secure loading element creation
                     const loadingEl = document.createElement('em');
@@ -626,9 +638,13 @@ export async function renderGrid(schema) {
             tr.appendChild(td);
         }
 
+        const tdComments = document.createElement('td');
+        tdComments.dataset.commentRowId = String(row['id']);
+        tr.appendChild(tdComments);
+
         if (!isReadOnly) {
             const tdActions = document.createElement('td');
-            
+
             const editBtn = document.createElement('button');
             editBtn.textContent = 'Edit';
             editBtn.style.marginRight = '8px';
@@ -672,6 +688,43 @@ export async function renderGrid(schema) {
 
     setupPagination(schema);
     debugLog("Grid rendered", { rows: pageRows.length });
+
+    loadCommentCounts(pageRows);
+}
+
+async function loadCommentCounts(pageRows) {
+    if (!currentTable || pageRows.length === 0) return;
+
+    const ids = pageRows.map(r => r['id']).filter(Boolean).join(',');
+    if (!ids) return;
+
+    try {
+        const res = await fetch(
+            `api_comments.php?action=counts&related_table=${encodeURIComponent(currentTable)}&related_ids=${encodeURIComponent(ids)}`,
+            { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+        );
+        const data = await res.json();
+        if (!data.success) return;
+
+        const counts = data.counts ?? {};
+        for (const [rowId, cnt] of Object.entries(counts)) {
+            if (cnt <= 0) continue;
+            const td = document.querySelector(`[data-comment-row-id="${CSS.escape(rowId)}"]`);
+            if (!td) continue;
+            const badge = document.createElement('span');
+            badge.className = 'c-count-badge';
+            badge.textContent = String(cnt);
+            badge.dataset.rowId = rowId;
+            badge.title = 'Go to comments';
+            badge.addEventListener('click', (e) => {
+                e.stopPropagation();
+                window.location.href = `edit.php?table=${encodeURIComponent(currentTable)}&id=${encodeURIComponent(rowId)}#tab-comments`;
+            });
+            td.appendChild(badge);
+        }
+    } catch {
+        // Non-critical — silently ignore
+    }
 }
 
 // Custom client side sorting function
@@ -737,8 +790,132 @@ export async function resetFilters(schema) {
     await renderGrid(schema);
 }
 
+// ── Comment preview popup ─────────────────────────────────────────────────
+
+function initPreviewPopup() {
+    cPreviewPopup = document.createElement('div');
+    cPreviewPopup.className = 'c-preview-popup';
+    cPreviewPopup.hidden = true;
+    document.body.appendChild(cPreviewPopup);
+
+    cPreviewPopup.addEventListener('mouseenter', () => clearTimeout(cPreviewTimer));
+    cPreviewPopup.addEventListener('mouseleave', () => { cPreviewPopup.hidden = true; });
+
+    document.addEventListener('mouseover', async (e) => {
+        const badge = e.target.closest('.c-count-badge[data-row-id]');
+        if (!badge) return;
+
+        clearTimeout(cPreviewTimer);
+        positionPreviewPopup(badge);
+        cPreviewPopup.innerHTML = '<p class="c-preview-loading">Loading\u2026</p>';
+        cPreviewPopup.hidden = false;
+
+        const rowId    = badge.dataset.rowId;
+        const tbl      = currentTable;
+        const cacheKey = `${tbl}:${rowId}`;
+
+        if (!previewCache.has(cacheKey)) {
+            try {
+                const res = await fetch(
+                    `api_comments.php?action=list&related_table=${encodeURIComponent(tbl)}&related_id=${encodeURIComponent(rowId)}&limit=3`,
+                    { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+                );
+                const data = await res.json();
+                previewCache.set(cacheKey, data.success ? (data.comments ?? []) : []);
+            } catch {
+                previewCache.set(cacheKey, []);
+            }
+        }
+
+        if (!cPreviewPopup.hidden) {
+            renderPreviewContent(previewCache.get(cacheKey) ?? []);
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        if (!e.target.closest('.c-count-badge[data-row-id]')) return;
+        cPreviewTimer = setTimeout(() => { cPreviewPopup.hidden = true; }, 150);
+    });
+}
+
+function positionPreviewPopup(anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const left = Math.min(Math.max(8, rect.left), window.innerWidth - 360);
+    cPreviewPopup.style.left = left + 'px';
+
+    if (window.innerHeight - rect.bottom >= 180 || rect.top < 180) {
+        cPreviewPopup.style.top    = (rect.bottom + 6) + 'px';
+        cPreviewPopup.style.bottom = '';
+    } else {
+        cPreviewPopup.style.top    = '';
+        cPreviewPopup.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+    }
+}
+
+function renderPreviewContent(comments) {
+    cPreviewPopup.replaceChildren();
+
+    const title = document.createElement('div');
+    title.className = 'c-preview-title';
+    title.textContent = 'Recent comments';
+    cPreviewPopup.appendChild(title);
+
+    const visible = comments.filter(c => !c.deleted_at);
+
+    if (visible.length === 0) {
+        const p = document.createElement('p');
+        p.className = 'c-preview-empty';
+        p.textContent = 'No comments yet.';
+        cPreviewPopup.appendChild(p);
+        return;
+    }
+
+    for (const c of visible) {
+        const item = document.createElement('div');
+        item.className = 'c-preview-item';
+
+        item.appendChild(renderAvatar(
+            c.avatar_id ? parseInt(c.avatar_id, 10) : null,
+            c.username ?? '?',
+            24
+        ));
+
+        const content = document.createElement('div');
+        content.className = 'c-preview-item-content';
+
+        const meta = document.createElement('div');
+        meta.className = 'c-preview-meta';
+
+        const author = document.createElement('strong');
+        author.textContent = c.username ?? 'Unknown';
+        meta.appendChild(author);
+
+        const time = document.createElement('span');
+        time.className = 'c-preview-time';
+        time.textContent = formatPreviewTime(c.created_at);
+        meta.appendChild(time);
+
+        const body = document.createElement('p');
+        body.className = 'c-preview-body';
+        const raw = (c.body ?? '').replace(/\s+/g, ' ');
+        body.textContent = raw.length > 90 ? raw.slice(0, 90) + '\u2026' : raw;
+
+        content.appendChild(meta);
+        content.appendChild(body);
+        item.appendChild(content);
+        cPreviewPopup.appendChild(item);
+    }
+}
+
+function formatPreviewTime(iso) {
+    if (!iso) return '';
+    return new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+}
+
 // Setup export event listener
 document.addEventListener('DOMContentLoaded', () => {
+    initPreviewPopup();
+
     // Search highlight trigger
     const searchInput = document.getElementById('globalSearch');
     if (searchInput) {
