@@ -76,6 +76,7 @@ if ($action === 'init_db') {
         $tCronLog = sys_table('users_notifications_log');
         $tFiles = sys_table('files');
         $tLoginAttempts = sys_table('login_attempts');
+        $tComments = sys_table('comments');
 
         // Prepare missing DB updates and tables creation
         $queries = [
@@ -101,7 +102,10 @@ if ($action === 'init_db') {
             "CREATE TABLE IF NOT EXISTS $tCronLog ( id serial4 NOT NULL, started_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, finished_at timestamp NULL, status varchar(20) NOT NULL DEFAULT 'running', triggered_by varchar(20) NOT NULL DEFAULT 'cron', sources_processed int4 NULL, notifications_created int4 NULL, error_message text NULL, CONSTRAINT spw_users_notifications_log_pkey PRIMARY KEY (id) )",
             "CREATE INDEX IF NOT EXISTS idx_spw_cron_log_started_at ON $tCronLog USING btree (started_at)",
 			"INSERT INTO $tUsers (username, password_hash, salt, password_algo, password_params, is_active, role) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', NULL, 'argon2id', '{}'::jsonb, true, 'full' WHERE NOT EXISTS (SELECT 1 FROM $tUsers WHERE username = 'test')",
-            "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS avatar_id smallint"
+            "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS avatar_id smallint",
+            "CREATE TABLE IF NOT EXISTS $tComments ( id serial4 NOT NULL, related_table varchar(100) NOT NULL, related_id int4 NOT NULL, user_id int4 NOT NULL, body text NOT NULL, created_at timestamp DEFAULT now() NOT NULL, deleted_at timestamp NULL, CONSTRAINT spw_comments_pkey PRIMARY KEY (id), CONSTRAINT spw_comments_body_len CHECK (char_length(body) <= 4000), CONSTRAINT spw_comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES $tUsers(id) ON DELETE SET NULL )",
+            "CREATE INDEX IF NOT EXISTS idx_spw_comments_related ON $tComments USING btree (related_table, related_id, created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_spw_comments_user_id ON $tComments USING btree (user_id)"
         ];
         
         foreach ($queries as $q) {

@@ -169,6 +169,10 @@ if ($fileRes) {
         $relatedFiles[] = $f;
     }
 }
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -176,6 +180,7 @@ if ($fileRes) {
     <meta charset="utf-8">
     <title>OpenSparrow | Edit Record - <?php echo htmlspecialchars($tableCfg['display_name'] ?? $table); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
     <link href="/assets/css/styles.css" rel="stylesheet">
     <style>
         .tag-badge { background: #e2e8f0; color: #475569; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #cbd5e1; margin-right: 4px; display: inline-block; }
@@ -201,6 +206,19 @@ if ($fileRes) {
         </div>
     <?php endif; ?>
 
+    <div class="tab-list" role="tablist">
+        <button class="tab-btn active" data-tab="tab-details" role="tab" aria-selected="true">Details</button>
+        <?php foreach ($subtablesData as $si => $sd) : ?>
+            <?php $siLabel = $sd['config']['label'] ?? ($sd['schema']['display_name'] ?? $sd['config']['table']); ?>
+            <button class="tab-btn" data-tab="tab-sub-<?php echo (int)$si; ?>" role="tab" aria-selected="false">
+                <?php echo htmlspecialchars($siLabel); ?>
+            </button>
+        <?php endforeach; ?>
+        <button class="tab-btn" data-tab="tab-files" role="tab" aria-selected="false">Files</button>
+        <button class="tab-btn" data-tab="tab-comments" role="tab" aria-selected="false">Comments</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-details" role="tabpanel">
     <div class="form-wrapper">
         <form method="POST" class="editor-form">
             <?php foreach ($tableCfg['columns'] as $colName => $colCfg) : ?>
@@ -311,8 +329,65 @@ if ($fileRes) {
             </div>
         </form>
     </div>
+    </div><!-- /tab-panel#tab-details -->
 
-    <div class="subtable-container" style="margin-top: 40px;">
+    <?php foreach ($subtablesData as $si => $sd) : ?>
+    <?php
+        $sTable = $sd['config']['table'];
+        $sFk    = $sd['config']['foreign_key'];
+        $sCols  = $sd['config']['columns_to_show'] ?? ['id'];
+        $siLabel = $sd['config']['label'] ?? ($sd['schema']['display_name'] ?? $sTable);
+    ?>
+    <div class="tab-panel" id="tab-sub-<?php echo (int)$si; ?>" role="tabpanel">
+        <div class="subtable-container" style="margin-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3><?php echo htmlspecialchars($siLabel); ?></h3>
+                <?php if (!$isReadOnly) : ?>
+                    <a href="create.php?table=<?php echo urlencode($sTable); ?>&<?php echo urlencode($sFk); ?>=<?php echo urlencode((string)$id); ?>" class="btn-add">
+                        + Add <?php echo htmlspecialchars($siLabel); ?>
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <?php if (empty($sd['rows'])) : ?>
+                <p style="color: var(--muted); font-size: 14px; margin-top: 10px;">No records found.</p>
+            <?php else : ?>
+                <div class="edit-subtable-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <?php foreach ($sCols as $c) : ?>
+                                    <th><?php echo htmlspecialchars($sd['schema']['columns'][$c]['display_name'] ?? $c); ?></th>
+                                <?php endforeach; ?>
+                                <th style="width: 80px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($sd['rows'] as $r) : ?>
+                                <tr>
+                                    <?php foreach ($sCols as $c) : ?>
+                                        <?php $displayVal = $r[$c . '__display'] ?? $r[$c] ?? ''; ?>
+                                        <td><?php echo htmlspecialchars((string)$displayVal); ?></td>
+                                    <?php endforeach; ?>
+                                    <td class="subtable-actions">
+                                        <?php if ($isReadOnly) : ?>
+                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action" style="pointer-events: none; opacity: 0.5;">View</a>
+                                        <?php else : ?>
+                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action">Edit</a>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div><!-- /tab-panel#tab-sub-<?php echo (int)$si; ?> -->
+    <?php endforeach; ?>
+
+    <div class="tab-panel" id="tab-files" role="tabpanel">
+    <div class="subtable-container" style="margin-top: 10px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h3 style="color: #0f172a; margin: 0;">Attached Files</h3>
         </div>
@@ -402,66 +477,49 @@ if ($fileRes) {
             <p style="color: #64748b; font-size: 14px; margin-top: 10px;">No files attached to this record.</p>
         <?php endif; ?>
     </div>
+    </div><!-- /tab-panel#tab-files -->
 
-    <?php foreach ($subtablesData as $sd) : ?>
-        <div class="subtable-container" style="margin-top: 40px;">
-            <?php
-                $sTable = $sd['config']['table'];
-                $sFk = $sd['config']['foreign_key'];
-                $sCols = $sd['config']['columns_to_show'] ?? ['id'];
-                $sLabel = $sd['config']['label'] ?? ($sd['schema']['display_name'] ?? $sTable);
-            ?>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3><?php echo htmlspecialchars($sLabel); ?></h3>
-                <?php if (!$isReadOnly) : ?>
-                    <a href="create.php?table=<?php echo urlencode($sTable); ?>&<?php echo urlencode($sFk); ?>=<?php echo urlencode((string)$id); ?>" class="btn-add">
-                        + Add <?php echo htmlspecialchars($sLabel); ?>
-                    </a>
-                <?php endif; ?>
-            </div>
-
-            <?php if (empty($sd['rows'])) : ?>
-                <p style="color: var(--muted); font-size: 14px; margin-top: 10px;">No records found.</p>
-            <?php else : ?>
-                <div class="edit-subtable-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <?php foreach ($sCols as $c) : ?>
-                                    <th><?php echo htmlspecialchars($sd['schema']['columns'][$c]['display_name'] ?? $c); ?></th>
-                                <?php endforeach; ?>
-                                <th style="width: 80px;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($sd['rows'] as $r) : ?>
-                                <tr>
-                                    <?php foreach ($sCols as $c) : ?>
-                                        <?php $displayVal = $r[$c . '__display'] ?? $r[$c] ?? ''; ?>
-                                        <td><?php echo htmlspecialchars((string)$displayVal); ?></td>
-                                    <?php endforeach; ?>
-                                    <td class="subtable-actions">
-                                        <?php if ($isReadOnly) : ?>
-                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action" style="pointer-events: none; opacity: 0.5;">View</a>
-                                        <?php else : ?>
-                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action">Edit</a>
-                                        <?php endif; ?>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
-    <?php endforeach; ?>
+    <div class="tab-panel" id="tab-comments" role="tabpanel">
+        <div id="c-panel"></div>
+    </div><!-- /tab-panel#tab-comments -->
 
 </main>
 
 <?php include 'templates/footer.php'; ?>
 
 <script>
+    window.CSRF_TOKEN      = <?php echo json_encode($_SESSION['csrf_token'], JSON_THROW_ON_ERROR); ?>;
+    window.EDIT_TABLE      = <?php echo json_encode($table, JSON_THROW_ON_ERROR); ?>;
+    window.EDIT_ID         = <?php echo json_encode((int)$id, JSON_THROW_ON_ERROR); ?>;
+    window.CURRENT_USER_ID = <?php echo json_encode((int)$_SESSION['user_id'], JSON_THROW_ON_ERROR); ?>;
+    window.USER_ROLE       = <?php echo json_encode($_SESSION['role'] ?? 'full', JSON_THROW_ON_ERROR); ?>;
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Tab switching
+    const tabBtns   = document.querySelectorAll('.tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+
+    function activateTab(tabId) {
+        tabBtns.forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+        tabPanels.forEach(p => p.classList.remove('active'));
+        const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+        const panel = document.getElementById(tabId);
+        if (btn)   { btn.classList.add('active');   btn.setAttribute('aria-selected', 'true'); }
+        if (panel) { panel.classList.add('active'); }
+    }
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+    });
+
+    // Auto-activate tab from URL hash (e.g. #tab-comments)
+    const hash = window.location.hash.slice(1);
+    if (hash && document.getElementById(hash)) {
+        activateTab(hash);
+    }
+
     // 1. RegExp Validation Logic
     const inputs = document.querySelectorAll('input[data-pattern]');
     inputs.forEach(input => {
@@ -548,6 +606,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<script type="module" src="assets/js/comments.js?v=<?php echo @filemtime('assets/js/comments.js'); ?>"></script>
 
 </body>
 </html>
