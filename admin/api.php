@@ -360,15 +360,57 @@ if ($action === 'health') {
     $versionFile = __DIR__ . '/../includes/VERSION';
     $appVersion = file_exists($versionFile) ? trim((string) file_get_contents($versionFile)) : 'unknown';
 
+    $displayErrors = ini_get('display_errors');
+
     $data = [
-        'app_version' => $appVersion,
-        'php_version' => PHP_VERSION,
-        'php_version_ok' => version_compare(PHP_VERSION, '8.0.0', '>='),
-        'pgsql_ok' => extension_loaded('pgsql') || extension_loaded('pdo_pgsql'),
-        'dir_writable' => is_writable(__DIR__ . '/../includes'),
+        'app_version'      => $appVersion,
+
+        // PHP environment
+        'php_version'      => PHP_VERSION,
+        'php_version_ok'   => version_compare(PHP_VERSION, '8.1.0', '>='),
+        'memory_limit'     => ini_get('memory_limit'),
+        'memory_limit_ok'  => (int) ini_get('memory_limit') >= 64 || ini_get('memory_limit') === '-1',
+        'upload_max_filesize'    => ini_get('upload_max_filesize'),
+        'upload_max_filesize_ok' => (int) ini_get('upload_max_filesize') >= 8,
+        'display_errors_off'     => $displayErrors === '' || $displayErrors == '0' || strtolower((string) $displayErrors) === 'off',
+
+        // Extensions
+        'pgsql_ok'     => extension_loaded('pgsql') || extension_loaded('pdo_pgsql'),
+        'json_ok'      => extension_loaded('json'),
+        'session_ok'   => extension_loaded('session'),
+        'mbstring_ok'  => extension_loaded('mbstring'),
+        'fileinfo_ok'  => extension_loaded('fileinfo'),
+        'openssl_ok'   => extension_loaded('openssl'),
+
+        // Security functions
+        'argon2id_ok'      => defined('PASSWORD_ARGON2ID'),
+        'random_bytes_ok'  => function_exists('random_bytes'),
+        'hash_equals_ok'   => function_exists('hash_equals'),
+        'bin2hex_ok'       => function_exists('bin2hex'),
+
+        // Database
         'db_connected' => $db_connected,
-        'db_error' => $db_error,
-        'pg_version' => $pg_version,
+        'db_error'     => $db_error,
+        'pg_version'   => $pg_version,
+
+        // Filesystem
+        'dir_writable'          => is_writable(__DIR__ . '/../includes'),
+        'storage_writable'      => is_dir(__DIR__ . '/../storage') && is_writable(__DIR__ . '/../storage'),
+        'storage_files_writable'=> is_dir(__DIR__ . '/../storage/files') && is_writable(__DIR__ . '/../storage/files'),
+
+        // Config files
+        'database_json_ok' => (static function () {
+            $f = __DIR__ . '/../includes/database.json';
+            return file_exists($f) && is_array(@json_decode(@file_get_contents($f), true));
+        })(),
+        'schema_json_ok' => (static function () {
+            $f = __DIR__ . '/../includes/schema.json';
+            return file_exists($f) && is_array(@json_decode(@file_get_contents($f), true));
+        })(),
+        'security_json_ok' => (static function () {
+            $f = __DIR__ . '/../includes/security.json';
+            return file_exists($f) && is_array(@json_decode(@file_get_contents($f), true));
+        })(),
     ];
     header('Content-Type: application/json');
     echo json_encode($data);
