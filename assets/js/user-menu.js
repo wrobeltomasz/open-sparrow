@@ -117,16 +117,31 @@ function updateHeaderAvatar(avatarId) {
         img.alt = `Avatar ${avatarId}`;
         existing.replaceWith(img);
     } else {
-        // Fallback to initial circle SVG
+        // Fallback to initial circle SVG — built via DOM API to avoid innerHTML XSS (CodeQL js/xss-through-dom)
         const initial = (tooltip?.textContent?.trim()?.[0] ?? '?').toUpperCase();
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('class', 'avatar avatar-border avatar-initial');
         svg.setAttribute('viewBox', '0 0 32 32');
         svg.setAttribute('aria-hidden', 'true');
-        svg.innerHTML = `
-            <circle cx="16" cy="16" r="16" fill="#364B60"/>
-            <text x="16" y="21" text-anchor="middle" fill="#fff"
-                  font-size="14" font-family="Inter,sans-serif" font-weight="600">${initial}</text>`;
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '16');
+        circle.setAttribute('cy', '16');
+        circle.setAttribute('r', '16');
+        circle.setAttribute('fill', '#364B60');
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', '16');
+        text.setAttribute('y', '21');
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', '#fff');
+        text.setAttribute('font-size', '14');
+        text.setAttribute('font-family', 'Inter,sans-serif');
+        text.setAttribute('font-weight', '600');
+        text.textContent = initial;
+
+        svg.appendChild(circle);
+        svg.appendChild(text);
         existing.replaceWith(svg);
     }
 }
