@@ -13,7 +13,7 @@
 
 <header>
 
-    <button id="sidebarToggle" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer; margin-left: -10px; margin-right: 5px;">☰</button>
+    <button id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
 
     <input id="globalSearch" type="text" placeholder="Find..." />
 
@@ -26,51 +26,18 @@
     <button id="clearFilters" title="Clear all filters" style="display:none;">Clear Filters</button>
 
     <div class="header-user-menu">
-        <div class="notifications-wrapper" 
-             style="position: relative; cursor: pointer; display: inline-block; margin-right: 15px; vertical-align: middle;">
-            <span style="font-size: 20px;"><img style="height:20px;" title="User notifications" src="assets/img/notifications.png"></span>
-            <span id="notif-badge" style="
-                display: none;
-                position: absolute;
-                top: -8px;
-                right: -10px;
-                background: var(--danger);
-                color: white;
-                border-radius: 50%;
-                padding: 2px 6px;
-                font-size: 11px;
-                font-weight: bold;
-            ">0</span>
-            
-            <div id="notif-dropdown" style="
-                display: none;
-                position: absolute;
-                top: 40px;
-                right: -50px;
-                width: 320px;
-                background: white;
-                border: 1px solid #ccc;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 1000;
-                max-height: 400px;
-                overflow-y: auto;
-                color: #333;
-                text-align: left;
-                border-radius: 4px;
-            ">
-                <div style="padding: 12px; background: #f8f9fa; font-weight: bold; 
-                            border-bottom: 1px solid #ddd; border-radius: 4px 4px 0 0;">
-                    Notifications
-                </div>
-                <ul id="notif-list" style="list-style: none; margin: 0; padding: 0;"></ul>
+        <div class="notifications-wrapper" aria-label="Notifications">
+            <span><img class="notif-icon-img" title="User notifications" src="assets/img/notifications.png" alt="Notifications"></span>
+            <span id="notif-badge" class="notif-badge">0</span>
+            <div id="notif-dropdown" class="notif-dropdown">
+                <div class="notif-dropdown-header">Notifications</div>
+                <ul id="notif-list" class="notif-list"></ul>
             </div>
         </div>
 
         <?php if (($userRole ?? '') === 'full') : ?>
-        <a href="/admin/index.php" title="Admin" 
-           style="text-decoration: none; font-size: 20px; margin-right: 15px; 
-                  vertical-align: middle; display: inline-block; transition: opacity 0.2s;">
-           <img style="height:20px;" title="Admin panel" src="assets/img/settings.png">
+        <a href="/admin/index.php" class="header-admin-link" title="Admin panel">
+            <img title="Admin panel" src="assets/img/settings.png" alt="Admin">
         </a>
         <?php endif; ?>
         
@@ -108,7 +75,7 @@
     </div>
 </header>
 <div class="app-container">
-<nav id="menu" class="menu"></nav>
+<?php include __DIR__ . '/menu.php'; ?>
 <main>
     <section id="gridSection">
         <h2 id="gridTitle">Table</h2>
@@ -143,131 +110,22 @@
 <?php include 'templates/footer.php'; ?>
 
 <script>
-    // Define global user role state
     window.USER_ROLE = '<?php echo htmlspecialchars($userRole ?? 'readonly', ENT_QUOTES, 'UTF-8'); ?>';
-
     document.addEventListener("DOMContentLoaded", () => {
-		
-		// Setup sidebar toggle and restore state
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        const sidebarMenu = document.getElementById('menu');
-        
-        if (sidebarToggle && sidebarMenu) {
-            sidebarToggle.addEventListener('click', () => {
-                sidebarMenu.classList.toggle('collapsed');
-                localStorage.setItem('menuCollapsed', sidebarMenu.classList.contains('collapsed'));
-            });
-            
-            // Apply saved state
-            if (localStorage.getItem('menuCollapsed') === 'true') {
-                sidebarMenu.classList.add('collapsed');
-            }
-        }
         const mobileActions = document.getElementById("mobileActions");
-        const menu = document.getElementById("menu");
-
         if (mobileActions) {
             mobileActions.addEventListener("change", e => {
                 const action = e.target.value;
-                if (action === "add") {
-                    const addBtn = document.getElementById("addRow");
-                    if (addBtn) addBtn.click();
-                }
-                if (action === "export") {
-                    const exportBtn = document.getElementById("exportCsv");
-                    if (exportBtn) exportBtn.click();
-                }
+                if (action === "add") { const b = document.getElementById("addRow"); if (b) b.click(); }
+                if (action === "export") { const b = document.getElementById("exportCsv"); if (b) b.click(); }
                 if (action === "refresh") location.reload();
                 mobileActions.value = "";
             });
         }
-
-        const badge = document.getElementById('notif-badge');
-        const dropdown = document.getElementById('notif-dropdown');
-        const notifList = document.getElementById('notif-list');
-        const wrapper = document.querySelector('.notifications-wrapper');
-
-        async function checkNotifications() {
-            try {
-                const res = await fetch('api_notifications.php?action=get_count', {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                const data = await res.json();
-                if (data.count > 0) {
-                    if (badge) {
-                        badge.style.display = 'block';
-                        badge.textContent = data.count;
-                    }
-                } else {
-                    if (badge) badge.style.display = 'none';
-                }
-            } catch (error) {
-                console.error('Error checking notifications:', error);
-            }
-        }
-
-        if (wrapper) {
-            wrapper.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (dropdown.style.display === 'none') {
-                    dropdown.style.display = 'block';
-                    loadNotifications();
-                } else {
-                    dropdown.style.display = 'none';
-                }
-            });
-        }
-
-        document.addEventListener('click', (e) => {
-            if (wrapper && !e.target.closest('.notifications-wrapper')) {
-                if (dropdown) dropdown.style.display = 'none';
-            }
-        });
-
-        function loadNotifications() {
-            fetch('api_notifications.php?action=get_list', {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!notifList) return;
-                notifList.innerHTML = '';
-                if (data.notifications && data.notifications.length > 0) {
-                    data.notifications.forEach(notification => {
-                        const li = document.createElement('li');
-                        li.style.cssText = 'padding:10px 15px;border-bottom:1px solid #f0f0f0;font-weight:' + (notification.is_read === 't' ? 'normal' : 'bold') + ';';
-                        li.textContent = notification.title;
-                        if (notification.link) {
-                            li.style.cursor = 'pointer';
-                            li.title = notification.link;
-                            li.addEventListener('click', async () => {
-                                await fetch('api_notifications.php?action=mark_read', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                                    body: JSON.stringify({ id: parseInt(notification.id) })
-                                }).catch(() => {});
-                                window.location.href = notification.link;
-                            });
-                        }
-                        notifList.appendChild(li);
-                    });
-                } else {
-                    const emptyMsg = document.createElement('li');
-                    emptyMsg.style.padding = '15px';
-                    emptyMsg.style.textAlign = 'center';
-                    emptyMsg.style.color = '#777';
-                    emptyMsg.textContent = 'No new notifications';
-                    notifList.appendChild(emptyMsg);
-                }
-            })
-            .catch(error => console.error('Error loading notifications:', error));
-        }
-
-        checkNotifications();
-        setInterval(checkNotifications, 120000);
     });
 </script>
-
+<script src="assets/js/sidebar.js?v=<?php echo @filemtime('assets/js/sidebar.js'); ?>"></script>
+<script src="assets/js/notifications.js?v=<?php echo @filemtime('assets/js/notifications.js'); ?>"></script>
 <script type="module" src="assets/js/app.js?v=<?php echo @filemtime('assets/js/app.js'); ?>"></script>
 <script type="module" src="assets/js/user-menu.js?v=<?php echo @filemtime('assets/js/user-menu.js'); ?>"></script>
 

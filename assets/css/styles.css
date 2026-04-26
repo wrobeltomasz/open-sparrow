@@ -1511,3 +1511,91 @@ th.drag-over .th-label {
 .c-count-badge:hover {
   background: var(--accent-mid);
 }
+
+/* =========================================
+   SIDEBAR TOGGLE BUTTON
+========================================= */
+#sidebarToggle {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-left: -10px;
+  margin-right: 5px;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+/* =========================================
+   NOTIFICATIONS IN HEADER
+========================================= */
+.notifications-wrapper {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.notif-icon-img {
+  height: 20px;
+  display: block;
+}
+
+.notif-badge {
+  display: none;
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background: var(--danger);
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.notif-dropdown {
+  display: none;
+  position: absolute;
+  top: 40px;
+  right: -50px;
+  width: 320px;
+  background: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 400px;
+  overflow-y: auto;
+  color: #333;
+  text-align: left;
+  border-radius: 4px;
+}
+
+.notif-dropdown-header {
+  padding: 12px;
+  background: #f8f9fa;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+  border-radius: 4px 4px 0 0;
+}
+
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.header-admin-link {
+  text-decoration: none;
+  font-size: 20px;
+  vertical-align: middle;
+  display: inline-block;
+  transition: opacity 0.2s;
+}
+
+.header-admin-link img {
+  height: 20px;
+  display: block;
+}

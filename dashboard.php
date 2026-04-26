@@ -48,6 +48,10 @@ header("Content-Security-Policy: default-src 'self'; style-src 'self' 'nonce-$cs
 // Retrieve user role with a safe fallback
 $userRole = $_SESSION['role'] ?? 'readonly';
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 // Expose only capability flags to the client instead of the raw role name
 // to reduce attack surface during reconnaissance
 $userCaps = [
@@ -61,6 +65,7 @@ $userCaps = [
     <meta charset="utf-8" />
     <title>OpenSparrow | Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>" />
     <link href="assets/css/styles.css" rel="stylesheet" />
     <link href="assets/css/mobile.css" rel="stylesheet" media="only screen and (max-width: 768px)" />
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -81,6 +86,9 @@ $userCaps = [
     // Expose binary capability flags only — never the raw role string
     window.USER_CAPS = <?php echo json_encode($userCaps, JSON_THROW_ON_ERROR); ?>;
 </script>
+<script src="assets/js/sidebar.js" nonce="<?php echo $cspNonce; ?>"></script>
+<script src="assets/js/notifications.js" nonce="<?php echo $cspNonce; ?>"></script>
+<script type="module" src="assets/js/user-menu.js" nonce="<?php echo $cspNonce; ?>"></script>
 <script type="module" src="assets/js/dashboard.js" nonce="<?php echo $cspNonce; ?>"></script>
 </body>
 </html>

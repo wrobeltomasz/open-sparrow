@@ -62,8 +62,6 @@ $userCaps = [
     'canExport' => in_array($userRole, ['full', 'export'], true),
 ];
 
-// Resolve app.js cache-buster without suppressing errors
-$appJsVersion = file_exists('assets/js/app.js') ? (string)filemtime('assets/js/app.js') : '1';
 ?>
 <!doctype html>
 <html lang="en">
@@ -169,21 +167,6 @@ $appJsVersion = file_exists('assets/js/app.js') ? (string)filemtime('assets/js/a
 <?php include 'templates/header_app.php'; ?>
 
 <main>
-    <!-- Hidden scaffold elements required by app.js initialisation -->
-    <div class="f-hidden">
-        <nav id="menu" class="menu"></nav>
-        <input id="globalSearch" type="text" />
-        <select id="columnFilter"></select>
-        <div id="filterBar"></div>
-        <button id="clearFilters"></button>
-        <h2 id="gridTitle"></h2>
-        <div id="grid"></div>
-        <select id="mobileActions"></select>
-        <button id="addRow"></button>
-        <button id="exportCsv"></button>
-        <div id="pagination"></div>
-    </div>
-
     <section id="filesSection">
         <div class="files-container">
 
@@ -255,7 +238,9 @@ $appJsVersion = file_exists('assets/js/app.js') ? (string)filemtime('assets/js/a
     window.CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'], JSON_THROW_ON_ERROR); ?>;
 </script>
 
-<script type="module" src="assets/js/app.js?v=<?php echo $appJsVersion; ?>" nonce="<?php echo $cspNonce; ?>"></script>
+<script src="assets/js/sidebar.js" nonce="<?php echo $cspNonce; ?>"></script>
+<script src="assets/js/notifications.js" nonce="<?php echo $cspNonce; ?>"></script>
+<script type="module" src="assets/js/user-menu.js" nonce="<?php echo $cspNonce; ?>"></script>
 
 <script nonce="<?php echo $cspNonce; ?>">
 document.addEventListener("DOMContentLoaded", () => {
