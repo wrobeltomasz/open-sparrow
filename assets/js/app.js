@@ -1,4 +1,4 @@
-import { buildMenu, loadTable, renderGrid, getState, setFilteredData, resetFilters } from './grid.js';
+import { loadTable, renderGrid, getState, setFilteredData, resetFilters } from './grid.js';
 import { debugLog } from './debug.js';
 import { setupPagination } from './pagination.js';
 import { initWorkflows } from './workflows.js';
@@ -16,22 +16,6 @@ let activeFilters = {
     search: '',
     columns: {}
 };
-
-// Helper to safely render DOM elements for menu icons
-function renderIconElement(iconVal, fallbackPath) {
-    const icon = iconVal || fallbackPath;
-    if (icon.includes('/') || icon.includes('.')) {
-        const img = document.createElement('img');
-        img.src = icon;
-        img.alt = '';
-        img.style.cssText = 'width:20px; height:20px; vertical-align:middle; margin-right:8px;';
-        return img;
-    }
-    const span = document.createElement('span');
-    span.style.cssText = 'font-size:1.2em; margin-right:8px; vertical-align:middle;';
-    span.textContent = icon;
-    return span;
-}
 
 // Initialize application on DOM load
 document.addEventListener('DOMContentLoaded', async () => {
@@ -51,125 +35,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.AppState.schema = schemaData;
 
         if (Object.keys(window.schema.tables).length > 0) {
-            
-            // Read URL params to check if dashboard redirected us to a specific table
+
+            // Read URL params to determine initial table
             const urlParams = new URLSearchParams(window.location.search);
-            const urlTable = urlParams.get('table');
-            
-            // Determine the initial table to load
+            const urlTable  = urlParams.get('table');
             let initialTableName = Object.keys(window.schema.tables)[0];
             if (urlTable && window.schema.tables[urlTable]) {
                 initialTableName = urlTable;
             }
 
-            buildMenu(window.schema, menuEl, gridTitleEl, addRowBtn);
-            const navList = menuEl.querySelector('ul') || menuEl;
-            
-            let dashName = 'Dashboard';
-            let dashIconEl = renderIconElement('', 'assets/icons/dashboard.png');
-            let dashHidden = false;
-            let calName = 'Calendar';
-            let calIconEl = renderIconElement('', 'assets/icons/calendar.png');
-            let calHidden = false;
-            let filesName = 'Files';
-            let filesIconEl = renderIconElement('', 'assets/icons/folder_open.png');
-
-            try {
-                const dashRes = await fetch('api.php?api=dashboard&v=' + Date.now());
-                if (dashRes.ok) {
-                    const dashCfg = await dashRes.json();
-                    if (dashCfg.menu_name) dashName = dashCfg.menu_name;
-                    dashIconEl = renderIconElement(dashCfg.menu_icon, 'assets/icons/dashboard.png');
-                    dashHidden = dashCfg.hidden === true;
-                }
-            } catch(e) { console.warn('Could not load dashboard config', e); }
-
-            try {
-                const calRes = await fetch('api.php?api=calendar&v=' + Date.now());
-                if (calRes.ok) {
-                    const calCfg = await calRes.json();
-                    if (calCfg.menu_name) calName = calCfg.menu_name;
-                    calIconEl = renderIconElement(calCfg.menu_icon, 'assets/icons/calendar.png');
-                    calHidden = calCfg.hidden === true;
-                }
-            } catch(e) { console.warn('Could not load calendar config', e); }
-
-            // Fetch files config from correct API endpoint
-            try {
-                const filesRes = await fetch('api_files.php?action=get_config&v=' + Date.now());
-                if (filesRes.ok) {
-                    const filesData = await filesRes.json();
-                    if (filesData.success && filesData.config) {
-                        if (filesData.config.menu_name) filesName = filesData.config.menu_name;
-                        filesIconEl = renderIconElement(filesData.config.menu_icon, 'assets/icons/folder_open.png');
-                    }
-                }
-            } catch(e) { console.warn('Could not load files config', e); }
-
-            // Dashboard Item
-            const dashItem = document.createElement('li');
-            const dashLink = document.createElement('a');
-            dashLink.href = 'dashboard.php';
-            dashLink.className = 'custom-nav-link';
-            dashLink.title = dashName;
-            dashLink.setAttribute('aria-label', dashName);
-            dashLink.appendChild(dashIconEl);
-            const dashSpan = document.createElement('span');
-            dashSpan.className = 'menu-text'; // Added class for hiding text
-            dashSpan.style.verticalAlign = 'middle';
-            dashSpan.style.textTransform = 'none'; // Prevent CSS from changing case
-            dashSpan.textContent = dashName;
-            dashLink.appendChild(dashSpan);
-            dashItem.appendChild(dashLink);
-
-            // Calendar Item
-            const calItem = document.createElement('li');
-            const calLink = document.createElement('a');
-            calLink.href = 'calendar.php';
-            calLink.className = 'custom-nav-link';
-            calLink.title = calName;
-            calLink.setAttribute('aria-label', calName);
-            calLink.appendChild(calIconEl);
-            const calSpan = document.createElement('span');
-            calSpan.className = 'menu-text'; // Added class for hiding text
-            calSpan.style.verticalAlign = 'middle';
-            calSpan.style.textTransform = 'none'; // Prevent CSS from changing case
-            calSpan.textContent = calName;
-            calLink.appendChild(calSpan);
-            calItem.appendChild(calLink);
-
-            // Files Item
-            const filesItem = document.createElement('li');
-            const filesLink = document.createElement('a');
-            filesLink.href = 'files.php';
-            filesLink.className = 'custom-nav-link';
-            filesLink.title = filesName;
-            filesLink.setAttribute('aria-label', filesName);
-            if (window.location.pathname.includes('files.php')) {
-                filesLink.classList.add('active');
+            // Menu is PHP-rendered; wire SPA click handlers onto [data-table] links
+            const navList = menuEl?.querySelector('ul') || menuEl;
+            if (menuEl) {
+                menuEl.querySelectorAll('a[data-table]').forEach(a => {
+                    a.addEventListener('click', e => {
+                        e.preventDefault();
+                        menuEl.querySelectorAll('a').forEach(l => l.classList.remove('active'));
+                        a.classList.add('active');
+                        window.history.pushState({}, document.title, window.location.pathname);
+                        loadTable(window.schema, a.dataset.table, gridTitleEl, addRowBtn);
+                    });
+                });
             }
-            filesLink.appendChild(filesIconEl);
-            const filesSpan = document.createElement('span');
-            filesSpan.className = 'menu-text'; // Added class for hiding text
-            filesSpan.style.verticalAlign = 'middle';
-            filesSpan.style.textTransform = 'none'; // Prevent CSS from changing case
-            filesSpan.textContent = filesName;
-            filesLink.appendChild(filesSpan);
-            filesItem.appendChild(filesLink);
 
-            // Prepend in reverse order to achieve: Dashboard, Calendar, Files
-            // Skip modules flagged as hidden in their Global Settings
-            if (navList.tagName === 'UL') {
-                navList.prepend(filesItem);
-                if (!calHidden) navList.prepend(calItem);
-                if (!dashHidden) navList.prepend(dashItem);
-            } else {
-                menuEl.prepend(filesLink);
-                if (!calHidden) menuEl.prepend(calLink);
-                if (!dashHidden) menuEl.prepend(dashLink);
-            }
-            
-            // Dynamically create a container for Active Filter Pills
+            // Container for active filter pills
             const gridSection = document.getElementById('gridSection');
             if (gridSection) {
                 const pillsContainer = document.createElement('div');
@@ -180,8 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const gridContainerEl = document.getElementById('grid');
             if (gridContainerEl) { initWorkflows(navList, gridContainerEl, gridTitleEl); }
-            
-            // Load target table requested by URL
+
             loadTable(window.schema, initialTableName, gridTitleEl, addRowBtn);
             setupPagination(window.schema);
         }
