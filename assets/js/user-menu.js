@@ -247,7 +247,9 @@ function initUserMenu() {
     const toggle = open => {
         menu.classList.toggle('open', open);
         btn.setAttribute('aria-expanded', String(open));
-        menu.setAttribute('aria-hidden', String(!open));
+        if (!open && menu.contains(document.activeElement)) {
+            btn.focus();
+        }
     };
 
     btn.addEventListener('click', e => {

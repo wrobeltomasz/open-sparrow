@@ -97,7 +97,7 @@
                 <?php endif; ?>
                 <span class="user-avatar-tooltip"><?= $unameEsc ?></span>
             </button>
-            <div class="user-avatar-menu" id="userAvatarMenu" role="menu" aria-hidden="true">
+            <div class="user-avatar-menu" id="userAvatarMenu" role="menu">
                 <button class="user-avatar-menu-item" id="changeAvatarBtn" role="menuitem">Change avatar</button>
                 <button class="user-avatar-menu-item" id="changePasswordBtn" role="menuitem">Change password</button>
                 <div class="user-avatar-menu-divider"></div>
