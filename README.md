@@ -8,7 +8,7 @@
 
   <p>
     <a href="LICENCE"><img src="https://img.shields.io/badge/License-LGPL%20v3-blue.svg" alt="License: LGPL v3" /></a>
-    <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.0%2B-777BB4?logo=php&logoColor=white" alt="PHP 8.0+" /></a>
+    <a href="https://www.php.net/"><img src="https://img.shields.io/badge/PHP-8.1%2B-777BB4?logo=php&logoColor=white" alt="PHP 8.1+" /></a>
     <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript"><img src="https://img.shields.io/badge/JavaScript-ES6%2B-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript ES6+" /></a>
   </p>
 
@@ -57,7 +57,7 @@ Demo: https://demo.opensparrow.org
 ### Core directories
 - **`admin/`** — management panel (schema editor, users, security settings).
 - **`assets/`** — static frontend resources (`css/`, `js/`, `icons/`, `img/`).
-- **`includes/`** — backend helpers. `db.php` centralizes PostgreSQL access; `api_helpers.php` holds request/response helpers.
+- **`includes/`** — backend helpers. `config.php` centralizes env-driven configuration; `db.php` centralizes PostgreSQL access; `api_helpers.php` holds request/response helpers.
 - **`cron/`** — scheduled workers (e.g. `cron_notifications.php`).
 - **`templates/`** — layout wrappers (`template.php`).
 - **`tests/`** — E2E Selenium suite.
@@ -80,7 +80,7 @@ Demo: https://demo.opensparrow.org
 
 ### Prerequisites
 
-- PHP 8.0+
+- PHP 8.1+
 - PostgreSQL 14+
 - Apache, Nginx, or the PHP built-in server
 - Git
@@ -133,18 +133,22 @@ None. The repository has no composer/npm step.
 
 ### 5. Environment variables (optional)
 
-```env
-PGHOST=127.0.0.1
-PGPORT=5432
-PGDATABASE=opensparrow
-PGUSER=postgres
-PGPASSWORD=postgres
-PGSCHEMA=app
-```
+All variables are read by `includes/config.php` on every request. If a variable is absent, the documented default applies.
 
-`PGSCHEMA` controls the schema used for OpenSparrow system tables (`spw_*`). Defaults to `app`. If `includes/database.json` defines a `schema` key, it overrides this variable.
+| Variable | Default | Description |
+|---|---|---|
+| `APP_ENV` | `production` | Runtime environment. Set to `development` to enable `SameSite=Lax` cookies (required on HTTP). |
+| `SECURE_COOKIES` | `true` | Set to `false` when running on plain HTTP (local dev, Docker on localhost). |
+| `DB_HOST` | `localhost` | PostgreSQL host. Falls back to `PGHOST` if `DB_HOST` is unset. |
+| `DB_PORT` | `5432` | PostgreSQL port. Falls back to `PGPORT` if `DB_PORT` is unset. |
+| `PGDATABASE` | — | PostgreSQL database name. |
+| `PGUSER` | — | PostgreSQL user. |
+| `PGPASSWORD` | — | PostgreSQL password. |
+| `PGSCHEMA` | `app` | Schema for OpenSparrow system tables (`spw_*`). Overridden by `schema` key in `includes/database.json`. |
 
-> There is no `.env` loader in the current codebase. Export these in your shell/container environment or configure everything from the admin UI.
+> There is no `.env` loader. Export these in your shell, container environment, or web-server virtual-host config. All connection details can alternatively be configured from the admin UI (written to `includes/database.json`).
+
+**Docker dev shortcut:** `docker-compose.override.yml` (included in the repo) sets `APP_ENV=development` and `SECURE_COOKIES=false` automatically when you run `docker compose up` locally.
 
 ### 6. Configure the database from Admin
 
@@ -201,10 +205,10 @@ Open **http://localhost:8000/admin**.
 
 ## Security & Configuration
 
-Configuration lives in `includes/database.json`, protected by `.htaccess`.
+Configuration lives in `includes/database.json`, protected by `.htaccess`. Environment variables (see section 5) take precedence and are the recommended approach for containerized deployments.
 
 - **Production:** deny public web access to `includes/` at the web-server level.
-- **Planned:** full `.env` support for containerized and cloud-native deployments.
+- **Cookies:** `SECURE_COOKIES=true` (default) enforces the `Secure` flag. Set to `false` only on plain HTTP environments.
 
 ---
 
