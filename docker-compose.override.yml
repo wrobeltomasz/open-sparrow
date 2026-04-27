@@ -1,0 +1,17 @@
+# Local development overrides — auto-merged by `docker compose up`.
+# Do NOT use in production. Production deployments run without this file
+# (docker compose -f docker-compose.yml up) or via FTP/shared hosting.
+services:
+  app:
+    environment:
+      APP_ENV: development
+      SECURE_COOKIES: "false"
+      DB_HOST: db
+      DB_PORT: "5432"
+
+  cron:
+    environment:
+      APP_ENV: development
+      SECURE_COOKIES: "false"
+      DB_HOST: db
+      DB_PORT: "5432"

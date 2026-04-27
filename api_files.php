@@ -12,6 +12,7 @@ header('X-Content-Type-Options: nosniff');
 // Restrict API to same origin — reject cross-origin requests explicitly
 header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? ''));
 
+require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/api_helpers.php';
 
@@ -20,9 +21,9 @@ session_set_cookie_params([
     'lifetime' => 0,
     'path'     => '/',
     'domain'   => '',
-    'secure'   => true,
+    'secure'   => SECURE_COOKIES,
     'httponly' => true,
-    'samesite' => 'Strict'
+    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
 ]);
 session_start();
 

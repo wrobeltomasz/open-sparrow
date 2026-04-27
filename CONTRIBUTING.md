@@ -15,7 +15,7 @@ Click the **Fork** button on GitHub and clone your fork:
 
 ### 2. Requirements
 
-- PHP >= 8.0  
+- PHP >= 8.1  
 - PostgreSQL >= 14  
 - Web server (Apache/Nginx)
 

@@ -1,14 +1,16 @@
 <?php
 // admin/index.php
 
+require __DIR__ . '/../includes/config.php';
+
 // Set secure session cookie parameters before starting the session
 session_set_cookie_params([
     'lifetime' => 0,
     'path' => '/',
     'domain' => '',
-    'secure' => true,
+    'secure' => SECURE_COOKIES,
     'httponly' => true,
-    'samesite' => 'Strict'
+    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
 ]);
 
 session_start();

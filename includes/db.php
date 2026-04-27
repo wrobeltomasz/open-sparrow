@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/config.php';
+
 function db_connect(): \PgSql\Connection
 {
     $configFile = __DIR__ . '/database.json';
 
     // Default values fallback
-    $host = getenv('PGHOST') ?: '';
-    $port = getenv('PGPORT') ?: '';
+    $host = DB_HOST;
+    $port = DB_PORT;
     $dbname = getenv('PGDATABASE') ?: '';
     $user = getenv('PGUSER') ?: '';
     $password = getenv('PGPASSWORD') ?: '';

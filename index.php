@@ -1,4 +1,14 @@
 <?php
+require __DIR__ . '/includes/config.php';
+
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => '',
+    'secure' => SECURE_COOKIES,
+    'httponly' => true,
+    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
+]);
 session_start();
 
 // Redirect to login if user is not authenticated
