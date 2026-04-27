@@ -43,3 +43,11 @@ storage/files/*
 # Files calude
 /.claude
 CLAUDE.md
+
+# Cypress (testy lokalne — nie wysyłaj na GitHub)
+cypress/
+cypress.config.js
+package.json
+package-lock.json
+node_modules/
+.cypress-cache/
