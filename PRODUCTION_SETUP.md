@@ -1,0 +1,130 @@
+# Production Setup
+
+## Quick Start
+
+```bash
+# 1. Copy production config
+cp docker-compose-production.yml docker-compose.yml
+
+# 2. Create .env from template
+cp .env.example .env
+nano .env  # Set POSTGRES_PASSWORD to a strong value
+
+# 3. Lock down .env
+echo ".env" >> .gitignore
+
+# 4. Deploy
+docker compose pull
+docker compose up -d
+
+# 5. Initialize database (first run only)
+# Open http://localhost/admin
+# Login: admin
+# System Health → Initialize System Tables
+
+# 6. Verify
+docker compose ps
+curl http://localhost/login.php
+```
+
+---
+
+## Development
+
+```bash
+# Merges docker-compose.yml + docker-compose.override.yml automatically
+docker compose up -d
+```
+
+---
+
+## Environment Variables
+
+| Variable | Default | Required |
+|----------|---------|----------|
+| `POSTGRES_PASSWORD` | — | ✓ Strong value required |
+| `POSTGRES_USER` | postgres | |
+| `POSTGRES_DB` | opensparrow | |
+| `PGSCHEMA` | app | |
+| `DOCKER_IMAGE` | wrobeltom/open-sparrow:latest | |
+| `APP_ENV` | production | |
+| `SECURE_COOKIES` | true | |
+| `HTTP_PORT` | 80 | |
+
+Generate strong password:
+```bash
+openssl rand -base64 32
+```
+
+---
+
+## Monitoring
+
+```bash
+docker compose ps               # Health status
+docker compose logs -f          # All services
+docker compose logs -f app      # Specific service
+docker compose logs -f db
+docker compose logs -f nginx
+```
+
+---
+
+## Backup & Restore
+
+```bash
+# Backup database
+docker compose exec db pg_dump \
+  -U ${POSTGRES_USER:-postgres} \
+  ${POSTGRES_DB:-opensparrow} > backup_$(date +%Y%m%d).sql
+
+# Backup files
+tar -czf storage_$(date +%Y%m%d).tar.gz storage/
+
+# Restore database
+docker compose exec -T db psql \
+  -U ${POSTGRES_USER:-postgres} \
+  ${POSTGRES_DB:-opensparrow} < backup.sql
+
+# Restore files
+tar -xzf storage_backup.tar.gz
+```
+
+---
+
+## Upgrade
+
+```bash
+# 1. Update image version in .env
+DOCKER_IMAGE=wrobeltom/open-sparrow:v1.2.3
+
+# 2. Pull & restart
+docker compose pull
+docker compose up -d
+
+# 3. Apply migrations if any
+# Admin → System Health → Initialize System Tables
+```
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| `POSTGRES_PASSWORD must be set` | Check `.env` exists with value set |
+| Port already in use | Change `HTTP_PORT` in `.env` |
+| DB not ready | `docker compose logs db` |
+| App unhealthy | `docker compose logs app` |
+
+---
+
+## Checklist
+
+- [ ] `.env` created with strong `POSTGRES_PASSWORD`
+- [ ] `.env` added to `.gitignore`
+- [ ] `docker compose pull` succeeded
+- [ ] `docker compose ps` — all services healthy
+- [ ] `/admin → System Health → Initialize System Tables` ran
+- [ ] Login works at `http://localhost/login.php`
+- [ ] Backup strategy in place

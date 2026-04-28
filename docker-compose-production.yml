@@ -1,0 +1,138 @@
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:16-alpine
+    container_name: opensparrow_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-opensparrow}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?error: POSTGRES_PASSWORD must be set}
+    # Runtime PostgreSQL tuning
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=1310kB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-opensparrow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - opensparrow
+
+  # PHP-FPM Application Service
+  app:
+    image: ${DOCKER_IMAGE:-wrobeltom/open-sparrow:latest}
+    container_name: opensparrow_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-opensparrow}
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGSCHEMA: ${PGSCHEMA:-app}
+      APP_ENV: ${APP_ENV:-production}
+      SECURE_COOKIES: ${SECURE_COOKIES:-true}
+    volumes:
+      - ./includes:/var/www/html/includes:rw
+      - ./storage:/var/www/html/storage:rw
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - opensparrow
+
+  # Nginx Web Server Service
+  nginx:
+    image: nginx:alpine
+    container_name: opensparrow_nginx
+    restart: always
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - opensparrow
+
+  # Background Worker (Cron) Service
+  cron:
+    image: ${DOCKER_IMAGE:-wrobeltom/open-sparrow:latest}
+    container_name: opensparrow_cron
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-opensparrow}
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGSCHEMA: ${PGSCHEMA:-app}
+      APP_ENV: ${APP_ENV:-production}
+    volumes:
+      - ./includes:/var/www/html/includes:ro
+      - ./storage:/var/www/html/storage:rw
+    command: >
+      sh -c "echo '* * * * * php /var/www/html/cron/cron_notifications.php >> /var/log/cron.log 2>&1' | crontab - && crond -f -l 2"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - opensparrow
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  opensparrow:
+    driver: bridge
