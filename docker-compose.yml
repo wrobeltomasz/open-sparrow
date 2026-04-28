@@ -3,7 +3,7 @@ version: '3.9'
 services:
   # PHP-FPM Application Service
   app:
-    image: wrobeltom/open-sparrow:latest  # ← ZMIANA
+    image: wrobeltom/open-sparrow:latest
     restart: unless-stopped
     volumes:
       - .:/var/www/html
@@ -30,7 +30,7 @@ services:
 
   # Background Worker (Cron) Service
   cron:
-    image: wrobeltom/open-sparrow:latest  # ← ZMIANA
+    image: wrobeltom/open-sparrow:latest
     restart: unless-stopped
     volumes:
       - .:/var/www/html
