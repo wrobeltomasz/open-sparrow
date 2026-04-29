@@ -101,9 +101,6 @@ function applyDrillDown(element, table, filterCol = null, filterVal = null, filt
         if (filterCol && filterVal !== null) {
             url += `&filter_col=${encodeURIComponent(filterCol)}&filter_val=${encodeURIComponent(filterVal)}`;
         }
-        if (filterWhere) {
-            url += `&filter_where=${encodeURIComponent(filterWhere)}`;
-        }
         window.location.href = url;
     });
     

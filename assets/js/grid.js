@@ -82,16 +82,12 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
         const urlParams = new URLSearchParams(window.location.search);
         const filterCol = urlParams.get('filter_col');
         const filterVal = urlParams.get('filter_val');
-        const filterWhere = urlParams.get('filter_where');
 
         let fetchUrl = `api.php?api=list&table=${encodeURIComponent(table)}`;
 
         if (urlParams.get('table') === table) {
             if (filterCol && filterVal !== null) {
                 fetchUrl += `&filter_col=${encodeURIComponent(filterCol)}&filter_val=${encodeURIComponent(filterVal)}`;
-            }
-            if (filterWhere) {
-                fetchUrl += `&filter_where=${encodeURIComponent(filterWhere)}`;
             }
         }
 
@@ -605,15 +601,15 @@ export async function renderGrid(schema) {
     const searchTerm = searchInput ? searchInput.value.trim() : '';
 
     if (searchTerm) {
-        const escaped = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // ✅ fix
-        const regex = new RegExp(`(${escaped})`, 'gi');
-
-        const highlighted = String(value).replace(
-            regex,
-            '<mark class="search-highlight">$1</mark>'
-        );
-
-        td.innerHTML = highlighted;
+        const escVal = String(value)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const escSearch = searchTerm
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const escapedForRegex = escSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedForRegex})`, 'gi');
+        td.innerHTML = escVal.replace(regex, '<mark class="search-highlight">$1</mark>');
     } else {
         td.textContent = value;
     }

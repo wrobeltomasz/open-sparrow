@@ -51,11 +51,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest'
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
                                 },
                                 body: JSON.stringify({ id: parseInt(n.id) })
                             }).catch(() => {});
-                            window.location.href = n.link;
+                            try {
+                                const target = new URL(n.link, window.location.origin);
+                                if (target.origin === window.location.origin) {
+                                    window.location.href = target.href;
+                                }
+                            } catch (_) {}
                         });
                     }
                     list.appendChild(li);

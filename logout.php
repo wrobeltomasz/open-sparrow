@@ -1,14 +1,41 @@
 <?php
 
+require __DIR__ . '/includes/config.php';
+
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path'     => '/',
+    'domain'   => '',
+    'secure'   => SECURE_COOKIES,
+    'httponly' => true,
+    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
+]);
+
 session_start();
+
 if (isset($_SESSION['user_id'])) {
     require __DIR__ . '/includes/db.php';
     require __DIR__ . '/includes/api_helpers.php';
     $conn = db_connect();
-// Log logout action
     log_user_action($conn, $_SESSION['user_id'], 'LOGOUT');
 }
 
+$_SESSION = [];
+
+if (ini_get('session.use_cookies')) {
+    $params = session_get_cookie_params();
+    setcookie(
+        session_name(),
+        '',
+        time() - 42000,
+        $params['path'],
+        $params['domain'],
+        $params['secure'],
+        $params['httponly']
+    );
+}
+
+session_unset();
 session_destroy();
-header("Location: login.php");
+header('Location: login.php');
 exit;
