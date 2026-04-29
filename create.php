@@ -119,16 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="/assets/css/styles.css" rel="stylesheet">
 </head>
 <body>
-<header>
-    <a href="index.php" class="brand-logo">
-        <img src="assets/img/logo-blue.png" alt="OpenSparrow Logo" />
-    </a>
-    <div class="header-user-menu">
-        <button onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'" class="btn-logout">Back</button>
-    </div>
-</header>
-
-<main style="padding: 20px; max-width: 800px; margin: 0 auto;">
+<?php include 'templates/header_app.php'; ?>
+<main style="padding: 20px;">
     <h2>Add new record: <?php echo htmlspecialchars($tableCfg['display_name'] ?? $table); ?></h2>
     
     <?php if ($error) : ?>
@@ -250,9 +242,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 </main>
+</div>
 
 <?php include 'templates/footer.php'; ?>
 
+<script src="assets/js/sidebar.js?v=<?php echo @filemtime('assets/js/sidebar.js'); ?>"></script>
+<script src="assets/js/notifications.js?v=<?php echo @filemtime('assets/js/notifications.js'); ?>"></script>
+<script type="module" src="assets/js/user-menu.js?v=<?php echo @filemtime('assets/js/user-menu.js'); ?>"></script>
 <script>
 // Parse RegExp using standard JS engine to avoid strict v flag issues
 // Handles validation before form submission
