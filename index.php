@@ -25,6 +25,14 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+$cspNonce = bin2hex(random_bytes(16));
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+// style-src allows 'unsafe-inline' for element style attributes used throughout the template
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'nonce-$cspNonce'; connect-src 'self'");
+
 // Route API requests directly to api.php
 if (isset($_GET['api'])) {
     require __DIR__ . '/api.php';

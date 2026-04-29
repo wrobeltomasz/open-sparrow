@@ -202,9 +202,7 @@ try {
             $qType = $widget['query']['type'] ?? 'list';
             $data = null;
 
-            // Extract custom WHERE clause for widget
-            $customWhere = trim($widget['query']['where'] ?? '');
-            $sqlWhere = $customWhere !== '' ? ' WHERE (' . $customWhere . ')' : '';
+            $sqlWhere = '';
 
             // Apply Global Date Filter if requested and target matches
             $dateFilter = $_GET['date_filter'] ?? 'all';
@@ -426,23 +424,13 @@ try {
 
         $filterCol = $_GET['filter_col'] ?? '';
         $filterVal = $_GET['filter_val'] ?? '';
-        $filterWhere = $_GET['filter_where'] ?? '';
 
-        $whereParts = [];
+        $whereSql = '';
         $params = [];
 
         if ($filterCol !== '' && $filterVal !== '') {
-            $whereParts[] = sprintf('%s = $1', pg_ident($filterCol));
+            $whereSql = sprintf(' WHERE %s = $1', pg_ident($filterCol));
             $params[] = $filterVal;
-        }
-
-        if ($filterWhere !== '') {
-            $whereParts[] = '(' . $filterWhere . ')';
-        }
-
-        $whereSql = '';
-        if (!empty($whereParts)) {
-            $whereSql = ' WHERE ' . implode(' AND ', $whereParts);
         }
 
         $sql = sprintf(
@@ -454,15 +442,12 @@ try {
             pg_ident($idCol)
         );
 
-        if (empty($params)) {
-            $res = @pg_query($conn, $sql);
-        } else {
-            $res = @pg_query_params($conn, $sql, $params);
-        }
+        $res = @pg_query_params($conn, $sql, $params);
 
         if (!$res) {
+            error_log('[api][list] ' . pg_last_error($conn));
             http_response_code(500);
-            echo json_encode(['error' => pg_last_error($conn)]);
+            echo json_encode(['error' => 'Database error']);
             exit;
         }
 
@@ -615,8 +600,9 @@ try {
 
             $res = @pg_query_params($conn, $sql, [$val, $body['id']]);
             if (!$res) {
+                error_log('[api][patch] ' . pg_last_error($conn));
                 http_response_code(422);
-                echo json_encode(['error' => pg_last_error($conn)]);
+                echo json_encode(['error' => 'Database error']);
                 exit;
             }
 
@@ -680,8 +666,9 @@ try {
             }
 
             if (!$res) {
+                error_log('[api][insert] ' . pg_last_error($conn));
                 http_response_code(422);
-                echo json_encode(['error' => pg_last_error($conn)]);
+                echo json_encode(['error' => 'Database error']);
                 exit;
             }
 
@@ -708,8 +695,9 @@ try {
 
             $res = @pg_query_params($conn, $sql, [$body['id']]);
             if (!$res) {
+                error_log('[api][delete] ' . pg_last_error($conn));
                 http_response_code(422);
-                echo json_encode(['error' => pg_last_error($conn)]);
+                echo json_encode(['error' => 'Database error']);
                 exit;
             }
 
@@ -719,7 +707,8 @@ try {
         }
     }
 } catch (Throwable $e) {
+    error_log('[api][exception] ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Internal server error']);
     exit;
 }

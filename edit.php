@@ -46,6 +46,11 @@ function format_bytes_edit($bytes) {
 
 // Handle POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfToken = $_POST['csrf_token'] ?? '';
+    if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
+        http_response_code(403);
+        die('Invalid CSRF token.');
+    }
     $updates = [];
     $params = [];
     $i = 1;
@@ -96,7 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: index.php?table=" . urlencode($table));
         exit;
     } else {
-        $error = pg_last_error($conn);
+        error_log('[edit.php] ' . pg_last_error($conn));
+        $error = 'Database error. Please try again.';
     }
 }
 
@@ -221,6 +227,7 @@ if (empty($_SESSION['csrf_token'])) {
     <div class="tab-panel active" id="tab-details" role="tabpanel">
     <div class="form-wrapper">
         <form method="POST" class="editor-form">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
             <?php foreach ($tableCfg['columns'] as $colName => $colCfg) : ?>
                 <?php
                 if (isset($colCfg['show_in_edit']) && $colCfg['show_in_edit'] === false) {

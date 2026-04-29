@@ -1,5 +1,9 @@
 // admin/users.js
 
+function escHtml(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 // Helper function to retrieve CSRF token from meta tag
 function getCsrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
@@ -40,8 +44,8 @@ export async function renderUsersEditor(ctx) {
         data.users.forEach(u => {
             html += `
                 <tr style="border-bottom: 1px solid #e2e8f0;">
-                    <td style="padding: 10px;">${u.id}</td>
-                    <td style="padding: 10px;"><strong>${u.username}</strong></td>
+                    <td style="padding: 10px;">${escHtml(u.id)}</td>
+                    <td style="padding: 10px;"><strong>${escHtml(u.username)}</strong></td>
                     <td style="padding: 10px;">
                         <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; color: white; background: ${u.is_active ? '#10b981' : '#ef4444'};">
                             ${u.is_active ? 'Active' : 'Inactive'}
