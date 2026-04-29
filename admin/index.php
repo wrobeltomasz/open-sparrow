@@ -83,14 +83,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
     $csrfToken = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $csrfToken)) {
         $login_error = "Invalid request (CSRF check failed).";
-    } elseif (password_verify($_POST['admin_password'], $admin_password_hash)) {
-        // Prevent session fixation vulnerabilities
-        session_regenerate_id(true); 
-        $_SESSION['sparrow_admin_logged_in'] = true;
-        header("Location: index.php");
-        exit;
     } else {
-        $login_error = "Invalid password!";
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = @db_connect();
+
+        $ipSalt = 'c7a4b8f1d9e2a3c5b6f8d0e1a2b3c4d5';
+        $ipHash = hash_hmac('sha256', $_SERVER['REMOTE_ADDR'] ?? '', $ipSalt);
+        $maxAttempts   = 10;
+        $lockoutMinutes = 15;
+        $rateLimited   = false;
+
+        if ($conn) {
+            $tAttempts = sys_table('login_attempts');
+            $resCheck = pg_query_params(
+                $conn,
+                "SELECT COUNT(*) FROM $tAttempts WHERE ip_hash = \$1 AND attempted_at > now() - (\$2 * interval '1 minute')",
+                [$ipHash, $lockoutMinutes]
+            );
+            if ($resCheck && (int)pg_fetch_result($resCheck, 0, 0) >= $maxAttempts) {
+                $login_error = 'Too many failed attempts. Please try again later.';
+                $rateLimited = true;
+            }
+        }
+
+        if (!$rateLimited) {
+            if (password_verify($_POST['admin_password'], $admin_password_hash)) {
+                session_regenerate_id(true);
+                $_SESSION['sparrow_admin_logged_in'] = true;
+                header("Location: index.php");
+                exit;
+            } else {
+                if ($conn) {
+                    pg_query_params($conn, "INSERT INTO $tAttempts (username, ip_hash) VALUES (\$1, \$2)", ['admin', $ipHash]);
+                }
+                $login_error = "Invalid password!";
+            }
+        }
     }
 }
 
@@ -119,7 +147,7 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
     <body>
         <div class="login-card">
             <h2>OpenSparrow</h2>
-            <p>Admin Control Panel<br><br>Default password: <strong>admin</strong></p>
+            <p>Admin Control Panel</p>
             <?php if (isset($login_error)) {
                 echo "<div class='error'>" . htmlspecialchars($login_error, ENT_QUOTES) . "</div>";
             } ?>

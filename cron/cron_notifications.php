@@ -3,6 +3,11 @@
 // cron/cron_notifications.php
 declare(strict_types=1);
 
+if (php_sapi_name() !== 'cli') {
+    http_response_code(403);
+    exit;
+}
+
 // Disable output buffering to force real-time rendering in the browser
 @ini_set('output_buffering', 'off');
 @ini_set('zlib.output_compression', '0');
@@ -24,6 +29,7 @@ function print_log(string $msg): void
 }
 
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/api_helpers.php';
 $triggeredBy = (isset($argv[1]) && $argv[1] === 'admin') ? 'admin' : 'cron';
 print_log("<h3>Start CRON - Diagnostics</h3>");
 $configFile = __DIR__ . '/../includes/calendar.json';
@@ -57,24 +63,28 @@ try {
         $urlTemplate = $source['url_template'] ?? '';
     // Check if all required fields and at least one user are present
         if (!$table || !$dateCol || !$titleCol || empty($notifiedUsers) || !is_array($notifiedUsers)) {
-            print_log("Skipping source <b>$table</b> (missing required columns or no users assigned).");
+            print_log("Skipping source <b>" . htmlspecialchars($table, ENT_QUOTES, 'UTF-8') . "</b> (missing required columns or no users assigned).");
             continue;
         }
         $sourcesProcessed++;
 
         $targetDate = date('Y-m-d', strtotime("+$days days"));
-        print_log("Analyzing table: <b>$table</b> (looking for date: <b>$targetDate</b> in column <b>$dateCol</b>)");
+        print_log(
+            "Analyzing table: <b>" . htmlspecialchars($table, ENT_QUOTES, 'UTF-8') . "</b>"
+            . " (looking for date: <b>" . htmlspecialchars($targetDate, ENT_QUOTES, 'UTF-8') . "</b>"
+            . " in column <b>" . htmlspecialchars($dateCol, ENT_QUOTES, 'UTF-8') . "</b>)"
+        );
     // Fetch records matching the date directly from the target table
-        $sql = "
-            SELECT 
-                id AS record_id, 
-                \"$titleCol\" AS title
-            FROM app.\"$table\"
-            WHERE DATE(\"$dateCol\") = $1
-        ";
+        $sql = sprintf(
+            'SELECT id AS record_id, %s AS title FROM %s.%s WHERE DATE(%s) = $1',
+            pg_ident($titleCol),
+            pg_ident(sys_schema()),
+            pg_ident($table),
+            pg_ident($dateCol)
+        );
         $result = pg_query_params($conn, $sql, [$targetDate]);
         if (!$result) {
-            print_log("<span style='color:red;'>SQL QUERY ERROR: " . pg_last_error($conn) . "</span>");
+            print_log("<span style='color:red;'>SQL QUERY ERROR: " . htmlspecialchars(pg_last_error($conn), ENT_QUOTES, 'UTF-8') . "</span>");
             continue;
         }
 
@@ -83,7 +93,7 @@ try {
         $validRes = pg_query_params($conn, "SELECT id FROM " . sys_table('users') . " WHERE id = ANY($1::int[]) AND is_active = TRUE", [$uidList]);
         $validUserIds = $validRes ? array_map('intval', array_column(pg_fetch_all($validRes) ?: [], 'id')) : [];
         if (empty($validUserIds)) {
-            print_log("Skipping source <b>$table</b> (none of the configured users exist or are active).");
+            print_log("Skipping source <b>" . htmlspecialchars($table, ENT_QUOTES, 'UTF-8') . "</b> (none of the configured users exist or are active).");
             continue;
         }
 

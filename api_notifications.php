@@ -15,6 +15,16 @@ header('Content-Type: application/json; charset=utf-8');
 // Safely cast the authenticated user ID
 $userId = (int)$_SESSION['user_id'];
 $action = $_GET['action'] ?? 'get_count';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfToken = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'CSRF token mismatch.']);
+        exit;
+    }
+}
+
 try {
     $conn = db_connect();
 // Fetch the count of unread notifications for the user

@@ -4,6 +4,9 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 // Check role and block POST requests for readonly users
 $isReadOnly = ($_SESSION['role'] ?? 'full') === 'readonly';
@@ -31,6 +34,11 @@ $error = '';
 
 // Handle POST request (INSERT)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfToken = $_POST['csrf_token'] ?? '';
+    if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
+        http_response_code(403);
+        die('Invalid CSRF token.');
+    }
     $cols = [];
     $params = [];
     $ph = [];
@@ -97,7 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header("Location: index.php?table=" . urlencode($table));
         exit;
     } else {
-        $error = pg_last_error($conn);
+        error_log('[create.php] ' . pg_last_error($conn));
+        $error = 'Database error. Please try again.';
     }
 }
 ?>
@@ -130,6 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="form-wrapper">
         <form method="POST" class="editor-form">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
             <?php foreach ($tableCfg['columns'] as $colName => $colCfg) : ?>
                 <?php
                 // Skip primary key and readonly fields during create

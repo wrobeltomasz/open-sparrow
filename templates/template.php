@@ -109,7 +109,7 @@
 
 <?php include 'templates/footer.php'; ?>
 
-<script>
+<script nonce="<?php echo $cspNonce ?? ''; ?>">
     window.USER_ROLE = '<?php echo htmlspecialchars($userRole ?? 'readonly', ENT_QUOTES, 'UTF-8'); ?>';
     document.addEventListener("DOMContentLoaded", () => {
         const mobileActions = document.getElementById("mobileActions");

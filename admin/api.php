@@ -173,13 +173,17 @@ if ($action === 'users_add') {
 
     try {
         require_once __DIR__ . '/../includes/db.php';
+        require_once __DIR__ . '/../includes/api_helpers.php';
         $conn = db_connect();
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO " . sys_table('users') . " (username, password_hash, is_active, role) VALUES ($1, $2, true, $3)";
+        $sql = "INSERT INTO " . sys_table('users') . " (username, password_hash, is_active, role) VALUES ($1, $2, true, $3) RETURNING id";
         $res = @pg_query_params($conn, $sql, [$username, $hash, $role]);
         if (!$res) {
             admin_db_fail($conn, 'users_add');
         }
+        $newRow = pg_fetch_assoc($res);
+        $newUserId = (int)($newRow['id'] ?? 0);
+        log_user_action($conn, 0, 'ADD_USER', 'users', $newUserId);
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
@@ -205,12 +209,14 @@ if ($action === 'users_toggle') {
 
     try {
         require_once __DIR__ . '/../includes/db.php';
+        require_once __DIR__ . '/../includes/api_helpers.php';
         $conn = db_connect();
         $sql = "UPDATE " . sys_table('users') . " SET is_active = $1 WHERE id = $2";
         $res = @pg_query_params($conn, $sql, [$isActive ? 'true' : 'false', $userId]);
         if (!$res) {
             admin_db_fail($conn, 'users_toggle');
         }
+        log_user_action($conn, 0, 'TOGGLE_USER', 'users', $userId);
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
@@ -237,12 +243,14 @@ if ($action === 'users_update_role') {
 
     try {
         require_once __DIR__ . '/../includes/db.php';
+        require_once __DIR__ . '/../includes/api_helpers.php';
         $conn = db_connect();
         $sql = "UPDATE " . sys_table('users') . " SET role = $1 WHERE id = $2";
         $res = @pg_query_params($conn, $sql, [$role, $userId]);
         if (!$res) {
             admin_db_fail($conn, 'users_update_role');
         }
+        log_user_action($conn, 0, 'UPDATE_ROLE', 'users', $userId);
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
@@ -464,17 +472,22 @@ if ($action === 'import' && isset($_FILES['backup_file'])) {
     $zip = new ZipArchive();
     if ($zip->open($_FILES['backup_file']['tmp_name']) === true) {
         $extractPath = __DIR__ . '/../includes/';
+        $importAllowed = ['schema', 'dashboard', 'calendar', 'database', 'security', 'workflows', 'files'];
         $validFiles = [];
 
         // Validate each file inside the archive
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $filename = $zip->getNameIndex($i);
-            // Block path traversal characters and enforce .json extension to prevent RCE
-            if (str_contains($filename, '../') || str_contains($filename, '..\\') || substr($filename, -5) !== '.json') {
+            $basename = substr($filename, 0, -5); // strip .json suffix
+            // Reject any path separator (blocks subdirs and traversal), non-.json, or unknown config name
+            if (str_contains($filename, '/') || str_contains($filename, '\\')
+                || substr($filename, -5) !== '.json'
+                || !in_array($basename, $importAllowed, true)
+            ) {
                 $zip->close();
                 http_response_code(400);
                 header('Content-Type: application/json');
-                echo json_encode(['error' => 'Invalid file detected. Only safe .json files are allowed.']);
+                echo json_encode(['error' => 'Invalid file detected. Only known config .json files are allowed.']);
                 exit;
             }
             $validFiles[] = $filename;
@@ -636,6 +649,14 @@ if ($action === 'save' && in_array($file, $allowedFiles, true)) {
     header('Content-Type: application/json');
     $parsedData = json_decode($data, true);
     if ($parsedData !== null) {
+        // Strip raw SQL WHERE fragments from dashboard widget configs
+        if ($file === 'dashboard' && isset($parsedData['widgets']) && is_array($parsedData['widgets'])) {
+            foreach ($parsedData['widgets'] as &$w) {
+                unset($w['query']['where']);
+            }
+            unset($w);
+        }
+
         // Hash the admin password securely before saving if it is not hashed already
         if ($file === 'security' && !empty($parsedData['admin_password'])) {
             $info = password_get_info($parsedData['admin_password']);
