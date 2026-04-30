@@ -194,8 +194,16 @@ if (empty($_SESSION['csrf_token'])) {
 </head>
 <body>
 
-<?php include 'templates/header_app.php'; ?>
-<main style="padding: 20px;">
+<header>
+    <a href="index.php" class="brand-logo">
+        <img src="assets/img/logo-blue.png" alt="OpenSparrow Logo" />
+    </a>
+    <div class="header-user-menu">
+        <button onclick="window.history.back()" class="btn-logout">Back</button>
+    </div>
+</header>
+
+<main style="padding: 20px; max-width: 1000px; margin: 0 auto;">
     <h2>Edit record #<?php echo htmlspecialchars((string)$id); ?> in <?php echo htmlspecialchars($tableCfg['display_name'] ?? $table); ?></h2>
 
     <?php if ($error) : ?>
@@ -483,13 +491,8 @@ if (empty($_SESSION['csrf_token'])) {
     </div><!-- /tab-panel#tab-comments -->
 
 </main>
-</div>
 
 <?php include 'templates/footer.php'; ?>
-
-<script src="assets/js/sidebar.js?v=<?php echo @filemtime('assets/js/sidebar.js'); ?>"></script>
-<script src="assets/js/notifications.js?v=<?php echo @filemtime('assets/js/notifications.js'); ?>"></script>
-<script type="module" src="assets/js/user-menu.js?v=<?php echo @filemtime('assets/js/user-menu.js'); ?>"></script>
 
 <script>
     window.CSRF_TOKEN      = <?php echo json_encode($_SESSION['csrf_token'], JSON_THROW_ON_ERROR); ?>;
