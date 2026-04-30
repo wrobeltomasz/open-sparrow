@@ -30,13 +30,16 @@ function to_display_name(array $tableCfg): string
     return $tableCfg['display_name'] ?? ($tableCfg['name'] ?? 'Unknown');
 }
 
-function map_fk_display(array $schema, array $tableCfg, array $rows): array
+function map_fk_display(array $schema, array $tableCfg, array $rows, $conn = null): array
 {
     if (empty($rows) || !isset($tableCfg['foreign_keys'])) {
         return $rows;
     }
 
-    $conn = $GLOBALS['conn'];
+    $conn = $conn ?? $GLOBALS['conn'] ?? null;
+    if ($conn === null) {
+        return $rows;
+    }
     foreach ($tableCfg['foreign_keys'] as $fkCol => $fkCfg) {
         $fkValues = [];
         foreach ($rows as $row) {

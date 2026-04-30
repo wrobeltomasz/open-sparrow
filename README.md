@@ -59,9 +59,10 @@ Demo: https://demo.opensparrow.org
 ## Project Structure
 
 ### Core directories
+- **`src/`** — OOP application layer (PSR-4, no Composer). Namespaced under `App\`. Sub-directories: `Audit/`, `Csrf/`, `Domain/`, `Form/`, `Http/`, `Persistence/`, `Repository/`, `Support/`. Loaded via `includes/autoload.php`; wired in `includes/bootstrap.php`.
 - **`admin/`** — management panel (schema editor, users, security settings).
 - **`assets/`** — static frontend resources (`css/`, `js/`, `icons/`, `img/`).
-- **`includes/`** — backend helpers. `config.php` centralizes env-driven configuration; `db.php` centralizes PostgreSQL access; `api_helpers.php` holds request/response helpers.
+- **`includes/`** — backend helpers. `config.php` centralizes env-driven configuration; `db.php` centralizes PostgreSQL access; `api_helpers.php` holds request/response helpers; `autoload.php` registers the PSR-4 class loader; `bootstrap.php` wires all OOP dependencies.
 - **`cron/`** — scheduled workers (e.g. `cron_notifications.php`).
 - **`templates/`** — layout wrappers (`template.php`).
 - **`tests/`** — E2E Selenium suite.
