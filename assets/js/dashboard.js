@@ -100,11 +100,16 @@ function applyDrillDown(element, table, filterCol = null, filterVal = null, filt
         let url = `index.php?table=${encodeURIComponent(table)}`;
         if (filterCol && filterVal !== null) {
             url += `&filter_col=${encodeURIComponent(filterCol)}&filter_val=${encodeURIComponent(filterVal)}`;
+        } else if (filterWhere) {
+            // Parse simple "column = 'value'" from query.where for drill-down URL
+            const m = /^(\w+)\s*=\s*'([^']*)'$/i.exec(filterWhere.trim());
+            if (m) {
+                url += `&filter_col=${encodeURIComponent(m[1])}&filter_val=${encodeURIComponent(m[2])}`;
+            }
         }
         window.location.href = url;
     });
-    
-    // Hover visual feedback
+
     element.addEventListener('mouseenter', () => element.style.opacity = '0.8');
     element.addEventListener('mouseleave', () => element.style.opacity = '1');
 }
