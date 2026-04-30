@@ -1,0 +1,79 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Schema;
+
+final class JsonSchemaRepository implements SchemaRepositoryInterface
+{
+    private array $rawData;
+    /** @var array<string, TableConfig> */
+    private array $cache = [];
+
+    public function __construct(string $path)
+    {
+        $json = file_get_contents($path);
+        if ($json === false) {
+            throw new \RuntimeException("Cannot read schema file: {$path}");
+        }
+        $data = json_decode($json, true);
+        if (!is_array($data)) {
+            throw new \RuntimeException("Invalid schema JSON in: {$path}");
+        }
+        $this->rawData = $data;
+    }
+
+    public function table(string $name): TableConfig
+    {
+        if (!$this->hasTable($name)) {
+            throw new \InvalidArgumentException("Unknown table: {$name}");
+        }
+        return $this->cache[$name] ??= $this->build($name, $this->rawData['tables'][$name]);
+    }
+
+    public function hasTable(string $name): bool
+    {
+        return isset($this->rawData['tables'][$name]);
+    }
+
+    public function all(): array
+    {
+        $result = [];
+        foreach (array_keys($this->rawData['tables'] ?? []) as $name) {
+            $result[$name] = $this->table($name);
+        }
+        return $result;
+    }
+
+    public function raw(): array
+    {
+        return $this->rawData;
+    }
+
+    private function build(string $name, array $cfg): TableConfig
+    {
+        $columns = [];
+        foreach ($cfg['columns'] ?? [] as $colName => $colCfg) {
+            $columns[$colName] = new ColumnConfig(
+                name: $colName,
+                type: $colCfg['type'] ?? 'text',
+                displayName: $colCfg['display_name'] ?? $colName,
+                readonly: !empty($colCfg['readonly']),
+                notNull: !empty($colCfg['not_null']),
+                showInEdit: ($colCfg['show_in_edit'] ?? true) !== false,
+                options: $colCfg['options'] ?? [],
+                validationRegexp: $colCfg['validation_regexp'] ?? null,
+                validationMessage: $colCfg['validation_message'] ?? null,
+            );
+        }
+        return new TableConfig(
+            name: $name,
+            schema: $cfg['schema'] ?? 'public',
+            displayName: $cfg['display_name'] ?? $name,
+            columns: $columns,
+            foreignKeys: $cfg['foreign_keys'] ?? [],
+            subtables: $cfg['subtables'] ?? [],
+            primaryKey: 'id',
+        );
+    }
+}

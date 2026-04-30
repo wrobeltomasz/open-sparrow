@@ -1,120 +1,73 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+
+declare(strict_types=1);
+
+require __DIR__ . '/includes/bootstrap.php';
+
+use App\Form\RenderContext;
+
+if (!$session->has('user_id')) {
+    header('Location: login.php');
     exit;
 }
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
 
-// Check role and block POST requests for readonly users
-$isReadOnly = ($_SESSION['role'] ?? 'full') === 'readonly';
-if ($isReadOnly && $_SERVER['REQUEST_METHOD'] === 'POST') {
+$isReadOnly = $session->role() === 'readonly';
+
+if ($isReadOnly && $request->isPost()) {
     http_response_code(403);
-    die("Forbidden: Read-only access");
+    die('Forbidden: Read-only access');
 }
 
-require __DIR__ . '/includes/db.php';
-require __DIR__ . '/includes/api_helpers.php';
-$conn = db_connect();
+$table = $request->query('table');
 
-$table = $_GET['table'] ?? '';
-
-// Load schema
-$schema = json_decode(file_get_contents(__DIR__ . '/includes/schema.json'), true);
-if (!isset($schema['tables'][$table])) {
-    die("Invalid table.");
+if (!$schemas->hasTable($table)) {
+    die('Invalid table.');
 }
 
-$tableCfg = $schema['tables'][$table];
-$schemaName = $tableCfg['schema'] ?? 'public';
-$idCol = id_column();
-$error = '';
+$tableCfg = $schemas->table($table);
+$error    = '';
 
-// Handle POST request (INSERT)
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $csrfToken = $_POST['csrf_token'] ?? '';
-    if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrfToken)) {
+if ($request->isPost()) {
+    if (!$csrf->isValid($request->post('csrf_token'))) {
         http_response_code(403);
         die('Invalid CSRF token.');
     }
-    $cols = [];
-    $params = [];
-    $ph = [];
-    $i = 1;
-
-    foreach ($tableCfg['columns'] as $colName => $colCfg) {
-        // Skip primary key and readonly fields during create
-        if ($colName === $idCol || !empty($colCfg['readonly'])) {
-            continue;
-        }
-
-        $type = strtolower($colCfg['type'] ?? '');
-
-        if (str_contains($type, 'bool')) {
-            $val = isset($_POST[$colName]) ? 'true' : 'false';
-            $cols[] = pg_ident($colName);
-            $ph[] = "$" . $i . "::boolean";
-            $params[] = $val;
-            $i++;
-        } else {
-            $val = $_POST[$colName] ?? '';
-            if ($val === '') {
-                $val = null;
-            }
-
-            $cols[] = pg_ident($colName);
-            $ph[] = "$" . $i;
-            $params[] = $val;
-            $i++;
-        }
-    }
-
-    if (empty($cols)) {
-        $sql = sprintf(
-            'INSERT INTO "%s"."%s" DEFAULT VALUES RETURNING %s',
-            $schemaName,
-            $table,
-            pg_ident($idCol)
-        );
-        $res = pg_query($conn, $sql);
-    } else {
-        $sql = sprintf(
-            'INSERT INTO "%s"."%s" (%s) VALUES (%s) RETURNING %s',
-            $schemaName,
-            $table,
-            implode(', ', $cols),
-            implode(', ', $ph),
-            pg_ident($idCol)
-        );
-        $res = pg_query_params($conn, $sql, $params);
-    }
-
-    if ($res) {
-        $row = pg_fetch_assoc($res);
-        $newId = $row[$idCol] ?? null;
-
-        // Log manual insert
-        if ($newId !== null) {
-            log_user_action($conn, $_SESSION['user_id'], 'INSERT', $table, (int)$newId);
-        }
-
-        // Return to the grid of the source table. $table is validated against
-        // schema above (line 23) and app.js honours ?table=<name>.
-        header("Location: index.php?table=" . urlencode($table));
+    try {
+        $data  = $mapper->fromPost($tableCfg, $request->postAll());
+        $newId = $records->insert($tableCfg, $data);
+        $audit->log($session->userId(), 'INSERT', $tableCfg->name, (int)$newId);
+        header('Location: index.php?table=' . urlencode($table));
         exit;
-    } else {
-        error_log('[create.php] ' . pg_last_error($conn));
+    } catch (\RuntimeException $e) {
+        error_log('[create.php] ' . $e->getMessage());
         $error = 'Database error. Please try again.';
     }
 }
+
+// Pre-load FK options for all FK columns.
+$fkOptions = [];
+$rawSchema  = $schemas->raw();
+foreach ($tableCfg->foreignKeys as $colName => $fkCfg) {
+    $fkOptions[$colName] = $fkLoader->load($fkCfg, $rawSchema);
+}
+
+// Detect GET-prefilled (locked) fields — used for subtable FK pre-population.
+$prefilled = [];
+$locked    = [];
+foreach ($tableCfg->writableColumns() as $col) {
+    if (isset($_GET[$col->name])) {
+        $prefilled[$col->name] = (string)$_GET[$col->name];
+        $locked[$col->name]    = true;
+    }
+}
+
+$ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
 ?>
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>OpenSparrow | Add Record - <?php echo htmlspecialchars($tableCfg['display_name'] ?? $table); ?></title>
+    <title>OpenSparrow | Add Record - <?php echo htmlspecialchars($tableCfg->displayName); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="/assets/css/styles.css" rel="stylesheet">
 </head>
@@ -129,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </header>
 
 <main style="padding: 20px; max-width: 800px; margin: 0 auto;">
-    <h2>Add new record: <?php echo htmlspecialchars($tableCfg['display_name'] ?? $table); ?></h2>
-    
+    <h2>Add new record: <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
+
     <?php if ($error) : ?>
         <div style="color: red; margin-bottom: 15px; padding: 10px; border: 1px solid red; background: #fee;">
             Error: <?php echo htmlspecialchars($error); ?>
@@ -139,103 +92,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="form-wrapper">
         <form method="POST" class="editor-form">
-            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
-            <?php foreach ($tableCfg['columns'] as $colName => $colCfg) : ?>
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf->token(), ENT_QUOTES, 'UTF-8'); ?>">
+            <?php foreach ($tableCfg->visibleColumns() as $col) : ?>
                 <?php
-                // Skip primary key and readonly fields during create
-                if ($colName === $idCol || !empty($colCfg['readonly'])) {
+                if ($col->name === $tableCfg->primaryKey || $col->readonly) {
                     continue;
                 }
-                if (isset($colCfg['show_in_edit']) && $colCfg['show_in_edit'] === false) {
-                    continue;
-                }
-
-                $type = strtolower($colCfg['type'] ?? '');
-                $isPrefilled = isset($_GET[$colName]);
-                $prefillVal = $_GET[$colName] ?? '';
-
-                $requiredAttr = !empty($colCfg['not_null']) ? 'required' : '';
-                // Disable field if prefilled or user is readonly
-                $disabledAttr = ($isPrefilled || $isReadOnly) ? 'disabled' : '';
-                $nameAttr = $isPrefilled ? '' : 'name="' . $colName . '"';
+                $hasFk   = $tableCfg->hasForeignKey($col->name);
+                $isColRo = $isReadOnly || ($locked[$col->name] ?? false);
+                $reqStar = ($col->notNull && !$isColRo) ? '<span style="color:red; margin-left:3px;">*</span>' : '';
                 ?>
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label style="display: block; font-weight: bold; margin-bottom: 5px;">
-                        <?php echo htmlspecialchars($colCfg['display_name'] ?? $colName); ?>
-                        <?php if ($requiredAttr) {
-                            echo '<span style="color:red; margin-left:3px;">*</span>';
-                        } ?>
+                        <?php echo htmlspecialchars($col->displayName); ?>
+                        <?php echo $reqStar; ?>
                     </label>
-
-                    <?php if (isset($tableCfg['foreign_keys'][$colName])) : ?>
-                        <?php
-                        $fkCfg = $tableCfg['foreign_keys'][$colName];
-                        $refTable = $fkCfg['reference_table'];
-                        $refSchema = $schema['tables'][$refTable]['schema'] ?? 'public';
-                        $refPk = $fkCfg['reference_column'] ?? 'id';
-                        
-                        // Handle array or string display columns safely
-                        $refDisplayArr = is_array($fkCfg['display_column'] ?? null) ? $fkCfg['display_column'] : [$fkCfg['display_column'] ?? $refPk];
-                        $refColsSql = implode(', ', array_map('pg_ident', $refDisplayArr));
-                        $orderColSql = pg_ident($refDisplayArr[0]);
-
-                        $refSql = sprintf('SELECT %s, %s FROM "%s"."%s" ORDER BY %s ASC', pg_ident($refPk), $refColsSql, $refSchema, $refTable, $orderColSql);
-                        $refRes = pg_query($conn, $refSql);
-                        ?>
-                        <select <?php echo $nameAttr; ?> <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                            <option value="">-- Select --</option>
-                            <?php if ($refRes) :
-                                while ($refRow = pg_fetch_assoc($refRes)) : ?>
-                                    <?php 
-                                    $selected = ($prefillVal == $refRow[$refPk]) ? 'selected' : ''; 
-                                    
-                                    // Concatenate multiple columns for display if needed
-                                    $displayParts = [];
-                                    foreach ($refDisplayArr as $dc) {
-                                        if (isset($refRow[$dc]) && $refRow[$dc] !== '') {
-                                            $displayParts[] = $refRow[$dc];
-                                        }
-                                    }
-                                    $displayString = implode(' - ', $displayParts) ?: $refRow[$refPk];
-                                    ?>
-                                    <option value="<?php echo htmlspecialchars((string)$refRow[$refPk]); ?>" <?php echo $selected; ?>>
-                                        <?php echo htmlspecialchars($displayString); ?>
-                                    </option>
-                                <?php endwhile;
-                            endif; ?>
-                        </select>
-                        
-                    <?php elseif ($type === 'enum' || str_starts_with($type, 'enum')) : ?>
-                        <select <?php echo $nameAttr; ?> <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                            <option value="">-- Select --</option>
-                            <?php if (!empty($colCfg['options']) && is_array($colCfg['options'])) : ?>
-                                <?php foreach ($colCfg['options'] as $opt) : ?>
-                                    <?php $selected = ($prefillVal === (string)$opt) ? 'selected' : ''; ?>
-                                    <option value="<?php echo htmlspecialchars((string)$opt); ?>" <?php echo $selected; ?>>
-                                        <?php echo htmlspecialchars((string)$opt); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
-
-                    <?php elseif (str_contains($type, 'bool')) : ?>
-                        <?php $checked = ($prefillVal === 'true' || $prefillVal === 't' || $prefillVal === '1' || $prefillVal === 'on') ? 'checked' : ''; ?>
-                        <input type="checkbox" <?php echo $nameAttr; ?> <?php echo $disabledAttr; ?> <?php echo $checked; ?> style="transform: scale(1.2); margin-top: 5px;" />
-                    
-                    <?php elseif (str_contains($type, 'date')) : ?>
-                        <input type="date" <?php echo $nameAttr; ?> value="<?php echo htmlspecialchars($prefillVal); ?>" <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
-                    
-                    <?php else : ?>
-                        <?php
-                        $patternAttr = !empty($colCfg['validation_regexp']) ? 'data-pattern="' . htmlspecialchars($colCfg['validation_regexp']) . '"' : '';
-                        $titleAttr = !empty($colCfg['validation_message']) ? 'data-message="' . htmlspecialchars($colCfg['validation_message']) . '"' : '';
-                        ?>
-                        <input type="text" <?php echo $nameAttr; ?> value="<?php echo htmlspecialchars($prefillVal); ?>" <?php echo $requiredAttr; ?> <?php echo $disabledAttr; ?> <?php echo $patternAttr; ?> <?php echo $titleAttr; ?> style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" />
-                    <?php endif; ?>
-
-                    <?php if ($isPrefilled) : ?>
-                        <input type="hidden" name="<?php echo $colName; ?>" value="<?php echo htmlspecialchars($prefillVal); ?>" />
-                    <?php endif; ?>
+                    <?php echo $fieldRegistry->for($col, $hasFk)->render($col, null, $ctx); ?>
                 </div>
             <?php endforeach; ?>
 
@@ -254,30 +126,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php include 'templates/footer.php'; ?>
 
 <script>
-// Parse RegExp using standard JS engine to avoid strict v flag issues
-// Handles validation before form submission
 document.addEventListener('DOMContentLoaded', function() {
     const inputs = document.querySelectorAll('input[data-pattern]');
     inputs.forEach(input => {
-        const validateInput = () => {
-            if (!input.value) {
-                input.setCustomValidity('');
-                return;
-            }
+        const validate = () => {
+            if (!input.value) { input.setCustomValidity(''); return; }
             try {
                 const regex = new RegExp(input.dataset.pattern);
-                if (!regex.test(input.value)) {
-                    input.setCustomValidity(input.dataset.message || 'Invalid format');
-                } else {
-                    input.setCustomValidity('');
-                }
+                input.setCustomValidity(regex.test(input.value) ? '' : (input.dataset.message || 'Invalid format'));
             } catch (e) {
-                console.error("Invalid RegExp provided in schema:", input.dataset.pattern, e);
+                console.error('Invalid RegExp in schema:', input.dataset.pattern, e);
             }
         };
-
-        input.addEventListener('input', validateInput);
-        validateInput();
+        input.addEventListener('input', validate);
+        validate();
     });
 });
 </script>
