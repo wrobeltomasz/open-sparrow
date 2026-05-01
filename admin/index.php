@@ -186,6 +186,7 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
             <button class="admin-tab" data-file="calendar">Calendar</button>
             <button class="admin-tab" data-file="workflows">Workflows</button>
             <button class="admin-tab" data-file="files">Files</button>
+            <button class="admin-tab" data-file="menu">Menu Preview</button>
         </div>
 
         <div class="header-user-menu">

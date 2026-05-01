@@ -602,6 +602,163 @@ if ($action === 'backup_tables') {
     exit;
 }
 
+// Shared helpers for menu_config GET and POST
+$menuMaxBytes = 524288;
+$menuSafeReadJson = static function (string $path) use ($menuMaxBytes) : ?array {
+    if (!file_exists($path) || filesize($path) > $menuMaxBytes) {
+        return null;
+    }
+    $content = file_get_contents($path, false, null, 0, $menuMaxBytes);
+    if ($content === false) {
+        return null;
+    }
+    $decoded = json_decode($content, true);
+    return is_array($decoded) ? $decoded : null;
+};
+$menuSanitizeIcon = static function (string $icon) : string {
+    if ($icon === '') {
+        return '';
+    }
+    if (preg_match('#^(https://[^\s<>"\']+|assets/[^\s<>"\']*)$#i', $icon)) {
+        return $icon;
+    }
+    return '';
+};
+
+// GET: return structured (possibly nested) menu item list for the admin Menu Preview tab
+if ($action === 'menu_config' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Content-Type: application/json');
+
+    $inc = __DIR__ . '/../includes';
+
+    // Build catalog: key → full display entry
+    $catalog = [];
+
+    $dashRaw = $menuSafeReadJson($inc . '/dashboard.json') ?? [];
+    $catalog['dashboard'] = [
+        'type' => 'dashboard', 'key' => 'dashboard',
+        'name'   => $dashRaw['menu_name'] ?? 'Dashboard',
+        'icon'   => $menuSanitizeIcon((string)($dashRaw['menu_icon'] ?? 'assets/icons/dashboard.png')),
+        'hidden' => !empty($dashRaw['hidden']),
+        'children' => [],
+    ];
+
+    $calRaw = $menuSafeReadJson($inc . '/calendar.json') ?? [];
+    $catalog['calendar'] = [
+        'type' => 'calendar', 'key' => 'calendar',
+        'name'   => $calRaw['menu_name'] ?? 'Calendar',
+        'icon'   => $menuSanitizeIcon((string)($calRaw['menu_icon'] ?? 'assets/icons/calendar.png')),
+        'hidden' => !empty($calRaw['hidden']),
+        'children' => [],
+    ];
+
+    $filesRaw = $menuSafeReadJson($inc . '/files.json') ?? [];
+    $catalog['files'] = [
+        'type' => 'files', 'key' => 'files',
+        'name'   => $filesRaw['menu_name'] ?? 'Files',
+        'icon'   => $menuSanitizeIcon((string)($filesRaw['menu_icon'] ?? 'assets/icons/folder_open.png')),
+        'hidden' => !empty($filesRaw['hidden']),
+        'children' => [],
+    ];
+
+    $schemaRaw = $menuSafeReadJson($inc . '/schema.json') ?? [];
+    foreach ($schemaRaw['tables'] ?? [] as $tName => $tConfig) {
+        $catalog[$tName] = [
+            'type' => 'table', 'key' => $tName,
+            'name'   => $tConfig['display_name'] ?? $tName,
+            'icon'   => $menuSanitizeIcon((string)($tConfig['icon'] ?? '')),
+            'hidden' => !empty($tConfig['hidden']),
+            'children' => [],
+        ];
+    }
+
+    $menuRaw = $menuSafeReadJson($inc . '/menu.json');
+    $items   = [];
+    $placed  = [];
+
+    if ($menuRaw !== null && isset($menuRaw['items']) && is_array($menuRaw['items'])) {
+        foreach ($menuRaw['items'] as $entry) {
+            $key = $entry['key'] ?? '';
+            if ($key === '' || !isset($catalog[$key])) {
+                continue;
+            }
+            $item = $catalog[$key];
+            $item['children'] = [];
+            foreach ($entry['children'] ?? [] as $ce) {
+                $ck = $ce['key'] ?? '';
+                if ($ck === '' || !isset($catalog[$ck])) {
+                    continue;
+                }
+                $child = $catalog[$ck];
+                $child['children'] = [];
+                $item['children'][] = $child;
+                $placed[$ck] = true;
+            }
+            $items[]      = $item;
+            $placed[$key] = true;
+        }
+        // Append items added after menu.json was last saved
+        foreach ($catalog as $key => $entry) {
+            if (!isset($placed[$key])) {
+                $items[] = $entry;
+            }
+        }
+    } else {
+        $items = array_values($catalog);
+    }
+
+    echo json_encode(['items' => $items]);
+    exit;
+}
+
+// POST: save menu structure (order + nesting) to includes/menu.json
+if ($action === 'menu_config' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+
+    $body = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($body) || !isset($body['items']) || !is_array($body['items'])) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'error' => 'Invalid payload']);
+        exit;
+    }
+
+    $inc       = __DIR__ . '/../includes';
+    $schemaRaw = $menuSafeReadJson($inc . '/schema.json') ?? [];
+    $validKeys  = array_merge(['dashboard', 'calendar', 'files'], array_keys($schemaRaw['tables'] ?? []));
+    $validTypes = ['dashboard', 'calendar', 'files', 'table'];
+
+    $sanitized = [];
+    foreach ($body['items'] as $entry) {
+        $key  = $entry['key']  ?? '';
+        $type = $entry['type'] ?? '';
+        if (!in_array($key, $validKeys, true) || !in_array($type, $validTypes, true)) {
+            continue;
+        }
+        $children = [];
+        foreach ($entry['children'] ?? [] as $child) {
+            $ck = $child['key']  ?? '';
+            $ct = $child['type'] ?? '';
+            if (!in_array($ck, $validKeys, true) || !in_array($ct, $validTypes, true)) {
+                continue;
+            }
+            $children[] = ['type' => $ct, 'key' => $ck, 'children' => []];
+        }
+        $sanitized[] = ['type' => $type, 'key' => $key, 'children' => $children];
+    }
+
+    $payload  = json_encode(['items' => $sanitized], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    $filePath = $inc . '/menu.json';
+    $tmp      = $filePath . '.tmp';
+    if (@file_put_contents($tmp, $payload, LOCK_EX) === false) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'error' => 'Write failed']);
+        exit;
+    }
+    @rename($tmp, $filePath);
+    echo json_encode(['status' => 'success']);
+    exit;
+}
+
 // Allowed config files for read and write operations
 // Dodałem 'files' do autoryzowanych konfiguracji
 $allowedFiles = ['schema', 'dashboard', 'calendar', 'database', 'security', 'workflows', 'files'];

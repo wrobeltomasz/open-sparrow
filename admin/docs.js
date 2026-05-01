@@ -16,7 +16,7 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">0. Admin Panel Layout</h3>
             <p>The admin header exposes the main configuration tabs plus two drop-downs:</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files.</li>
+                <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files, Menu Preview.</li>
                 <li><strong>System drop-down:</strong> Database, Security, Users, System Health, Run Notifications Cron.</li>
                 <li><strong>Configuration drop-down:</strong> Export / Import the entire configuration as a ZIP archive (recommended before every production deployment).</li>
                 <li><strong>Save config:</strong> Persists the currently edited JSON file to <code>includes/</code>. After a successful save a green status pill appears next to the button confirming which file was written. Error pills stay visible for 6 seconds so they are not missed.</li>
@@ -181,7 +181,82 @@ export function renderDocumentation(ctx) {
                 <li><strong>File library:</strong> Upload, search, filter by type, preview images and delete files from the admin UI. Deletions are logged to the audit trail.</li>
             </ul>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">11. Deployment Notes</h3>
+            <h3 style="color: #2563eb; margin-top: 30px;">11. Menu Preview &amp; Navigation Editor</h3>
+            <p>
+                The <strong>Menu Preview</strong> tab renders the frontend sidebar exactly as users see it and lets you
+                rearrange or nest items by dragging — no code required. Every change is saved automatically.
+            </p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">How the menu is stored</h4>
+            <p>
+                Menu order and nesting are stored in <code>includes/menu.json</code>, separately from the individual
+                config files (<code>dashboard.json</code>, <code>calendar.json</code>, <code>schema.json</code>, etc.).
+                Display data — name, icon, hidden flag — always comes from those files. <code>menu.json</code> stores
+                only the <em>structure</em>:
+            </p>
+            <pre style="background:#f1f5f9; padding:12px 16px; border-radius:6px; font-size:13px; overflow-x:auto;">{
+  "items": [
+    { "type": "dashboard", "key": "dashboard", "children": [] },
+    { "type": "table",     "key": "clients",   "children": [
+      { "type": "table", "key": "orders", "children": [] }
+    ]},
+    { "type": "calendar",  "key": "calendar",  "children": [] }
+  ]
+}</pre>
+            <p>
+                If <code>menu.json</code> does not exist the frontend falls back to the flat default order (Dashboard →
+                Calendar → Files → tables in schema order). New tables added to the schema after the last menu save are
+                automatically appended at the end.
+            </p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Drag &amp; drop controls</h4>
+            <ul style="padding-left: 20px;">
+                <li>
+                    <strong>Reorder:</strong> Drag any item and drop it above or below another item.
+                    A blue line with a dot indicates where the item will land.
+                </li>
+                <li>
+                    <strong>Nest (create submenu):</strong> Drag a top-level item and drop it onto the
+                    <em>middle zone</em> of another top-level item — the target highlights with a dashed blue outline.
+                    The dragged item becomes a child. Maximum depth is <strong>1 level</strong>.
+                </li>
+                <li>
+                    <strong>Un-nest:</strong> Drag a child item and drop it above or below any top-level item to
+                    promote it back to the top level.
+                </li>
+                <li>
+                    <strong>Reorder within a submenu:</strong> Child items can be dragged within their parent's submenu
+                    to change their relative order.
+                </li>
+                <li>
+                    <strong>Auto-save:</strong> Every drop triggers a save to <code>includes/menu.json</code> after a
+                    short debounce (350 ms). The frontend reflects changes on the next page load.
+                </li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Hidden items</h4>
+            <p>
+                Items marked as hidden in their own config (Schema → <em>Hide from Sidebar Menu</em>, or the
+                <em>Hidden</em> toggle in Dashboard / Calendar / Files global settings) are still displayed in the
+                Menu Preview with a red <strong>HIDDEN</strong> badge and reduced opacity. They are excluded from the
+                live frontend sidebar but remain available for reordering and nesting so their position is preserved
+                if you un-hide them later.
+            </p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Frontend rendering</h4>
+            <p>
+                On the frontend, items with children are rendered as
+                <code>&lt;details&gt;</code> / <code>&lt;summary&gt;</code> elements — they expand and collapse on
+                click with no JavaScript required and are fully keyboard-accessible. The submenu opens automatically
+                when the current page matches a child item. Child links are indented visually to reflect the hierarchy.
+            </p>
+            <p style="background: #f0f9ff; padding: 10px 14px; border-left: 3px solid #38bdf8; border-radius: 4px; font-size: 14px;">
+                <strong>Tip:</strong> Changes to display name, icon or hidden status are made in Schema / Dashboard /
+                Calendar / Files tabs and saved there. The Menu Preview tab controls <em>order and nesting only</em>.
+                Both sets of changes take effect on the frontend simultaneously.
+            </p>
+
+            <h3 style="color: #2563eb; margin-top: 30px;">12. Deployment Notes</h3>
             <ul style="padding-left: 20px;">
                 <li><strong>Deny public access to <code>includes/</code>:</strong> Configure your web server so <code>database.json</code>, <code>security.json</code> and <code>schema.json</code> cannot be fetched directly.</li>
                 <li><strong>Environment variables:</strong> <code>PGHOST</code>, <code>PGPORT</code>, <code>PGDATABASE</code>, <code>PGUSER</code>, <code>PGPASSWORD</code>, <code>PGSCHEMA</code>. <code>PGSCHEMA</code> is the fallback for the system schema when <code>database.json</code> does not define <code>schema</code>.</li>

@@ -1,7 +1,6 @@
 <?php
 // templates/menu.php
 
-// Safe JSON reader with file size limit to prevent memory exhaustion
 if (!function_exists('safeReadJson')) {
     function safeReadJson(string $path, int $maxBytes = 524288): ?array {
         if (!file_exists($path) || filesize($path) > $maxBytes) return null;
@@ -12,17 +11,6 @@ if (!function_exists('safeReadJson')) {
     }
 }
 
-// Load schema to get tables list dynamically
-$schemaPath = __DIR__ . '/../includes/schema.json';
-$tables = safeReadJson($schemaPath)['tables'] ?? [];
-
-$currentPage  = basename($_SERVER['PHP_SELF']);
-// Limit length to prevent unexpectedly large values from reaching comparison logic
-$currentTable = substr($_GET['table'] ?? '', 0, 64);
-$isWorkflows  = isset($_GET['workflows']);
-
-// Helper: try to load a JSON config from multiple candidate paths.
-// $baseName is validated against a strict whitelist to prevent path traversal.
 if (!function_exists('loadMenuConfig')) {
     function loadMenuConfig(string $baseName, string $includeDir): array {
         if (!preg_match('/^[a-zA-Z0-9_-]{1,64}$/', $baseName)) {
@@ -30,7 +18,6 @@ if (!function_exists('loadMenuConfig')) {
         }
         $realBase = realpath($includeDir);
         if ($realBase === false) return [];
-
         $candidates = [
             $includeDir . '/' . $baseName . '.json',
             $includeDir . '/' . $baseName . '_config.json',
@@ -39,9 +26,7 @@ if (!function_exists('loadMenuConfig')) {
         ];
         foreach ($candidates as $path) {
             $realPath = realpath($path);
-            if ($realPath === false || !str_starts_with($realPath, $realBase)) {
-                continue;
-            }
+            if ($realPath === false || !str_starts_with($realPath, $realBase)) continue;
             $decoded = safeReadJson($realPath);
             if ($decoded !== null) return $decoded;
         }
@@ -49,23 +34,6 @@ if (!function_exists('loadMenuConfig')) {
     }
 }
 
-$includeDir = __DIR__ . '/../includes';
-
-$dashCfg  = loadMenuConfig('dashboard', $includeDir);
-$calCfg   = loadMenuConfig('calendar',  $includeDir);
-$filesCfg = loadMenuConfig('files',     $includeDir);
-
-$dashName    = $dashCfg['menu_name']  ?? 'Dashboard';
-$dashIcon    = $dashCfg['menu_icon']  ?? 'assets/icons/dashboard.png';
-$dashHidden  = $dashCfg['hidden']     ?? false;
-$calName     = $calCfg['menu_name']   ?? 'Calendar';
-$calIcon     = $calCfg['menu_icon']   ?? 'assets/icons/calendar.png';
-$calHidden   = $calCfg['hidden']      ?? false;
-$filesName   = $filesCfg['menu_name'] ?? 'Files';
-$filesIcon   = $filesCfg['menu_icon'] ?? 'assets/icons/folder_open.png';
-$filesHidden = $filesCfg['hidden']    ?? false;
-
-// Helper: render icon — supports relative/https image path or emoji/text.
 // Validates image URIs against a strict whitelist to block javascript: and data: payloads.
 if (!function_exists('renderMenuIcon')) {
     function renderMenuIcon(string $icon): string {
@@ -79,59 +47,158 @@ if (!function_exists('renderMenuIcon')) {
              . htmlspecialchars($icon, ENT_QUOTES, 'UTF-8') . '</span>';
     }
 }
+
+$includeDir   = __DIR__ . '/../includes';
+$schemaPath   = $includeDir . '/schema.json';
+$tables       = safeReadJson($schemaPath)['tables'] ?? [];
+
+$currentPage  = basename($_SERVER['PHP_SELF']);
+$currentTable = substr($_GET['table'] ?? '', 0, 64);
+$isWorkflows  = isset($_GET['workflows']);
+
+$dashCfg  = loadMenuConfig('dashboard', $includeDir);
+$calCfg   = loadMenuConfig('calendar',  $includeDir);
+$filesCfg = loadMenuConfig('files',     $includeDir);
+
+// Build catalog: key → display data
+$menuCatalog = [
+    'dashboard' => [
+        'type'   => 'dashboard',
+        'href'   => 'dashboard.php',
+        'name'   => $dashCfg['menu_name']  ?? 'Dashboard',
+        'icon'   => $dashCfg['menu_icon']  ?? 'assets/icons/dashboard.png',
+        'hidden' => !empty($dashCfg['hidden']),
+        'active' => $currentPage === 'dashboard.php',
+    ],
+    'calendar' => [
+        'type'   => 'calendar',
+        'href'   => 'calendar.php',
+        'name'   => $calCfg['menu_name']   ?? 'Calendar',
+        'icon'   => $calCfg['menu_icon']   ?? 'assets/icons/calendar.png',
+        'hidden' => !empty($calCfg['hidden']),
+        'active' => $currentPage === 'calendar.php',
+    ],
+    'files' => [
+        'type'   => 'files',
+        'href'   => 'files.php',
+        'name'   => $filesCfg['menu_name'] ?? 'Files',
+        'icon'   => $filesCfg['menu_icon'] ?? 'assets/icons/folder_open.png',
+        'hidden' => !empty($filesCfg['hidden']),
+        'active' => $currentPage === 'files.php',
+    ],
+];
+
+foreach ($tables as $tName => $tConfig) {
+    $isActive = false;
+    if ($currentPage === 'index.php' && !$isWorkflows) {
+        if ($currentTable === $tName) {
+            $isActive = true;
+        } elseif (empty($currentTable) && $tName === array_key_first($tables)) {
+            $isActive = true;
+        }
+    }
+    $menuCatalog[$tName] = [
+        'type'   => 'table',
+        'href'   => 'index.php?table=' . urlencode($tName),
+        'name'   => $tConfig['display_name'] ?? $tName,
+        'icon'   => $tConfig['icon'] ?? '',
+        'hidden' => !empty($tConfig['hidden']),
+        'active' => $isActive,
+        'data-table' => $tName,
+    ];
+}
+
+// Build structured item list (from menu.json if it exists, else flat catalog order)
+$menuJson   = safeReadJson($includeDir . '/menu.json');
+$menuItems  = [];
+$menuPlaced = [];
+
+if ($menuJson !== null && isset($menuJson['items']) && is_array($menuJson['items'])) {
+    foreach ($menuJson['items'] as $entry) {
+        $key = $entry['key'] ?? '';
+        if ($key === '' || !isset($menuCatalog[$key])) continue;
+        $item             = $menuCatalog[$key];
+        $item['children'] = [];
+        foreach ($entry['children'] ?? [] as $ce) {
+            $ck = $ce['key'] ?? '';
+            if ($ck === '' || !isset($menuCatalog[$ck])) continue;
+            $item['children'][] = $menuCatalog[$ck];
+            $menuPlaced[$ck]    = true;
+        }
+        $menuItems[]       = $item;
+        $menuPlaced[$key]  = true;
+    }
+    foreach ($menuCatalog as $key => $entry) {
+        if (!isset($menuPlaced[$key])) {
+            $entry['children'] = [];
+            $menuItems[]       = $entry;
+        }
+    }
+} else {
+    foreach ($menuCatalog as $entry) {
+        $entry['children'] = [];
+        $menuItems[]       = $entry;
+    }
+}
+
+// Render a single menu link <a>
+if (!function_exists('renderMenuLink')) {
+    function renderMenuLink(array $item, string $extraClass = ''): string
+    {
+        $classes = trim('custom-nav-link ' . ($item['active'] ? 'active' : '') . ' ' . $extraClass);
+        $href    = htmlspecialchars($item['href'] ?? '#', ENT_QUOTES, 'UTF-8');
+        $attrs   = '';
+        if (!empty($item['data-table'])) {
+            $attrs = ' data-table="' . htmlspecialchars($item['data-table'], ENT_QUOTES, 'UTF-8') . '"';
+        }
+        $icon = renderMenuIcon((string)($item['icon'] ?? ''));
+        if ($icon === '') {
+            $icon = '<span class="menu-icon-span">🗄️</span>';
+        }
+        $name = htmlspecialchars($item['name'] ?? '', ENT_QUOTES, 'UTF-8');
+        return '<a href="' . $href . '" class="' . htmlspecialchars($classes, ENT_QUOTES, 'UTF-8') . '"' . $attrs . '>'
+             . $icon
+             . '<span class="menu-text">' . $name . '</span>'
+             . '</a>';
+    }
+}
 ?>
 <nav id="menu" class="menu">
     <ul class="menu-list">
 
-        <?php if (!$dashHidden) : ?>
-        <li>
-            <a href="dashboard.php" class="custom-nav-link <?php echo $currentPage === 'dashboard.php' ? 'active' : ''; ?>">
-                <?php echo renderMenuIcon($dashIcon); ?>
-                <span class="menu-text"><?php echo htmlspecialchars($dashName, ENT_QUOTES, 'UTF-8'); ?></span>
-            </a>
-        </li>
-        <?php endif; ?>
+        <?php foreach ($menuItems as $item): ?>
+            <?php if ($item['hidden'] && empty($item['children'])) continue; ?>
 
-        <?php if (!$calHidden) : ?>
-        <li>
-            <a href="calendar.php" class="custom-nav-link <?php echo $currentPage === 'calendar.php' ? 'active' : ''; ?>">
-                <?php echo renderMenuIcon($calIcon); ?>
-                <span class="menu-text"><?php echo htmlspecialchars($calName, ENT_QUOTES, 'UTF-8'); ?></span>
-            </a>
-        </li>
-        <?php endif; ?>
-
-        <?php if (!$filesHidden) : ?>
-        <li>
-            <a href="files.php" class="custom-nav-link <?php echo $currentPage === 'files.php' ? 'active' : ''; ?>">
-                <?php echo renderMenuIcon($filesIcon); ?>
-                <span class="menu-text"><?php echo htmlspecialchars($filesName, ENT_QUOTES, 'UTF-8'); ?></span>
-            </a>
-        </li>
-        <?php endif; ?>
-
-        <?php foreach ($tables as $tName => $tConfig):
-            $isActive = '';
-            if ($currentPage === 'index.php' && !$isWorkflows) {
-                if ($currentTable === $tName) {
-                    $isActive = 'active';
-                } elseif (empty($currentTable) && $tName === array_key_first($tables)) {
-                    $isActive = 'active';
+            <?php if (!empty($item['children'])): ?>
+                <?php
+                // Parent item with submenu: use <details>/<summary> for click-expand
+                $anyChildActive = false;
+                foreach ($item['children'] as $child) {
+                    if (!empty($child['active'])) { $anyChildActive = true; break; }
                 }
-            }
-        ?>
-        <li>
-            <a href="index.php?table=<?php echo urlencode($tName); ?>"
-               class="custom-nav-link <?php echo $isActive; ?>"
-               data-table="<?php echo htmlspecialchars($tName, ENT_QUOTES, 'UTF-8'); ?>">
-                <?php if (!empty($tConfig['icon'])): ?>
-                    <?php echo renderMenuIcon($tConfig['icon']); ?>
-                <?php else: ?>
-                    <span class="menu-icon-span">🗄️</span>
-                <?php endif; ?>
-                <span class="menu-text"><?php echo htmlspecialchars($tConfig['display_name'] ?? $tName, ENT_QUOTES, 'UTF-8'); ?></span>
-            </a>
-        </li>
+                $isOpen = $anyChildActive || (!empty($item['active']));
+                ?>
+                <li class="menu-has-children">
+                    <details class="menu-submenu-details"<?php echo $isOpen ? ' open' : ''; ?>>
+                        <summary class="custom-nav-link<?php echo $item['active'] ? ' active' : ''; ?>">
+                            <?php
+                            $icon = renderMenuIcon((string)($item['icon'] ?? ''));
+                            echo ($icon !== '' ? $icon : '<span class="menu-icon-span">🗄️</span>');
+                            ?>
+                            <span class="menu-text"><?php echo htmlspecialchars($item['name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></span>
+                            <span class="menu-arrow">&#9660;</span>
+                        </summary>
+                        <ul class="menu-submenu">
+                            <?php foreach ($item['children'] as $child): ?>
+                                <?php if ($child['hidden']) continue; ?>
+                                <li><?php echo renderMenuLink($child); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </details>
+                </li>
+            <?php elseif (!$item['hidden']): ?>
+                <li><?php echo renderMenuLink($item); ?></li>
+            <?php endif; ?>
         <?php endforeach; ?>
 
     </ul>

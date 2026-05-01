@@ -404,3 +404,89 @@ header {
     border-bottom: 1px solid var(--border-light);
     color: var(--muted);
 }
+
+/* Menu Preview tab — wraps the FE nav structure; resets sticky/full-height layout */
+.menu-preview-wrap {
+    display: inline-block;
+}
+
+.menu-preview-wrap nav {
+    position: relative;
+    top: auto;
+    height: auto;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius);
+}
+
+/* Dimmed appearance for hidden items so admins can still see them */
+.menu-preview-wrap .preview-hidden {
+    opacity: 0.4;
+}
+
+/* HIDDEN badge appended inside the link for suppressed items */
+.menu-preview-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: #ef4444;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.menu-preview-info {
+    color: var(--muted);
+    font-size: 13px;
+    padding: 8px 0;
+    margin: 0;
+}
+
+/* ── Drag-and-drop: Menu Preview ─────────────────────────────────────────── */
+.menu-dnd-item {
+    cursor: grab;
+    position: relative;
+}
+
+.menu-dnd-item:active {
+    cursor: grabbing;
+}
+
+/* Ghost for the item being dragged */
+.dnd-dragging {
+    opacity: 0.35;
+}
+
+/* Target highlighted for nesting (drop-on-item → become child) */
+.dnd-nest-target > .custom-nav-link,
+.dnd-nest-target > details > summary {
+    outline: 2px dashed var(--accent);
+    outline-offset: -2px;
+    background: var(--accent-mid) !important;
+    border-radius: var(--radius);
+}
+
+/* Horizontal insert-position indicator line */
+.menu-drop-line {
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+    margin: 0 8px;
+    pointer-events: none;
+    position: relative;
+}
+
+.menu-drop-line::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+}

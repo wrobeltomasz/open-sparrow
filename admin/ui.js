@@ -328,6 +328,304 @@ export function renderGlobalSettings(ctx, options = {}) {
     if (typeof onAfter === 'function') onAfter(ctx);
 }
 
+// Full menu preview with drag-and-drop reordering and 1-level nesting.
+// Mirrors the HTML structure of templates/menu.php so assets/css/styles.css
+// applies the exact FE look. Auto-saves to api.php?action=menu_config on change.
+// config shape: { items: [{ type, key, name, icon, hidden, children: [] }] }
+export function createFullMenuPreview(config) {
+    const wrap = document.createElement('div');
+    wrap.className = 'menu-preview-wrap';
+
+    // ── state ──────────────────────────────────────────────────────────────
+    let state = { items: [] };
+    let saveTimer = null;
+
+    function getCsrf() {
+        const m = document.querySelector('meta[name="csrf-token"]');
+        return m ? m.getAttribute('content') : '';
+    }
+
+    function scheduleSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(async () => {
+            const payload = {
+                items: state.items.map(it => ({
+                    type: it.type, key: it.key,
+                    children: (it.children || []).map(c => ({ type: c.type, key: c.key, children: [] })),
+                })),
+            };
+            try {
+                await fetch('api.php?action=menu_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrf() },
+                    body: JSON.stringify(payload),
+                });
+            } catch (_) { /* silent */ }
+        }, 350);
+    }
+
+    // ── DOM helpers ────────────────────────────────────────────────────────
+    function buildIcon(icon) {
+        if (icon && (icon.includes('/') || icon.includes('.'))) {
+            const img = document.createElement('img');
+            img.src = '../' + icon;
+            img.alt = '';
+            img.onerror = () => img.remove();
+            return img;
+        }
+        const span = document.createElement('span');
+        span.className = 'menu-icon-span';
+        span.textContent = icon || '🗄️';
+        return span;
+    }
+
+    function buildLink(item) {
+        const a = document.createElement('a');
+        a.href = '#';
+        a.className = 'custom-nav-link' + (item.hidden ? ' preview-hidden' : '');
+        a.addEventListener('click', e => e.preventDefault());
+        a.appendChild(buildIcon(item.icon));
+        const ns = document.createElement('span');
+        ns.className = 'menu-text';
+        ns.textContent = item.name || item.key;
+        a.appendChild(ns);
+        if (item.hidden) {
+            const b = document.createElement('span');
+            b.className = 'menu-preview-badge';
+            b.textContent = 'HIDDEN';
+            a.appendChild(b);
+        }
+        return a;
+    }
+
+    // ── drag state ─────────────────────────────────────────────────────────
+    let dragKey = null;        // key of item being dragged
+    let dragParent = null;     // parent key, or null if top-level
+
+    // ── drop indicator ─────────────────────────────────────────────────────
+    function clearIndicators() {
+        wrap.querySelectorAll('.menu-drop-line').forEach(el => el.remove());
+        wrap.querySelectorAll('.dnd-nest-target').forEach(el => el.classList.remove('dnd-nest-target'));
+    }
+
+    // Inspect cursor position within a li: 'before' | 'nest' | 'after'
+    function hitZone(e, li, allowNest) {
+        const r = li.getBoundingClientRect();
+        const pct = (e.clientY - r.top) / r.height;
+        if (allowNest && pct > 0.28 && pct < 0.72) return 'nest';
+        return pct < 0.5 ? 'before' : 'after';
+    }
+
+    // ── state mutations ────────────────────────────────────────────────────
+    function removeDragged(items) {
+        if (dragParent === null) {
+            return items.filter(i => i.key !== dragKey);
+        }
+        return items.map(p => p.key === dragParent
+            ? { ...p, children: p.children.filter(c => c.key !== dragKey) }
+            : p);
+    }
+
+    function findItem(items) {
+        if (dragParent === null) return items.find(i => i.key === dragKey) || null;
+        for (const p of items) {
+            const c = (p.children || []).find(c => c.key === dragKey);
+            if (c) return c;
+        }
+        return null;
+    }
+
+    function applyDrop(targetKey, zone) {
+        const original = findItem(state.items);
+        if (!original) return;
+        const dragged = { ...original, children: original.children || [] };
+
+        let items = removeDragged(state.items);
+
+        if (zone === 'nest') {
+            // Make dragged a child of targetKey (top-level only, no further depth)
+            items = items.map(p => p.key === targetKey
+                ? { ...p, children: [...(p.children || []), { ...dragged, children: [] }] }
+                : p);
+        } else {
+            // Insert before/after targetKey (search top-level first, then children)
+            const topIdx = items.findIndex(i => i.key === targetKey);
+            if (topIdx !== -1) {
+                const at = zone === 'before' ? topIdx : topIdx + 1;
+                items.splice(at, 0, dragged);
+            } else {
+                items = items.map(p => {
+                    const ci = p.children.findIndex(c => c.key === targetKey);
+                    if (ci === -1) return p;
+                    const nc = [...p.children];
+                    nc.splice(zone === 'before' ? ci : ci + 1, 0, { ...dragged, children: [] });
+                    return { ...p, children: nc };
+                });
+            }
+        }
+
+        state.items = items;
+        rebuildDOM();
+        scheduleSave();
+    }
+
+    // ── per-li drag wiring ─────────────────────────────────────────────────
+    function wireDrag(li, key, parentKey) {
+        li.draggable = true;
+
+        li.addEventListener('dragstart', e => {
+            dragKey = key;
+            dragParent = parentKey;
+            e.dataTransfer.effectAllowed = 'move';
+            // Delay class add so drag image captures clean look
+            requestAnimationFrame(() => li.classList.add('dnd-dragging'));
+            e.stopPropagation();
+        });
+
+        li.addEventListener('dragend', () => {
+            dragKey = null;
+            dragParent = null;
+            li.classList.remove('dnd-dragging');
+            clearIndicators();
+        });
+
+        li.addEventListener('dragover', e => {
+            if (!dragKey || dragKey === key) return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'move';
+            clearIndicators();
+
+            // Nesting is allowed only when:
+            // - both dragged and target are top-level
+            // - target has no existing children
+            // - target is not the dragged item itself
+            const targetItem = state.items.find(i => i.key === key);
+            const allowNest = parentKey === null &&
+                              dragParent === null &&
+                              !!targetItem &&
+                              (targetItem.children || []).length === 0;
+
+            const zone = hitZone(e, li, allowNest);
+
+            if (zone === 'nest') {
+                li.classList.add('dnd-nest-target');
+            } else {
+                const line = document.createElement('div');
+                line.className = 'menu-drop-line';
+                zone === 'before' ? li.before(line) : li.after(line);
+            }
+        });
+
+        li.addEventListener('dragleave', e => {
+            if (!li.contains(e.relatedTarget)) clearIndicators();
+        });
+
+        li.addEventListener('drop', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!dragKey || dragKey === key) return;
+
+            const targetItem = state.items.find(i => i.key === key);
+            const allowNest = parentKey === null &&
+                              dragParent === null &&
+                              !!targetItem &&
+                              (targetItem.children || []).length === 0;
+
+            const zone = hitZone(e, li, allowNest);
+            applyDrop(key, zone);
+        });
+    }
+
+    // ── render ─────────────────────────────────────────────────────────────
+    function rebuildDOM() {
+        wrap.innerHTML = '';
+
+        const items = state.items;
+        if (!items.length) {
+            const p = document.createElement('p');
+            p.className = 'menu-preview-info';
+            p.textContent = 'No menu items configured.';
+            wrap.appendChild(p);
+            return;
+        }
+
+        const nav = document.createElement('nav');
+        nav.className = 'menu';
+        const ul = document.createElement('ul');
+        ul.className = 'menu-list';
+
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.dataset.key = item.key;
+            li.className = 'menu-dnd-item';
+
+            const children = item.children || [];
+            if (children.length > 0) {
+                li.classList.add('menu-has-children');
+                const details = document.createElement('details');
+                details.className = 'menu-submenu-details';
+
+                const summary = document.createElement('summary');
+                summary.className = 'custom-nav-link' + (item.hidden ? ' preview-hidden' : '');
+                summary.appendChild(buildIcon(item.icon));
+                const ns = document.createElement('span');
+                ns.className = 'menu-text';
+                ns.textContent = item.name || item.key;
+                summary.appendChild(ns);
+                if (item.hidden) {
+                    const b = document.createElement('span');
+                    b.className = 'menu-preview-badge';
+                    b.textContent = 'HIDDEN';
+                    summary.appendChild(b);
+                }
+                const arrow = document.createElement('span');
+                arrow.className = 'menu-arrow';
+                arrow.textContent = '▾';
+                summary.appendChild(arrow);
+                details.appendChild(summary);
+
+                const subUl = document.createElement('ul');
+                subUl.className = 'menu-submenu';
+                children.forEach(child => {
+                    const cli = document.createElement('li');
+                    cli.dataset.key = child.key;
+                    cli.className = 'menu-dnd-item menu-dnd-child';
+                    cli.appendChild(buildLink(child));
+                    wireDrag(cli, child.key, item.key);
+                    subUl.appendChild(cli);
+                });
+                details.appendChild(subUl);
+                li.appendChild(details);
+            } else {
+                li.appendChild(buildLink(item));
+            }
+
+            wireDrag(li, item.key, null);
+            ul.appendChild(li);
+        });
+
+        nav.appendChild(ul);
+        wrap.appendChild(nav);
+    }
+
+    function update(cfg) {
+        if (!cfg) {
+            wrap.innerHTML = '';
+            const p = document.createElement('p');
+            p.className = 'menu-preview-info';
+            p.textContent = 'Loading…';
+            wrap.appendChild(p);
+            return;
+        }
+        state = { items: (cfg.items || []).map(i => ({ ...i, children: i.children || [] })) };
+        rebuildDOM();
+    }
+
+    update(config);
+    return { el: wrap, update };
+}
+
 // New function to handle multiple choices via checkboxes list
 export function createMultiSelect(key, labelText, options, selectedValues, onChange) {
     const wrapper = document.createElement('div');
