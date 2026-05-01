@@ -52,46 +52,33 @@ export async function initWorkflows(menuListEl, containerEl, titleEl, appSchema)
         gridUI.forEach(el => el.style.display = '');
     });
 
-    // Force uppercase for the menu name
     const menuName = config.menu_name || 'Workflows';
-    const menuIcon = config.menu_icon || ''; 
 
-    const wfItem = document.createElement('li');
-    const wfLink = document.createElement('a');
-    
-    wfLink.href = '#';
-    wfLink.className = 'custom-nav-link';
-    wfLink.title = menuName;
-    wfLink.setAttribute('aria-label', menuName);
+    // Wire the PHP-rendered link (menu.php already outputs it with data-page="workflows")
+    const menuRoot = menuListEl.closest('#menu') ?? menuListEl;
+    const wfLink = menuRoot.querySelector('a[data-page="workflows"]');
 
-    // Safely append elements instead of using innerHTML
-    wfLink.appendChild(createIconElement(menuIcon));
-    const textSpan = document.createElement('span');
-    textSpan.className = 'menu-text'; // Add class to hide text on collapse
-    textSpan.style.verticalAlign = 'middle';
-    textSpan.textContent = menuName;
-    wfLink.appendChild(textSpan);
-    
-    // Handle menu click to display the workflows list
-    wfLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        // Remove active class from other menu items and set it here
-        const menuLinks = menuListEl.closest('#menu').querySelectorAll('a');
-        if (menuLinks) {
-            menuLinks.forEach(link => link.classList.remove('active'));
+    if (wfLink) {
+        wfLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            menuRoot.querySelectorAll('a').forEach(l => l.classList.remove('active'));
+            wfLink.classList.add('active');
+            const uiToHide = document.querySelectorAll('.actions, #filterBar, #globalSearch, #columnFilter, #clearFilters, #addRow');
+            uiToHide.forEach(el => el.style.display = 'none');
+            renderWorkflowsList(config.workflows, containerEl, titleEl, menuName, appSchema);
+        });
+    }
+
+    // Auto-show workflows view when page was loaded with ?workflows in URL
+    if (new URLSearchParams(window.location.search).has('workflows')) {
+        if (wfLink) {
+            menuRoot.querySelectorAll('a').forEach(l => l.classList.remove('active'));
+            wfLink.classList.add('active');
         }
-        wfLink.classList.add('active');
-        
-        // Hide grid-specific UI elements to create a clean workspace for workflows
         const uiToHide = document.querySelectorAll('.actions, #filterBar, #globalSearch, #columnFilter, #clearFilters, #addRow');
         uiToHide.forEach(el => el.style.display = 'none');
-        
         renderWorkflowsList(config.workflows, containerEl, titleEl, menuName, appSchema);
-    });
-
-    wfItem.appendChild(wfLink);
-    menuListEl.append(wfItem);
+    }
 }
 
 // Render the beautiful grid list of available workflows

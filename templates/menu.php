@@ -59,6 +59,7 @@ $isWorkflows  = isset($_GET['workflows']);
 $dashCfg  = loadMenuConfig('dashboard', $includeDir);
 $calCfg   = loadMenuConfig('calendar',  $includeDir);
 $filesCfg = loadMenuConfig('files',     $includeDir);
+$wfCfg    = loadMenuConfig('workflows', $includeDir);
 
 // Build catalog: key → display data
 $menuCatalog = [
@@ -87,6 +88,18 @@ $menuCatalog = [
         'active' => $currentPage === 'files.php',
     ],
 ];
+
+if (!empty($wfCfg['workflows'])) {
+    $menuCatalog['workflows'] = [
+        'type'      => 'workflows',
+        'href'      => 'index.php?workflows=1',
+        'name'      => $wfCfg['menu_name'] ?? 'Workflows',
+        'icon'      => $wfCfg['menu_icon'] ?? '',
+        'hidden'    => !empty($wfCfg['hidden']),
+        'active'    => $isWorkflows && $currentPage === 'index.php',
+        'data-page' => 'workflows',
+    ];
+}
 
 foreach ($tables as $tName => $tConfig) {
     $isActive = false;
@@ -150,6 +163,9 @@ if (!function_exists('renderMenuLink')) {
         $attrs   = '';
         if (!empty($item['data-table'])) {
             $attrs = ' data-table="' . htmlspecialchars($item['data-table'], ENT_QUOTES, 'UTF-8') . '"';
+        }
+        if (!empty($item['data-page'])) {
+            $attrs .= ' data-page="' . htmlspecialchars($item['data-page'], ENT_QUOTES, 'UTF-8') . '"';
         }
         $icon = renderMenuIcon((string)($item['icon'] ?? ''));
         if ($icon === '') {
