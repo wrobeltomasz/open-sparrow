@@ -142,7 +142,7 @@ $userCaps = [
     </style>
 </head>
 <body>
-<?php include 'templates/header_app.php'; ?>
+<?php include 'templates/header.php'; ?>
 <main id="calendarMain">
     <div class="calendar-header">
         <h2 id="calendarTitle">Month Year</h2>
@@ -159,8 +159,6 @@ $userCaps = [
 <script nonce="<?php echo $cspNonce; ?>">
     window.USER_CAPS = <?php echo json_encode($userCaps, JSON_THROW_ON_ERROR); ?>;
 </script>
-<script src="assets/js/sidebar.js" nonce="<?php echo $cspNonce; ?>"></script>
-<script src="assets/js/notifications.js" nonce="<?php echo $cspNonce; ?>"></script>
 <script type="module" src="assets/js/calendar.js?v=<?php echo @filemtime('assets/js/calendar.js'); ?>" nonce="<?php echo $cspNonce; ?>"></script>
 </body>
 </html>

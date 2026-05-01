@@ -63,10 +63,6 @@ foreach ($tableCfg->writableColumns() as $col) {
 
 $ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
 
-// Setup header variables for header_app.php
-$userRole  = $session->role();
-$avatarId  = $session->get('avatar_id');
-$uname     = $session->get('username', '');
 ?>
 <!doctype html>
 <html lang="en">
@@ -77,7 +73,7 @@ $uname     = $session->get('username', '');
     <link href="/assets/css/styles.css" rel="stylesheet">
 </head>
 <body>
-<?php include 'templates/header_app.php'; ?>
+<?php include 'templates/header.php'; ?>
 
 <main style="padding: 20px; max-width: 1060px; margin: 0 auto;">
     <h2>Add new record: <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>

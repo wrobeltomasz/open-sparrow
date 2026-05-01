@@ -171,7 +171,7 @@ $userCaps = [
 </head>
 <body>
 
-<?php include 'templates/header_app.php'; ?>
+<?php include 'templates/header.php'; ?>
 
 <main>
     <section id="filesSection">
@@ -245,8 +245,6 @@ $userCaps = [
     window.CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token'], JSON_THROW_ON_ERROR); ?>;
 </script>
 
-<script src="assets/js/sidebar.js" nonce="<?php echo $cspNonce; ?>"></script>
-<script src="assets/js/notifications.js" nonce="<?php echo $cspNonce; ?>"></script>
 <script nonce="<?php echo $cspNonce; ?>">
 document.addEventListener("DOMContentLoaded", () => {
     const API_URL = 'api_files.php';

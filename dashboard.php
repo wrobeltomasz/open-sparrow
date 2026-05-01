@@ -83,7 +83,7 @@ $userCaps = [
     </style>
 </head>
 <body>
-<?php include 'templates/header_app.php'; ?>
+<?php include 'templates/header.php'; ?>
 <main id="dashboardMain">
     <h2 id="gridTitle">Dashboard</h2>
     <section id="dashboardSection" class="dashboard-grid"></section>
@@ -93,8 +93,6 @@ $userCaps = [
     // Expose binary capability flags only — never the raw role string
     window.USER_CAPS = <?php echo json_encode($userCaps, JSON_THROW_ON_ERROR); ?>;
 </script>
-<script src="assets/js/sidebar.js" nonce="<?php echo $cspNonce; ?>"></script>
-<script src="assets/js/notifications.js" nonce="<?php echo $cspNonce; ?>"></script>
 <script type="module" src="assets/js/dashboard.js" nonce="<?php echo $cspNonce; ?>"></script>
 </body>
 </html>

@@ -63,10 +63,6 @@ foreach ($tableCfg->foreignKeys as $colName => $fkCfg) {
 
 $ctx = new RenderContext($isReadOnly, $fkOptions);
 
-// Setup header variables for header_app.php
-$userRole  = $session->role();
-$avatarId  = $session->get('avatar_id');
-$uname     = $session->get('username', '');
 ?>
 <!doctype html>
 <html lang="en">
@@ -82,7 +78,7 @@ $uname     = $session->get('username', '');
 </head>
 <body>
 
-<?php include 'templates/header_app.php'; ?>
+<?php include 'templates/header.php'; ?>
 
 <main style="padding: 20px; max-width: 1060px; margin: 0 auto;">
     <h2>Edit record in <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>

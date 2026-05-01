@@ -1,5 +1,12 @@
 <?php
-// templates/header_app.php — shared header + sidebar for all app pages
+// This file is part of OpenSparrow - https://opensparrow.org
+// Licensed under LGPL v3. See LICENCE file for details.
+
+// templates/header.php — unified application header for all app pages.
+// Optional variables (set before include):
+//   $headerControls (string) — extra HTML inside <header>, e.g. search/filter bar for the grid page
+//   $cspNonce       (string) — CSP nonce for the user-menu script tag
+
 $userRole  = $_SESSION['role']      ?? 'viewer';
 $avatarId  = $_SESSION['avatar_id'] ?? null;
 $uname     = $_SESSION['username']  ?? '';
@@ -8,9 +15,12 @@ $unameEsc  = htmlspecialchars($uname, ENT_QUOTES, 'UTF-8');
 $nonceAttr = isset($cspNonce)
     ? ' nonce="' . htmlspecialchars($cspNonce, ENT_QUOTES, 'UTF-8') . '"'
     : '';
+$cacheBust = @filemtime(__DIR__ . '/../assets/js/user-menu.js');
 ?>
 <header>
-    <button id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+    <button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+
+    <?php if (!empty($headerControls)) echo $headerControls; ?>
 
     <div class="header-user-menu">
         <div class="notifications-wrapper" aria-label="Notifications">
@@ -55,6 +65,8 @@ $nonceAttr = isset($cspNonce)
         <?php endif; ?>
     </div>
 </header>
-<script type="module" src="assets/js/user-menu.js?v=<?php echo @filemtime(__DIR__ . '/../assets/js/user-menu.js'); ?>"<?= $nonceAttr ?>></script>
+<script src="assets/js/sidebar.js?v=<?= @filemtime(__DIR__ . '/../assets/js/sidebar.js') ?>"<?= $nonceAttr ?>></script>
+<script src="assets/js/notifications.js?v=<?= @filemtime(__DIR__ . '/../assets/js/notifications.js') ?>"<?= $nonceAttr ?>></script>
+<script type="module" src="assets/js/user-menu.js?v=<?= $cacheBust ?>"<?= $nonceAttr ?>></script>
 <div class="app-container">
 <?php include __DIR__ . '/menu.php'; ?>
