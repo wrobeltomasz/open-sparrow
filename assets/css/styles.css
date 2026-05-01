@@ -1287,57 +1287,57 @@ th.drag-over .th-label {
   outline: 2px solid #F59E0B;
   outline-offset: 1px;
 }
-/* menu.php — replaces inline styles removed for CSP compliance */
-.menu-icon-span {
-    font-size: 1.2em;
-    margin-right: 8px;
-    vertical-align: middle;
-}
-.menu-list {
-    margin: 0;
-    padding: 1rem 0.5rem;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.search-highlight {
-    background-color: yellow;
-    font-weight: bold;
-}
-
-/* ===== SUBMENU (1-level nesting via <details>) ===== */
+/* container for parent item: allow absolute positioning of the arrow */
+/* Wrapper for parent item */
 .menu-has-children {
+    position: relative;
     display: flex;
     flex-direction: column;
 }
 
+/* Make sure link text does not overlap with arrow */
+.menu-has-children > a, 
+.menu-has-children > .custom-nav-link {
+    padding-right: 40px; 
+}
+
+/* Details container */
 .menu-submenu-details {
     width: 100%;
 }
 
-/* Hide native <details> arrow */
-.menu-submenu-details > summary {
+/* Position summary to the top right corner */
+.menu-submenu-details > summary.menu-toggle-arrow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px; 
     list-style: none;
     cursor: pointer;
     display: flex;
+    align-items: center;
+    height: 40px; 
 }
-.menu-submenu-details > summary::-webkit-details-marker { display: none; }
 
+/* Hide native marker */
+.menu-submenu-details > summary::-webkit-details-marker { 
+    display: none; 
+}
+
+/* Improve arrow visibility */
 .menu-arrow {
-    margin-left: auto;
-    font-size: 10px;
-    opacity: 0.45;
+    font-size: 18px;
+    opacity: 0.9;
     flex-shrink: 0;
-    transition: transform var(--transition);
-    align-self: center;
+    transition: transform 0.3s ease;
 }
 
+/* Rotate arrow when open */
 .menu-submenu-details[open] > summary .menu-arrow {
     transform: rotate(180deg);
 }
 
+/* Submenu list */
 .menu-submenu {
     list-style: none;
     margin: 2px 0 0;
@@ -1347,6 +1347,7 @@ th.drag-over .th-label {
     gap: 2px;
 }
 
+/* Submenu links */
 .menu-submenu .custom-nav-link {
     padding-left: 2.6rem;
     font-size: 13px;

@@ -17,8 +17,13 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Define strict user role
-$userRole = $_SESSION['role'] ?? 'readonly';
+// Admin role belongs in the admin panel, not the frontend
+if (($_SESSION['role'] ?? 'viewer') === 'admin') {
+    header("Location: admin/");
+    exit;
+}
+
+$userRole = $_SESSION['role'] ?? 'viewer';
 
 // Ensure CSRF token exists for this session
 if (empty($_SESSION['csrf_token'])) {

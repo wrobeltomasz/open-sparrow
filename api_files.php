@@ -52,9 +52,9 @@ function requireLogin(): void {
     }
 }
 
-// Admin validation helper
+// Editor validation helper (upload/delete requires editor role)
 function requireAdmin(): void {
-    if (($_SESSION['role'] ?? '') !== 'full') {
+    if (($_SESSION['role'] ?? '') !== 'editor') {
         jsonError('Forbidden', 403);
     }
 }

@@ -18,7 +18,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-$role = $_SESSION['role'] ?? 'full';
+$role = $_SESSION['role'] ?? 'viewer';
 
 // Validate CSRF token for all state-changing requests
 if (in_array($method, ['POST', 'PATCH', 'DELETE'], true)) {
@@ -120,8 +120,14 @@ if (in_array($profileAction, ['update_avatar', 'change_password'], true)) {
     exit(json_encode(['error' => 'Method not allowed']));
 }
 
-// Block data modification requests for readonly users
-if ($role === 'readonly' && in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+// Admin role is restricted to the admin panel; block from frontend data API
+if ($role === 'admin') {
+    http_response_code(403);
+    exit(json_encode(['error' => 'Forbidden: Admin accounts cannot access the frontend data API.']));
+}
+
+// Block data modification requests for viewer users
+if ($role === 'viewer' && in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
     http_response_code(403);
     exit(json_encode(['error' => 'Forbidden: Read-only access']));
 }
@@ -479,7 +485,7 @@ try {
 
         // POST: CALENDAR MOVE EVENT (Drag & Drop functionality)
         if ($method === 'POST' && ($body['api'] ?? '') === 'calendar' && ($body['action'] ?? '') === 'move_event') {
-            if ($role === 'readonly') {
+            if ($role === 'viewer') {
                 http_response_code(403);
                 echo json_encode(['error' => 'Forbidden']);
                 exit;

@@ -171,7 +171,7 @@ if (!function_exists('renderMenuLink')) {
 
             <?php if (!empty($item['children'])): ?>
                 <?php
-                // Parent item with submenu: use <details>/<summary> for click-expand
+                // Parent item with submenu: link navigates to grid, arrow toggles submenu
                 $anyChildActive = false;
                 foreach ($item['children'] as $child) {
                     if (!empty($child['active'])) { $anyChildActive = true; break; }
@@ -179,14 +179,13 @@ if (!function_exists('renderMenuLink')) {
                 $isOpen = $anyChildActive || (!empty($item['active']));
                 ?>
                 <li class="menu-has-children">
+                    <!-- Main link: navigates to grid/page -->
+                    <?php echo renderMenuLink($item); ?>
+                    
+                    <!-- Details toggle: only arrow for expanding/collapsing submenu -->
                     <details class="menu-submenu-details"<?php echo $isOpen ? ' open' : ''; ?>>
-                        <summary class="custom-nav-link<?php echo $item['active'] ? ' active' : ''; ?>">
-                            <?php
-                            $icon = renderMenuIcon((string)($item['icon'] ?? ''));
-                            echo ($icon !== '' ? $icon : '<span class="menu-icon-span">🗄️</span>');
-                            ?>
-                            <span class="menu-text"><?php echo htmlspecialchars($item['name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></span>
-                            <span class="menu-arrow">&#9660;</span>
+                        <summary class="menu-toggle-arrow">
+                            <span class="menu-arrow">▾</span>
                         </summary>
                         <ul class="menu-submenu">
                             <?php foreach ($item['children'] as $child): ?>

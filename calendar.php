@@ -18,6 +18,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+if (($_SESSION['role'] ?? 'viewer') === 'admin') {
+    header("Location: admin/");
+    exit;
+}
+
 // Enforce absolute session lifetime (8 hours) regardless of browser state
 $sessionMaxLifetime = 8 * 60 * 60;
 if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > $sessionMaxLifetime) {
@@ -48,7 +53,7 @@ header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
 header("Content-Security-Policy: default-src 'self'; style-src 'self' 'nonce-$cspNonce'; script-src 'self' 'nonce-$cspNonce'");
 
 // Define strict user role
-$userRole = $_SESSION['role'] ?? 'readonly';
+$userRole = $_SESSION['role'] ?? 'viewer';
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -57,8 +62,8 @@ if (empty($_SESSION['csrf_token'])) {
 // Expose only capability flags to the client instead of the raw role name
 // to reduce attack surface during reconnaissance
 $userCaps = [
-    'canEdit'   => $userRole === 'full',
-    'canExport' => in_array($userRole, ['full', 'export'], true),
+    'canEdit'   => $userRole === 'editor',
+    'canExport' => in_array($userRole, ['editor', 'export'], true),
 ];
 ?>
 <!doctype html>

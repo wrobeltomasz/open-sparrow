@@ -35,7 +35,7 @@
             </div>
         </div>
 
-        <?php if (($userRole ?? '') === 'full') : ?>
+        <?php if (($userRole ?? '') === 'admin') : ?>
         <a href="/admin/index.php" class="header-admin-link" title="Admin panel">
             <img title="Admin panel" src="assets/img/settings.png" alt="Admin">
         </a>
@@ -86,14 +86,14 @@
             <div class="left">
                 <select id="mobileActions">
                     <option value="">Choose action…</option>
-                    <?php if (($userRole ?? '') === 'full') : ?>
+                    <?php if (($userRole ?? '') === 'editor') : ?>
                     <option value="add">Add row</option>
                     <?php endif; ?>
                     <option value="export">Export CSV</option>
                     <option value="refresh">Refresh table</option>
                 </select>
 
-                <?php if (($userRole ?? '') === 'full') : ?>
+                <?php if (($userRole ?? '') === 'editor') : ?>
                 <button id="addRow" class="success">Add</button>
                 <?php endif; ?>
                 <button id="exportCsv">Export CSV</button>
@@ -110,7 +110,7 @@
 <?php include 'templates/footer.php'; ?>
 
 <script nonce="<?php echo $cspNonce ?? ''; ?>">
-    window.USER_ROLE = '<?php echo htmlspecialchars($userRole ?? 'readonly', ENT_QUOTES, 'UTF-8'); ?>';
+    window.USER_ROLE = '<?php echo htmlspecialchars($userRole ?? 'viewer', ENT_QUOTES, 'UTF-8'); ?>';
     document.addEventListener("DOMContentLoaded", () => {
         const mobileActions = document.getElementById("mobileActions");
         if (mobileActions) {

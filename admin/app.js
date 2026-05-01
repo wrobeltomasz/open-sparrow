@@ -23,9 +23,12 @@ const workspaceEl = document.getElementById('editorForm');
 const btnSave = document.getElementById('btnSave');
 const tabs = document.querySelectorAll('.admin-tab');
 
+// Tabs that save immediately via API — no config file involved, never dirty.
+const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database']);
+
 // Dirty-state guards: every edit marks the config dirty; navigation and reload
 // refuse to drop pending changes silently.
-export function markDirty() { isDirty = true; }
+export function markDirty() { if (!NON_CONFIG_TABS.has(currentFile)) isDirty = true; }
 export function markClean() { isDirty = false; }
 function confirmDiscard() {
     return !isDirty || confirm('You have unsaved changes that will be lost. Continue?');
@@ -237,7 +240,7 @@ async function loadConfigFile(fileName) {
         } else if (fileName === 'database') {
             if (!currentConfig.host) currentConfig = { host: 'localhost', port: '5432', dbname: '', user: 'postgres', password: '' };
         } else if (fileName === 'security') {
-            if (!currentConfig.admin_password) currentConfig = { admin_password: 'admin' };
+            currentConfig = {};
         }
 
         renderSidebar();

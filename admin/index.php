@@ -15,158 +15,68 @@ session_set_cookie_params([
 
 session_start();
 
-// Generate CSRF token for secure form submission and API requests
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-
-// Default password hash for fresh installation
-$admin_password_hash = password_hash('admin', PASSWORD_DEFAULT);
-
-$securityFile = __DIR__ . '/../includes/security.json';
-if (file_exists($securityFile)) {
-    $secData = json_decode(file_get_contents($securityFile), true);
-    if (isset($secData['admin_password']) && $secData['admin_password'] !== '') {
-        $storedPass = $secData['admin_password'];
-
-        // Safely check if password is in plaintext
-        $info = password_get_info($storedPass);
-        if ($info['algoName'] === 'unknown') {
-            $admin_password_hash = password_hash($storedPass, PASSWORD_DEFAULT);
-
-            // Persist hashed password back to security.json so plaintext isn't stored
-            // Prefer storing only the hash; file should be kept out of VCS and with restricted perms
-            $secData['admin_password'] = $admin_password_hash;
-            $encoded = json_encode($secData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            if ($encoded !== false) {
-                $tmp = $securityFile . '.tmp';
-                if (@file_put_contents($tmp, $encoded, LOCK_EX) !== false) {
-                    @chmod($tmp, 0600);
-                    @rename($tmp, $securityFile);
-                } else {
-                    // If persisting fails, continue using the in-memory hash but do not expose details
-                }
-            }
-        } else {
-            $admin_password_hash = $storedPass;
-        }
+// First-run bypass: if spw_users table doesn't exist yet the panel must be
+// reachable so the operator can run "Initialize System Tables". Once the table
+// exists and contains at least one admin account, normal auth applies.
+$firstRun = false;
+require_once __DIR__ . '/../includes/db.php';
+$_conn = @db_connect();
+if (!$_conn) {
+    $firstRun = true;
+} else {
+    $tUsers = sys_table('users');
+    $chk = @pg_query($_conn, "SELECT 1 FROM $tUsers LIMIT 1");
+    if ($chk === false) {
+        $firstRun = true;
     }
 }
+unset($_conn, $chk);
 
-// Handle user logout
-if (isset($_GET['logout'])) {
-    // Fully destroy session and clear session cookie
-    $_SESSION = [];
-
-    if (ini_get("session.use_cookies")) {
-        $params = session_get_cookie_params();
-        setcookie(
-            session_name(),
-            '',
-            time() - 42000,
-            $params['path'],
-            $params['domain'],
-            $params['secure'],
-            $params['httponly']
-        );
-    }
-
-    session_unset();
-    session_destroy();
-
-    header("Location: index.php");
+// Redirect to login if not authenticated (skipped on first run)
+if (!$firstRun && !isset($_SESSION['user_id'])) {
+    header("Location: ../login.php");
     exit;
 }
 
-// Handle login attempt using secure hash verification and CSRF protection
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['admin_password'])) {
-    $csrfToken = $_POST['csrf_token'] ?? '';
-    if (!hash_equals($_SESSION['csrf_token'], $csrfToken)) {
-        $login_error = "Invalid request (CSRF check failed).";
-    } else {
-        require_once __DIR__ . '/../includes/db.php';
-        $conn = @db_connect();
-
-        $ipSalt = 'c7a4b8f1d9e2a3c5b6f8d0e1a2b3c4d5';
-        $ipHash = hash_hmac('sha256', $_SERVER['REMOTE_ADDR'] ?? '', $ipSalt);
-        $maxAttempts   = 10;
-        $lockoutMinutes = 15;
-        $rateLimited   = false;
-
-        if ($conn) {
-            $tAttempts = sys_table('login_attempts');
-            $resCheck = pg_query_params(
-                $conn,
-                "SELECT COUNT(*) FROM $tAttempts WHERE ip_hash = \$1 AND attempted_at > now() - (\$2 * interval '1 minute')",
-                [$ipHash, $lockoutMinutes]
-            );
-            if ($resCheck && (int)pg_fetch_result($resCheck, 0, 0) >= $maxAttempts) {
-                $login_error = 'Too many failed attempts. Please try again later.';
-                $rateLimited = true;
-            }
-        }
-
-        if (!$rateLimited) {
-            if (password_verify($_POST['admin_password'], $admin_password_hash)) {
-                session_regenerate_id(true);
-                $_SESSION['sparrow_admin_logged_in'] = true;
-                header("Location: index.php");
-                exit;
-            } else {
-                if ($conn) {
-                    pg_query_params($conn, "INSERT INTO $tAttempts (username, ip_hash) VALUES (\$1, \$2)", ['admin', $ipHash]);
-                }
-                $login_error = "Invalid password!";
-            }
-        }
-    }
-}
-
-// Render login screen if not authenticated
-if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_logged_in'] !== true) {
+// Only admin role may access this panel (skipped on first run)
+if (!$firstRun && ($_SESSION['role'] ?? '') !== 'admin') {
+    http_response_code(403);
     ?>
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>Sparrow Admin | Login</title>
+        <title>403 Forbidden</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-            /* Embedded login styles for simplicity */
-            body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; }
-            .login-card { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); width: 100%; max-width: 340px; text-align: center; border: 1px solid #e2e8f0; }
-            .login-card h2 { margin-top: 0; color: #0f172a; font-weight: 700; font-size: 24px; margin-bottom: 8px; }
-            .login-card p { font-size: 14px; color: #64748b; margin-bottom: 24px; }
-            .login-card input { width: 100%; padding: 12px; margin: 10px 0 20px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; outline: none; font-family: inherit; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s; }
-            .login-card input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
-            .login-card button { width: 100%; padding: 12px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 15px; transition: background 0.2s; }
-            .login-card button:hover { background: #2563eb; }
-            .error { color: #ef4444; font-size: 14px; margin-bottom: 15px; background: #fef2f2; padding: 10px; border-radius: 6px; border: 1px solid #fca5a5; }
+            body { margin: 0; font-family: 'Inter', sans-serif; background: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
+            .card { background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 380px; border: 1px solid #e2e8f0; }
+            h1 { color: #ef4444; font-size: 22px; margin-bottom: 10px; }
+            p { color: #64748b; font-size: 14px; }
+            a { color: #3b82f6; text-decoration: none; font-weight: 600; }
         </style>
     </head>
     <body>
-        <div class="login-card">
-            <h2>OpenSparrow</h2>
-            <p>Admin Control Panel</p>
-            <?php if (isset($login_error)) {
-                echo "<div class='error'>" . htmlspecialchars($login_error, ENT_QUOTES) . "</div>";
-            } ?>
-            <form method="POST" action="index.php">
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES); ?>">
-                <input type="password" name="admin_password" placeholder="Enter password" required autofocus>
-                <button type="submit">Login</button>
-            </form>
+        <div class="card">
+            <h1>Access Denied</h1>
+            <p>Your account does not have permission to access the admin panel.</p>
+            <p><a href="../">Return to application</a></p>
         </div>
     </body>
     </html>
     <?php
     exit;
 }
+
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="current-user-id" content="<?php echo (int)($_SESSION['user_id'] ?? 0); ?>">
     <title>Sparrow Admin | Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES); ?>">
@@ -175,6 +85,14 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
     <link rel="stylesheet" href="style.css?v=<?php echo @filemtime('style.css'); ?>">
 </head>
 <body>
+    <?php if ($firstRun) : ?>
+    <div style="background:#fef3c7; border-bottom:2px solid #f59e0b; padding:12px 20px; font-size:14px; color:#92400e; text-align:center;">
+        <strong>First-run setup mode.</strong>
+        Go to <strong>System &rarr; Database</strong> and click <strong>Initialize System Tables</strong>.
+        This will create the default admin account (<code>admin</code> / <code>admin</code>).
+        Afterwards <a href="../login.php" style="color:#92400e; font-weight:bold;">log in</a> and change the password immediately.
+    </div>
+    <?php endif; ?>
     <header>
     <a href="/" class="brand-logo">
         <img src="../assets/img/logo-blue.png" alt="Sparrow Logo" />
@@ -199,7 +117,6 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
                 <button type="button" class="btn-logout" style="background: #334155; border-color: #475569;" onclick="document.getElementById('systemDropdownContainer').classList.toggle('active')">System &#9662;</button>
                 <div class="config-dropdown-content">
                     <button class="admin-tab" data-file="database">Database</button>
-                    <button class="admin-tab" data-file="security">Security</button>
                     <button class="admin-tab" data-file="users">Users</button>
                     <button class="admin-tab" data-file="health">System Health</button>
                     <button class="admin-tab" data-file="backup">Backup Tables</button>
@@ -222,7 +139,7 @@ if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_log
             <img src="../assets/icons/book_3s.png" alt="Docs" style="width: 24px; height: 24px; filter: brightness(0) invert(1); opacity: 0.9; pointer-events: none;">
         </button>
             
-            <button onclick="window.location.href='index.php?logout=1'" class="btn-logout" style="background: #ef4444; border-color: #ef4444;">Logout</button>
+            <button onclick="window.location.href='../logout.php'" class="btn-logout" style="background: #ef4444; border-color: #ef4444;">Logout</button>
         </div>
     </header>
 

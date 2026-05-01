@@ -8,8 +8,8 @@ const POLL_INTERVAL_MS = 15000;
 const table   = window.EDIT_TABLE      ?? '';
 const recordId = window.EDIT_ID        ?? 0;
 const myId    = window.CURRENT_USER_ID ?? 0;
-const myRole  = window.USER_ROLE       ?? 'readonly';
-const isReadOnly = myRole === 'readonly';
+const myRole  = window.USER_ROLE       ?? 'viewer';
+const isReadOnly = myRole !== 'editor';
 
 function csrfToken() {
     return window.CSRF_TOKEN
@@ -41,7 +41,7 @@ function formatTime(iso) {
 
 function buildMsg(c) {
     const isMine   = parseInt(c.user_id, 10) === myId;
-    const isAdmin  = myRole === 'full';
+    const isAdmin  = myRole === 'editor';
     const deleted  = !!c.deleted_at;
 
     const wrap = document.createElement('div');

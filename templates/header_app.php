@@ -1,6 +1,6 @@
 <?php
 // templates/header_app.php — shared header + sidebar for all app pages
-$userRole  = $_SESSION['role']      ?? 'readonly';
+$userRole  = $_SESSION['role']      ?? 'viewer';
 $avatarId  = $_SESSION['avatar_id'] ?? null;
 $uname     = $_SESSION['username']  ?? '';
 $initial   = htmlspecialchars(strtoupper(substr($uname, 0, 1)), ENT_QUOTES, 'UTF-8');
@@ -22,7 +22,7 @@ $nonceAttr = isset($cspNonce)
             </div>
         </div>
 
-        <?php if ($userRole === 'full') : ?>
+        <?php if ($userRole === 'admin') : ?>
         <a href="/admin/index.php" class="header-admin-link" title="Admin panel">
             <img title="Admin panel" src="assets/img/settings.png" alt="Admin">
         </a>

@@ -12,7 +12,7 @@ if (!$session->has('user_id')) {
     exit;
 }
 
-$isReadOnly = $session->role() === 'readonly';
+$isReadOnly = $session->role() !== 'editor';
 
 if ($isReadOnly && $request->isPost()) {
     http_response_code(403);
