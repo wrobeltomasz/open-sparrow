@@ -1307,6 +1307,51 @@ th.drag-over .th-label {
     font-weight: bold;
 }
 
+/* ===== SUBMENU (1-level nesting via <details>) ===== */
+.menu-has-children {
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-submenu-details {
+    width: 100%;
+}
+
+/* Hide native <details> arrow */
+.menu-submenu-details > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+}
+.menu-submenu-details > summary::-webkit-details-marker { display: none; }
+
+.menu-arrow {
+    margin-left: auto;
+    font-size: 10px;
+    opacity: 0.45;
+    flex-shrink: 0;
+    transition: transform var(--transition);
+    align-self: center;
+}
+
+.menu-submenu-details[open] > summary .menu-arrow {
+    transform: rotate(180deg);
+}
+
+.menu-submenu {
+    list-style: none;
+    margin: 2px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.menu-submenu .custom-nav-link {
+    padding-left: 2.6rem;
+    font-size: 13px;
+}
+
 /* =========================================
    AVATAR SIZE MODIFIER
 ========================================= */

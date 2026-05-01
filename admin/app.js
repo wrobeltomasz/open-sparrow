@@ -1,5 +1,5 @@
 // admin/app.js
-import { moveArrayItem, moveObjectKey, renderGlobalSettings } from './ui.js';
+import { moveArrayItem, moveObjectKey, renderGlobalSettings, createFullMenuPreview } from './ui.js';
 import { syncSchemaTables, renderSchemaEditor, createAddTableButton } from './schema.js';
 import { renderDashboardLayout, renderDashboardEditor, initDashboardUI } from './dashboard.js';
 import { renderCalendarEditor } from './calendar.js';
@@ -209,7 +209,7 @@ function getColumnOptionsForTable(tableName) {
 }
 
 async function loadConfigFile(fileName) {
-    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup') {
+    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu') {
         currentConfig = null;
         renderSidebar();
         renderEditor(fileName.toUpperCase(), null, false);
@@ -291,7 +291,7 @@ function clearConfig() {
 function renderSidebar() {
     itemListEl.innerHTML = '';
     
-    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup') {
+    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu') {
         document.getElementById('sidebarTitle').textContent = currentFile.charAt(0).toUpperCase() + currentFile.slice(1);
         const actionDiv = document.getElementById('sidebarActions');
         if (actionDiv) actionDiv.innerHTML = ''; 
@@ -302,6 +302,7 @@ function renderSidebar() {
         if (currentFile === 'docs') title = "Read Documentation";
         if (currentFile === 'users') title = "System Users";
         if (currentFile === 'backup') title = "Backup Tables";
+        if (currentFile === 'menu') title = "View Preview";
         
         li.textContent = title; 
         li.style.fontWeight = 'bold'; 
@@ -451,7 +452,7 @@ function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    if (['health', 'docs', 'users', 'backup'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
+    if (['health', 'docs', 'users', 'backup', 'menu'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -464,6 +465,35 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'users') return renderUsersEditor(ctx);
     if (currentFile === 'backup') return renderBackupPage(ctx);
     if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
+
+    if (currentFile === 'menu') {
+        (async () => {
+            workspaceEl.innerHTML = '';
+            const h3 = document.createElement('h3');
+            h3.style.marginTop = '0';
+            h3.textContent = 'Menu Preview';
+            workspaceEl.appendChild(h3);
+            const desc = document.createElement('p');
+            desc.style.cssText = 'color:var(--muted); font-size:14px; margin-bottom:20px;';
+            desc.textContent = 'Drag to reorder. Drop onto an item to nest it (1 level). Changes save automatically.';
+            workspaceEl.appendChild(desc);
+            const preview = createFullMenuPreview(null);
+            workspaceEl.appendChild(preview.el);
+            try {
+                const res = await fetch('api.php?action=menu_config');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                preview.update(data);
+            } catch (err) {
+                preview.el.remove();
+                const msg = document.createElement('p');
+                msg.style.color = 'var(--danger)';
+                msg.textContent = 'Failed to load menu config: ' + escapeHtml(err.message);
+                workspaceEl.appendChild(msg);
+            }
+        })();
+        return;
+    }
 
     if (key === 'LAYOUT') {
         if (currentFile === 'dashboard') return renderDashboardLayout(ctx);
