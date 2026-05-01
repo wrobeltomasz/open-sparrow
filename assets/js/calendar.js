@@ -276,16 +276,29 @@ function renderCalendar() {
                             // Build tooltip row safely
                             const rowDiv = document.createElement('div');
                             rowDiv.style.marginBottom = '4px';
-                            
+
                             const strong = document.createElement('strong');
                             strong.style.color = '#555';
                             strong.textContent = `${label}: `;
-                            
+
+                            const colDef = appSchema?.tables[ev.table]?.columns?.[key] || {};
+                            const enumColor = (colDef.type || '').toLowerCase() === 'enum'
+                                ? (colDef.enum_colors?.[String(displayVal)] ?? null)
+                                : null;
+
+                            if (enumColor) {
+                                const swatch = document.createElement('span');
+                                swatch.style.cssText = `display:inline-block;width:10px;height:10px;border-radius:2px;background:${enumColor};margin-right:4px;vertical-align:middle;`;
+                                rowDiv.appendChild(strong);
+                                rowDiv.appendChild(swatch);
+                            } else {
+                                rowDiv.appendChild(strong);
+                            }
+
                             const spanVal = document.createElement('span');
                             spanVal.style.color = '#111';
                             spanVal.textContent = displayVal;
-                            
-                            rowDiv.appendChild(strong);
+
                             rowDiv.appendChild(spanVal);
                             tooltip.appendChild(rowDiv);
                         }

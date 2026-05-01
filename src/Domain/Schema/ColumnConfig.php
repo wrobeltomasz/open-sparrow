@@ -14,6 +14,7 @@ final class ColumnConfig
         public readonly bool $notNull = false,
         public readonly bool $showInEdit = true,
         public readonly array $options = [],
+        public readonly array $enumColors = [],
         public readonly ?string $validationRegexp = null,
         public readonly ?string $validationMessage = null,
     ) {

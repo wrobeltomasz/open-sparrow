@@ -62,6 +62,7 @@ final class JsonSchemaRepository implements SchemaRepositoryInterface
                 notNull: !empty($colCfg['not_null']),
                 showInEdit: ($colCfg['show_in_edit'] ?? true) !== false,
                 options: $colCfg['options'] ?? [],
+                enumColors: $colCfg['enum_colors'] ?? [],
                 validationRegexp: $colCfg['validation_regexp'] ?? null,
                 validationMessage: $colCfg['validation_message'] ?? null,
             );
@@ -74,6 +75,7 @@ final class JsonSchemaRepository implements SchemaRepositoryInterface
             foreignKeys: $cfg['foreign_keys'] ?? [],
             subtables: $cfg['subtables'] ?? [],
             primaryKey: 'id',
+            icon: $cfg['icon'] ?? '',
         );
     }
 }

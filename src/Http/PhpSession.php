@@ -28,6 +28,6 @@ final class PhpSession implements SessionInterface
 
     public function role(): string
     {
-        return (string)($_SESSION['role'] ?? 'full');
+        return (string)($_SESSION['role'] ?? 'viewer');
     }
 }

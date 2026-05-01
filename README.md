@@ -46,7 +46,7 @@ Demo: https://demo.opensparrow.org
 - **Inline editing** — in-grid PATCH updates routed through a single `api.php` gateway.
 - **Dashboard engine** — COUNT / SUM / AVG / MIN / MAX / GROUP BY widgets defined in `dashboard.json`.
 - **Calendar & notifications** — date-based records on a calendar view, with scheduled reminders via cron.
-- **Admin panel** — visual editors for schema, dashboards, calendar, users, and security at `/admin`.
+- **Admin panel** — visual editors for schema, dashboards, calendar, users at `/admin`. Unified login for all roles — no separate admin password.
 - **Audit logging** — data changes tracked in internal log tables.
 - **CSV export & pagination** — built-in grid utilities.
 - **Workflows builder** — multi-step wizards linking parent/child records across tables.
@@ -111,8 +111,11 @@ Each release ZIP is built automatically by GitHub Actions and includes:
 1. Download `opensparrow-vX.Y.Z.zip` from the Releases page.
 2. Extract and upload the contents to your server root (e.g. `public_html/`) via FTP.
 3. Create the `includes/` directory and make it writable by the web server.
-4. Open `/admin` in your browser and configure the database connection.
-5. Run **Initialize System Tables** from the System Health tab.
+4. Open `/admin` — the panel opens without login on a fresh installation (no database yet).
+5. Go to **System → Database**, enter your connection details, and click **Save config**.
+6. Click **Initialize System Tables**. This creates all system tables and a default admin account (`admin` / `admin`).
+7. Go to `/login`, sign in as `admin` / `admin`. You are redirected to `/admin` automatically.
+8. Go to **System → Users → Change pwd** and set a strong password immediately.
 
 > **Note:** The ZIP contains no JSON configuration files. Your `includes/*.json` files are never overwritten during an upload — existing configuration is always preserved.
 
@@ -155,30 +158,31 @@ All variables are read by `includes/config.php` on every request. If a variable 
 
 **Docker dev shortcut:** `docker-compose.override.yml` (included in the repo) sets `APP_ENV=development` and `SECURE_COOKIES=false` automatically when you run `docker compose up` locally.
 
-### 6. Configure the database from Admin
+### 6. First-run setup (Docker or bare server)
 
-Open **http://localhost:8080/admin** and log in with the default master password: `admin` *(no username — the admin panel asks only for a master password)*.
+Open **http://localhost:8080/admin**.
 
-In the **Database** tab:
+On a fresh installation the admin panel detects that the database is not yet configured (no connection or missing `spw_users` table) and opens **without requiring a login**. A yellow banner at the top guides you through setup:
 
-1. Enter host, port, database, username, and password.
-2. *(Optional)* In **System Schema**, set the PostgreSQL schema for OpenSparrow system tables (`spw_users`, `spw_files`, etc.). Defaults to `app`.
-3. Click **Save File**.
+1. Go to **System → Database** — enter host, port, database name, username and password, then click **Save config**. *(Optional)* Change **System Schema** (default: `app`).
+2. Click **Initialize System Tables** in the same tab. This creates all `spw_*` tables and inserts a default admin account: **username `admin`, password `admin`**.
+3. Open **http://localhost:8080/login** and sign in as `admin` / `admin`. You are redirected to `/admin` automatically.
+4. Go to **System → Users**, find the `admin` row and click **Change pwd**. Enter `admin` as the current password and set a strong new one.
 
-Settings are written to `includes/database.json`. The `schema` key is read by `sys_schema()` in `includes/db.php` and used to qualify every system-table query.
+> The setup bypass closes permanently once `spw_users` exists. Every subsequent visit to `/admin` requires a valid session with the `admin` role.
 
-### 7. Initialize system tables
+### 7. User roles
 
-In the admin panel → **System Health** → **Initialize System Tables**. This creates all `spw_`-prefixed tables in the configured schema:
+All accounts are stored in `spw_users` and managed from **System → Users**. Three roles are available:
 
-- `spw_users`
-- `spw_users_log`
-- `spw_users_notifications`
-- `spw_users_notifications_log`
-- `spw_files`
-- `spw_login_attempts`
+| Role | Admin panel | Frontend app |
+|---|---|---|
+| `admin` | ✅ Full access | ❌ Blocked |
+| `editor` | ❌ Blocked | ✅ Full CRUD |
+| `viewer` | ❌ Blocked | 👁 Read-only |
 
-Re-run this after every upgrade — it uses `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE … ADD COLUMN IF NOT EXISTS`, so it is safe to execute on an existing database.
+- **Password reset:** click **Change pwd** next to any user. For your own account the current password is required; for other accounts the admin can override without it.
+- Re-run **Initialize System Tables** after every upgrade — it uses `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE … ADD COLUMN IF NOT EXISTS` and also migrates legacy roles (`full → editor`, `readonly → viewer`).
 
 ### 8. Run without Docker
 
@@ -214,6 +218,8 @@ Configuration lives in `includes/database.json`, protected by `.htaccess`. Envir
 
 - **Production:** deny public web access to `includes/` at the web-server level.
 - **Cookies:** `SECURE_COOKIES=true` (default) enforces the `Secure` flag. Set to `false` only on plain HTTP environments.
+- **Authentication:** all roles share a single login page (`/login`). The admin panel (`/admin`) requires role `admin`. Frontend pages require role `editor` or `viewer`. There is no separate admin password file — all accounts live in `spw_users`.
+- **Session security:** sessions include a User-Agent fingerprint and an 8-hour absolute lifetime to guard against hijacking and stale sessions.
 
 ---
 

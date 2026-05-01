@@ -7,7 +7,7 @@ export function buildExpandButton(row, schema, tr) {
     btn.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; color:var(--accent); font-weight:bold;';
 
     const subtables = schema.tables[state.currentTable]?.subtables || [];
-    const isReadOnly = window.USER_ROLE === 'readonly';
+    const isReadOnly = window.USER_ROLE !== 'editor';
 
     btn.addEventListener('click', async () => {
         const next = tr.nextElementSibling;

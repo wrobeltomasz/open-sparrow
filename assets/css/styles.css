@@ -1287,57 +1287,57 @@ th.drag-over .th-label {
   outline: 2px solid #F59E0B;
   outline-offset: 1px;
 }
-/* menu.php — replaces inline styles removed for CSP compliance */
-.menu-icon-span {
-    font-size: 1.2em;
-    margin-right: 8px;
-    vertical-align: middle;
-}
-.menu-list {
-    margin: 0;
-    padding: 1rem 0.5rem;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.search-highlight {
-    background-color: yellow;
-    font-weight: bold;
-}
-
-/* ===== SUBMENU (1-level nesting via <details>) ===== */
+/* container for parent item: allow absolute positioning of the arrow */
+/* Wrapper for parent item */
 .menu-has-children {
+    position: relative;
     display: flex;
     flex-direction: column;
 }
 
+/* Make sure link text does not overlap with arrow */
+.menu-has-children > a, 
+.menu-has-children > .custom-nav-link {
+    padding-right: 40px; 
+}
+
+/* Details container */
 .menu-submenu-details {
     width: 100%;
 }
 
-/* Hide native <details> arrow */
-.menu-submenu-details > summary {
+/* Position summary to the top right corner */
+.menu-submenu-details > summary.menu-toggle-arrow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px; 
     list-style: none;
     cursor: pointer;
     display: flex;
+    align-items: center;
+    height: 40px; 
 }
-.menu-submenu-details > summary::-webkit-details-marker { display: none; }
 
+/* Hide native marker */
+.menu-submenu-details > summary::-webkit-details-marker { 
+    display: none; 
+}
+
+/* Improve arrow visibility */
 .menu-arrow {
-    margin-left: auto;
-    font-size: 10px;
-    opacity: 0.45;
+    font-size: 18px;
+    opacity: 0.9;
     flex-shrink: 0;
-    transition: transform var(--transition);
-    align-self: center;
+    transition: transform 0.3s ease;
 }
 
+/* Rotate arrow when open */
 .menu-submenu-details[open] > summary .menu-arrow {
     transform: rotate(180deg);
 }
 
+/* Submenu list */
 .menu-submenu {
     list-style: none;
     margin: 2px 0 0;
@@ -1347,6 +1347,7 @@ th.drag-over .th-label {
     gap: 2px;
 }
 
+/* Submenu links */
 .menu-submenu .custom-nav-link {
     padding-left: 2.6rem;
     font-size: 13px;
@@ -1764,4 +1765,196 @@ th.drag-over .th-label {
 .header-admin-link img {
   height: 20px;
   display: block;
+}
+/* =========================================
+   EDITOR FORM — create.php / edit.php
+========================================= */
+.form-wrapper {
+  background: var(--panel);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  padding: 32px 36px;
+  border: 1px solid var(--border-light);
+  margin-top: 8px;
+}
+
+.form-id-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent-light);
+  border: 1px solid var(--accent-mid);
+  border-radius: var(--radius);
+  padding: 5px 14px;
+  margin-bottom: 24px;
+}
+
+.form-id-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.form-id-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-dark);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 36px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group.span-2 {
+  grid-column: span 2;
+}
+
+.form-group > label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.form-group > label .required {
+  color: #e53e3e;
+  margin-left: 2px;
+}
+
+.editor-form input[type="text"],
+.editor-form input[type="date"],
+.editor-form input[type="email"],
+.editor-form input[type="number"],
+.editor-form input[type="password"],
+.editor-form select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: #1e293b;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.editor-form input[type="text"]:focus,
+.editor-form input[type="date"]:focus,
+.editor-form input[type="email"]:focus,
+.editor-form input[type="number"]:focus,
+.editor-form select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-mid);
+}
+
+.editor-form input[readonly] {
+  background: var(--bg);
+  color: var(--muted);
+  cursor: default;
+}
+
+.editor-form select:disabled {
+  background: var(--bg);
+  color: var(--muted);
+  cursor: default;
+  opacity: 1;
+}
+
+.enum-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(0,0,0,0.08);
+  line-height: 1;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-light);
+}
+
+.btn-save {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), box-shadow var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-save:hover {
+  background: var(--accent-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-save:disabled {
+  background: var(--border);
+  color: var(--muted);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-cancel {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 24px;
+  background: var(--panel);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-cancel:hover {
+  background: var(--bg);
+  color: #1e293b;
+}
+
+.tab-btn .tab-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  margin-right: 5px;
+  opacity: 0.6;
+  transition: opacity var(--transition);
+}
+
+.tab-btn:hover .tab-icon,
+.tab-btn.active .tab-icon {
+  opacity: 1;
+}
+
+@media (max-width: 700px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-group.span-2 { grid-column: 1; }
+  .form-wrapper { padding: 20px; }
 }

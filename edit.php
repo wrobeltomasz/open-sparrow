@@ -12,7 +12,7 @@ if (!$session->has('user_id')) {
     exit;
 }
 
-$isReadOnly = $session->role() === 'readonly';
+$isReadOnly = $session->role() !== 'editor';
 
 if ($isReadOnly && $request->isPost()) {
     http_response_code(403);
@@ -63,10 +63,6 @@ foreach ($tableCfg->foreignKeys as $colName => $fkCfg) {
 
 $ctx = new RenderContext($isReadOnly, $fkOptions);
 
-// Setup header variables for header_app.php
-$userRole  = $session->role();
-$avatarId  = $session->get('avatar_id');
-$uname     = $session->get('username', '');
 ?>
 <!doctype html>
 <html lang="en">
@@ -82,26 +78,40 @@ $uname     = $session->get('username', '');
 </head>
 <body>
 
-<?php include 'templates/header_app.php'; ?>
+<?php include 'templates/header.php'; ?>
 
-<main style="padding: 20px; max-width: 1000px; margin: 0 auto;">
-    <h2>Edit record #<?php echo htmlspecialchars((string)$id); ?> in <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
+<main style="padding: 20px; max-width: 1060px; margin: 0 auto;">
+    <h2>Edit record in <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
 
     <?php if ($error) : ?>
-        <div style="color: red; margin-bottom: 15px; padding: 10px; border: 1px solid red; background: #fee;">
+        <div style="color: red; margin-bottom: 15px; padding: 10px; border: 1px solid red; background: #fee; border-radius: 6px;">
             Error: <?php echo htmlspecialchars($error); ?>
         </div>
     <?php endif; ?>
 
     <div class="tab-list" role="tablist">
-        <button class="tab-btn active" data-tab="tab-details" role="tab" aria-selected="true">Details</button>
+        <button class="tab-btn active" data-tab="tab-details" role="tab" aria-selected="true">
+            <?php if ($tableCfg->icon) : ?>
+                <img class="tab-icon" src="<?php echo htmlspecialchars($tableCfg->icon); ?>" alt="">
+            <?php endif; ?>
+            <?php echo htmlspecialchars($tableCfg->displayName); ?>
+        </button>
         <?php foreach ($subtablesData as $si => $sd) : ?>
-            <?php $siLabel = $sd['config']['label'] ?? ($sd['schema']->displayName ?? $sd['config']['table']); ?>
+            <?php
+            $siLabel = $sd['config']['label'] ?? ($sd['schema']->displayName ?? $sd['config']['table']);
+            $siIcon  = $sd['schema']->icon ?? '';
+            ?>
             <button class="tab-btn" data-tab="tab-sub-<?php echo (int)$si; ?>" role="tab" aria-selected="false">
+                <?php if ($siIcon) : ?>
+                    <img class="tab-icon" src="<?php echo htmlspecialchars($siIcon); ?>" alt="">
+                <?php endif; ?>
                 <?php echo htmlspecialchars($siLabel); ?>
             </button>
         <?php endforeach; ?>
-        <button class="tab-btn" data-tab="tab-files" role="tab" aria-selected="false">Files</button>
+        <button class="tab-btn" data-tab="tab-files" role="tab" aria-selected="false">
+            <img class="tab-icon" src="assets/icons/folder_open.png" alt="">
+            Files
+        </button>
         <button class="tab-btn" data-tab="tab-comments" role="tab" aria-selected="false">Comments</button>
     </div>
 
@@ -109,25 +119,40 @@ $uname     = $session->get('username', '');
     <div class="form-wrapper">
         <form method="POST" class="editor-form">
             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf->token(), ENT_QUOTES, 'UTF-8'); ?>">
+
+            <?php
+            $pkVal = $row[$tableCfg->primaryKey] ?? null;
+            if ($pkVal !== null) :
+            ?>
+            <div class="form-id-strip">
+                <span class="form-id-label">ID</span>
+                <span class="form-id-value"><?php echo htmlspecialchars((string)$pkVal); ?></span>
+            </div>
+            <?php endif; ?>
+
+            <div class="form-grid">
             <?php foreach ($tableCfg->visibleColumns() as $col) : ?>
                 <?php
+                if ($col->name === $tableCfg->primaryKey) continue;
                 $val     = $row[$col->name] ?? '';
                 $hasFk   = $tableCfg->hasForeignKey($col->name);
                 $isColRo = $col->readonly || $isReadOnly;
-                $reqStar = ($col->notNull && !$isColRo) ? '<span style="color:red;">*</span>' : '';
                 ?>
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                <div class="form-group">
+                    <label>
                         <?php echo htmlspecialchars($col->displayName); ?>
-                        <?php echo $reqStar; ?>
+                        <?php if ($col->notNull && !$isColRo) : ?>
+                            <span class="required">*</span>
+                        <?php endif; ?>
                     </label>
                     <?php echo $fieldRegistry->for($col, $hasFk)->render($col, $val, $ctx); ?>
                 </div>
             <?php endforeach; ?>
+            </div>
 
-            <div class="form-actions" style="margin-top: 20px;">
+            <div class="form-actions">
                 <?php if ($isReadOnly) : ?>
-                    <button type="button" class="btn-save" style="background: #ccc; cursor: not-allowed;" disabled>Update Record</button>
+                    <button type="button" class="btn-save" disabled>Update Record</button>
                 <?php else : ?>
                     <button type="submit" class="btn-save">Save Changes</button>
                 <?php endif; ?>
@@ -324,6 +349,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (hash && document.getElementById(hash)) {
         activateTab(hash);
     }
+
+    // Enum select color update
+    document.querySelectorAll('select[data-enum-colors]').forEach(sel => {
+        const colors = JSON.parse(sel.dataset.enumColors || '{}');
+        const apply  = () => { sel.style.background = colors[sel.value] || ''; };
+        sel.addEventListener('change', apply);
+        apply();
+    });
 
     // RegExp validation
     const inputs = document.querySelectorAll('input[data-pattern]');

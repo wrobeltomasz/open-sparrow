@@ -50,7 +50,7 @@ function requireLogin(): void
 function requireWrite(): void
 {
     requireLogin();
-    if (($_SESSION['role'] ?? 'full') === 'readonly') {
+    if (($_SESSION['role'] ?? 'editor') !== 'editor') {
         jsonError('Forbidden: read-only access', 403);
     }
 }
@@ -216,7 +216,7 @@ function actionDelete($conn, array $body): void
 
     $id     = (int)($body['id'] ?? 0);
     $userId = (int)$_SESSION['user_id'];
-    $role   = $_SESSION['role'] ?? 'full';
+    $role   = $_SESSION['role'] ?? 'editor';
 
     if ($id <= 0) {
         jsonError('id is required.', 400);
@@ -230,7 +230,7 @@ function actionDelete($conn, array $body): void
     }
 
     $row = pg_fetch_assoc($fetchRes);
-    if ($role !== 'full' && (int)$row['user_id'] !== $userId) {
+    if ($role !== 'editor' && (int)$row['user_id'] !== $userId) {
         jsonError('Forbidden: you can only delete your own comments.', 403);
     }
 

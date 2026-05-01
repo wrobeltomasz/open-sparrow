@@ -11,8 +11,8 @@ export { getState, setFilteredData };
 
 export { buildMenu } from './menu.js';
 
-const userRole = window.USER_ROLE || 'readonly';
-const isReadOnly = userRole === 'readonly';
+const userRole = window.USER_ROLE || 'viewer';
+const isReadOnly = userRole !== 'editor';
 
 export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
     debugLog('Loading table', table);

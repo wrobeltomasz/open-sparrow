@@ -41,6 +41,6 @@ final class TextField implements FieldTypeInterface
             : '';
 
         return '<input type="text" name="' . $name . '" value="' . htmlspecialchars($val, ENT_QUOTES, 'UTF-8') . '" '
-             . $reqAttr . ' ' . $roAttr . ' ' . $patAttr . ' ' . $msgAttr . ' style="width:100%;padding:8px;" />';
+             . $reqAttr . ' ' . $roAttr . ' ' . $patAttr . ' ' . $msgAttr . ' />';
     }
 }

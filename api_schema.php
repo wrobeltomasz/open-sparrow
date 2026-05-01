@@ -30,7 +30,7 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQ
     exit;
 }
 
-$userRole = $_SESSION['role'] ?? 'readonly';
+$userRole = $_SESSION['role'] ?? 'viewer';
 $schemaPath = __DIR__ . '/includes/schema.json';
 
 if (!file_exists($schemaPath)) {
@@ -72,7 +72,7 @@ foreach ($schemaData['tables'] as $tableName => $tableConfig) {
         ];
 
         // Send validation rules only to users with full access
-        if ($userRole === 'full') {
+        if ($userRole === 'editor') {
             if (!empty($colDef['validation_regexp'])) {
                 $pub['validation_regexp'] = $colDef['validation_regexp'];
             }

@@ -19,6 +19,7 @@ final class TableConfig
         public readonly array $foreignKeys,
         public readonly array $subtables,
         public readonly string $primaryKey = 'id',
+        public readonly string $icon = '',
     ) {
     }
 

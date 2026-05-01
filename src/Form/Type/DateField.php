@@ -34,6 +34,6 @@ final class DateField implements FieldTypeInterface
         $roAttr  = $locked ? 'readonly' : '';
 
         return '<input type="date" name="' . $name . '" value="' . htmlspecialchars($val, ENT_QUOTES, 'UTF-8') . '" '
-             . $reqAttr . ' ' . $roAttr . ' style="width:100%;padding:8px;" />';
+             . $reqAttr . ' ' . $roAttr . ' />';
     }
 }

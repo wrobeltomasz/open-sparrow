@@ -3,8 +3,7 @@
 declare(strict_types=1);
 
 session_start();
-// Check if user is logged in
-if (!isset($_SESSION['sparrow_admin_logged_in']) || $_SESSION['sparrow_admin_logged_in'] !== true) {
+if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     header('Content-Type: application/json');
     echo json_encode(['status' => 'error', 'error' => 'Unauthorized access. Log in first.']);
     exit;
@@ -36,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Ensure state-changing actions use POST method to prevent CSRF via GET
-$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'create_table', 'add_column', 'run_cron_notifications', 'backup_tables'];
+$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'users_change_password', 'create_table', 'add_column', 'run_cron_notifications', 'backup_tables'];
 if (in_array($action, $postActions, true) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Content-Type: application/json');
     http_response_code(405);
@@ -81,9 +80,9 @@ if ($action === 'init_db') {
         // Prepare missing DB updates and tables creation
         $queries = [
             "CREATE SCHEMA IF NOT EXISTS $schemaIdent",
-			"CREATE TABLE IF NOT EXISTS $tUsers ( id serial4 NOT NULL, username varchar(50) NOT NULL, password_hash varchar(255) NOT NULL, salt varchar(64), password_algo varchar(32) DEFAULT 'argon2id' NOT NULL, password_params jsonb DEFAULT '{}'::jsonb, is_active bool DEFAULT true, role varchar(20) DEFAULT 'full' NOT NULL, CONSTRAINT spw_users_pkey PRIMARY KEY (id), CONSTRAINT spw_users_username_key UNIQUE (username) )",
+			"CREATE TABLE IF NOT EXISTS $tUsers ( id serial4 NOT NULL, username varchar(50) NOT NULL, password_hash varchar(255) NOT NULL, salt varchar(64), password_algo varchar(32) DEFAULT 'argon2id' NOT NULL, password_params jsonb DEFAULT '{}'::jsonb, is_active bool DEFAULT true, role varchar(20) DEFAULT 'editor' NOT NULL, CONSTRAINT spw_users_pkey PRIMARY KEY (id), CONSTRAINT spw_users_username_key UNIQUE (username) )",
             "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS is_active bool DEFAULT true",
-            "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS \"role\" varchar(20) DEFAULT 'full' NOT NULL",
+            "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS \"role\" varchar(20) DEFAULT 'editor' NOT NULL",
 			"ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS salt varchar(64)",
 			"ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS password_algo varchar(32) DEFAULT 'argon2id' NOT NULL",
 			"ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS password_params jsonb DEFAULT '{}'::jsonb",
@@ -101,7 +100,8 @@ if ($action === 'init_db') {
             "CREATE INDEX IF NOT EXISTS idx_spw_login_attempts_ip ON $tLoginAttempts USING btree (ip_hash, attempted_at)",
             "CREATE TABLE IF NOT EXISTS $tCronLog ( id serial4 NOT NULL, started_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL, finished_at timestamp NULL, status varchar(20) NOT NULL DEFAULT 'running', triggered_by varchar(20) NOT NULL DEFAULT 'cron', sources_processed int4 NULL, notifications_created int4 NULL, error_message text NULL, CONSTRAINT spw_users_notifications_log_pkey PRIMARY KEY (id) )",
             "CREATE INDEX IF NOT EXISTS idx_spw_cron_log_started_at ON $tCronLog USING btree (started_at)",
-			"INSERT INTO $tUsers (username, password_hash, salt, password_algo, password_params, is_active, role) SELECT 'test', '\$2y\$12\$oqxkKJu53qLCJSnmyxs1BeIDeP81M.cstuhm7T6hS0HPMXYqaK2Je', NULL, 'argon2id', '{}'::jsonb, true, 'full' WHERE NOT EXISTS (SELECT 1 FROM $tUsers WHERE username = 'test')",
+            "UPDATE $tUsers SET role = 'editor' WHERE role = 'full'",
+            "UPDATE $tUsers SET role = 'viewer' WHERE role = 'readonly'",
             "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS avatar_id smallint",
             "CREATE TABLE IF NOT EXISTS $tComments ( id serial4 NOT NULL, related_table varchar(100) NOT NULL, related_id int4 NOT NULL, user_id int4 NOT NULL, body text NOT NULL, created_at timestamp DEFAULT now() NOT NULL, deleted_at timestamp NULL, CONSTRAINT spw_comments_pkey PRIMARY KEY (id), CONSTRAINT spw_comments_body_len CHECK (char_length(body) <= 4000), CONSTRAINT spw_comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES $tUsers(id) ON DELETE SET NULL )",
             "CREATE INDEX IF NOT EXISTS idx_spw_comments_related ON $tComments USING btree (related_table, related_id, created_at)",
@@ -113,6 +113,18 @@ if ($action === 'init_db') {
             if (!$res) {
                 admin_db_fail($conn, 'init_db');
             }
+        }
+
+        // Create default admin account for a clean installation (only when no users exist at all).
+        // Default credentials: admin / admin — must be changed immediately after first login.
+        $firstAdminHash = password_hash('admin', PASSWORD_DEFAULT);
+        $resAdmin = @pg_query_params(
+            $conn,
+            "INSERT INTO $tUsers (username, password_hash, is_active, role) SELECT 'admin', \$1, true, 'admin' WHERE NOT EXISTS (SELECT 1 FROM $tUsers LIMIT 1)",
+            [$firstAdminHash]
+        );
+        if (!$resAdmin) {
+            admin_db_fail($conn, 'init_db:first_admin');
         }
 
         header('Content-Type: application/json');
@@ -164,7 +176,7 @@ if ($action === 'users_add') {
     $data = json_decode(file_get_contents('php://input'), true);
     $username = trim($data['username'] ?? '');
     $password = $data['password'] ?? '';
-    $role = isset($data['role']) && $data['role'] === 'readonly' ? 'readonly' : 'full';
+    $role = in_array($data['role'] ?? '', ['admin', 'editor', 'viewer'], true) ? $data['role'] : 'editor';
     
     if (empty($username) || empty($password)) {
         echo json_encode(['status' => 'error', 'error' => 'Username and password are required.']);
@@ -234,7 +246,7 @@ if ($action === 'users_update_role') {
 
     $data = json_decode(file_get_contents('php://input'), true);
     $userId = (int)($data['id'] ?? 0);
-    $role = isset($data['role']) && $data['role'] === 'readonly' ? 'readonly' : 'full';
+    $role = in_array($data['role'] ?? '', ['admin', 'editor', 'viewer'], true) ? $data['role'] : 'editor';
 
     if ($userId <= 0) {
         echo json_encode(['status' => 'error', 'error' => 'Invalid user ID.']);
@@ -251,6 +263,52 @@ if ($action === 'users_update_role') {
             admin_db_fail($conn, 'users_update_role');
         }
         log_user_action($conn, 0, 'UPDATE_ROLE', 'users', $userId);
+        echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
+    }
+    exit;
+}
+
+// Change a user's password (admin action — no current-password check required)
+if ($action === 'users_change_password') {
+    header('Content-Type: application/json');
+    if ($isDemoMode) {
+        echo json_encode(['status' => 'error', 'error' => 'Action disabled in Demo Mode.']);
+        exit;
+    }
+
+    $data     = json_decode(file_get_contents('php://input'), true);
+    $userId   = (int)($data['id'] ?? 0);
+    $password = $data['password'] ?? '';
+
+    if ($userId <= 0 || $password === '') {
+        echo json_encode(['status' => 'error', 'error' => 'User ID and password are required.']);
+        exit;
+    }
+    if (strlen($password) < 8) {
+        echo json_encode(['status' => 'error', 'error' => 'Password must be at least 8 characters.']);
+        exit;
+    }
+
+    try {
+        require_once __DIR__ . '/../includes/db.php';
+        require_once __DIR__ . '/../includes/api_helpers.php';
+        $conn    = db_connect();
+        $newSalt = bin2hex(random_bytes(32));
+        $opts    = ['memory_cost' => 1 << 17, 'time_cost' => 4, 'threads' => 1];
+        $hash    = password_hash($newSalt . $password, PASSWORD_ARGON2ID, $opts);
+        $sql     = 'UPDATE ' . sys_table('users')
+            . ' SET password_hash = $1, salt = $2, password_algo = $3, password_params = $4 WHERE id = $5';
+        $res = @pg_query_params($conn, $sql, [
+            $hash, $newSalt, 'argon2id',
+            json_encode(['memory_cost' => 1 << 17, 'time_cost' => 4, 'threads' => 1]),
+            $userId,
+        ]);
+        if (!$res) {
+            admin_db_fail($conn, 'users_change_password');
+        }
+        log_user_action($conn, 0, 'CHANGE_PASSWORD', 'users', $userId);
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
@@ -777,12 +835,6 @@ if ($action === 'get' && in_array($file, $allowedFiles, true)) {
             $dbData['password'] = '********';
             $dbData['dbname'] = 'demo_db';
             echo json_encode($dbData);
-        } elseif ($isDemoMode && $file === 'security') {
-            $secData = json_decode($fileContent, true);
-            if (isset($secData['admin_password'])) {
-                $secData['admin_password'] = '********';
-            }
-            echo json_encode($secData);
         } else {
             echo $fileContent;
         }
@@ -812,14 +864,6 @@ if ($action === 'save' && in_array($file, $allowedFiles, true)) {
                 unset($w['query']['where']);
             }
             unset($w);
-        }
-
-        // Hash the admin password securely before saving if it is not hashed already
-        if ($file === 'security' && !empty($parsedData['admin_password'])) {
-            $info = password_get_info($parsedData['admin_password']);
-            if ($info['algoName'] === 'unknown') {
-                $parsedData['admin_password'] = password_hash($parsedData['admin_password'], PASSWORD_DEFAULT);
-            }
         }
 
         if (!is_dir(__DIR__ . '/../includes/')) {

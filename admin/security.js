@@ -1,18 +1,12 @@
 // admin/security.js
-import { createTextInput } from './ui.js';
 
 export function renderSecurityEditor(key, itemData, isArray, ctx) {
-    const { workspaceEl, currentConfig } = ctx;
-    
+    const { workspaceEl } = ctx;
     workspaceEl.innerHTML = `
         <h3>Security Settings</h3>
-        <p style="color: #777; margin-bottom: 20px;">
-            Change the access password for the administrator panel. <br>
-            <strong>Default password after installation is: admin</strong>
-        </p>
-    `;
-
-    workspaceEl.appendChild(createTextInput('admin_password', 'New Admin Password', currentConfig.admin_password || '', v => {
-        currentConfig.admin_password = v;
-    }));
+        <p style="color:#64748b; font-size:14px; max-width:480px;">
+            To change your password or another user's password, go to
+            <strong>System &rarr; Users</strong> and click <strong>Change pwd</strong>
+            next to the relevant account.
+        </p>`;
 }

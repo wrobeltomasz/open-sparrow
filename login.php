@@ -148,10 +148,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
-                    
-                    // Assign user role to session for authorization control
-                    $_SESSION['role'] = $user['role'] ?? 'full';
+                    $_SESSION['role'] = $user['role'] ?? 'editor';
                     $_SESSION['avatar_id'] = ($user['avatar_id'] !== '' && $user['avatar_id'] !== null) ? (int)$user['avatar_id'] : null;
+                    $_SESSION['created_at'] = time();
+                    $_SESSION['user_agent'] = hash('sha256', $_SERVER['HTTP_USER_AGENT'] ?? '');
 
                     // Rehash on login if parameters changed; generate new salt when rehashing
                     $newOptions = [
@@ -168,6 +168,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     log_user_action($conn, $user['id'], 'LOGIN');
 
+                    if (($_SESSION['role'] ?? '') === 'admin') {
+                        header("Location: admin/");
+                        exit;
+                    }
                     header("Location: " . resolve_landing_page());
                     exit;
                 } else {

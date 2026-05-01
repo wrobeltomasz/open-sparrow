@@ -26,7 +26,7 @@ export async function renderUsersEditor(ctx) {
         let html = `
             <h3>System Users Management</h3>
             <p style="color: #777; margin-bottom: 20px;">
-                Manage user access to the frontend application. Add new accounts or deactivate existing ones.
+                Manage user accounts and roles. Roles: <strong>Admin</strong> – admin panel only; <strong>Editor</strong> – full frontend CRUD; <strong>Viewer</strong> – read-only frontend.
             </p>
             <table style="width:100%; border-collapse: collapse; margin-bottom: 30px; text-align: left;">
                 <thead>
@@ -34,7 +34,7 @@ export async function renderUsersEditor(ctx) {
                         <th style="padding: 10px;">ID</th>
                         <th style="padding: 10px;">Username</th>
                         <th style="padding: 10px;">Status</th>
-                        <th style="padding: 10px;">FE Permission</th>
+                        <th style="padding: 10px;">Role</th>
                         <th style="padding: 10px;">Actions</th>
                     </tr>
                 </thead>
@@ -53,13 +53,17 @@ export async function renderUsersEditor(ctx) {
                     </td>
                     <td style="padding: 10px;">
                         <select class="select-user-role" data-id="${u.id}" style="padding: 5px; border-radius: 4px; border: 1px solid #cbd5e1; background: #fff;">
-                            <option value="full" ${u.role === 'full' || !u.role ? 'selected' : ''}>Full Access</option>
-                            <option value="readonly" ${u.role === 'readonly' ? 'selected' : ''}>Read Only</option>
+                            <option value="admin"  ${u.role === 'admin'  ? 'selected' : ''}>Admin</option>
+                            <option value="editor" ${u.role === 'editor' || !u.role ? 'selected' : ''}>Editor</option>
+                            <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Viewer</option>
                         </select>
                     </td>
-                    <td style="padding: 10px;">
+                    <td style="padding: 10px; display:flex; gap:6px; flex-wrap:wrap;">
                         <button class="btn-toggle-user" data-id="${u.id}" data-active="${u.is_active}" style="padding: 5px 10px; cursor: pointer; border: none; border-radius: 4px; background: ${u.is_active ? '#f59e0b' : '#3b82f6'}; color: white; font-weight: bold;">
                             ${u.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button class="btn-change-pwd" data-id="${u.id}" data-username="${escHtml(u.username)}" style="padding: 5px 10px; cursor: pointer; border: none; border-radius: 4px; background: #6366f1; color: white; font-weight: bold;">
+                            Change pwd
                         </button>
                     </td>
                 </tr>
@@ -85,10 +89,11 @@ export async function renderUsersEditor(ctx) {
                     <small id="passwordStrengthLabel" style="color: #777; display: block; margin-top: 4px;"></small>
                 </div>
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">FE Permission</label>
+                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">Role</label>
                     <select id="newRole" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-                        <option value="full">Full Access</option>
-                        <option value="readonly">Read Only</option>
+                        <option value="editor" selected>Editor</option>
+                        <option value="viewer">Viewer</option>
+                        <option value="admin">Admin</option>
                     </select>
                 </div>
                 <button id="btnAddUser" style="background: #10b981; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">Create User</button>
@@ -151,6 +156,95 @@ export async function renderUsersEditor(ctx) {
                     alert('Network error occurred.');
                     renderUsersEditor(ctx); 
                 }
+            });
+        });
+
+        // Change password for existing user
+        const currentUserId = parseInt(document.querySelector('meta[name="current-user-id"]')?.content ?? '0', 10);
+
+        workspaceEl.querySelectorAll('.btn-change-pwd').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id       = parseInt(btn.getAttribute('data-id'), 10);
+                const username = btn.getAttribute('data-username');
+                const isSelf   = id === currentUserId;
+
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+
+                const box = document.createElement('div');
+                box.style.cssText = 'background:#fff;border-radius:10px;padding:28px 24px;width:340px;box-shadow:0 8px 24px rgba(0,0,0,.2);';
+                box.innerHTML = `
+                    <h3 style="margin:0 0 4px;">Change password</h3>
+                    <p style="margin:0 0 16px;font-size:13px;color:#64748b;">User: <strong>${username}</strong></p>
+                    ${isSelf ? `<input type="password" id="cpw-current" placeholder="Current password"
+                        style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:8px;">` : ''}
+                    <input type="password" id="cpw-new" placeholder="New password (min 8 chars)"
+                        style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:8px;">
+                    <input type="password" id="cpw-confirm" placeholder="Confirm new password"
+                        style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:12px;">
+                    <p id="cpw-msg" style="font-size:13px;min-height:18px;margin:0 0 12px;"></p>
+                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                        <button id="cpw-cancel" style="padding:7px 16px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;">Cancel</button>
+                        <button id="cpw-save" style="padding:7px 16px;border:none;border-radius:6px;background:#6366f1;color:#fff;font-weight:600;cursor:pointer;">Save</button>
+                    </div>`;
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+
+                const msgEl    = box.querySelector('#cpw-msg');
+                const newInput = box.querySelector('#cpw-new');
+                (box.querySelector('#cpw-current') ?? newInput).focus();
+
+                box.querySelector('#cpw-cancel').addEventListener('click', () => overlay.remove());
+                overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+                box.querySelector('#cpw-save').addEventListener('click', async () => {
+                    const pwd     = newInput.value;
+                    const confirm = box.querySelector('#cpw-confirm').value;
+                    if (isSelf && !box.querySelector('#cpw-current').value) {
+                        msgEl.style.color = '#ef4444';
+                        msgEl.textContent = 'Current password is required.';
+                        return;
+                    }
+                    if (pwd.length < 8) {
+                        msgEl.style.color = '#ef4444';
+                        msgEl.textContent = 'Password must be at least 8 characters.';
+                        return;
+                    }
+                    if (pwd !== confirm) {
+                        msgEl.style.color = '#ef4444';
+                        msgEl.textContent = 'Passwords do not match.';
+                        return;
+                    }
+                    msgEl.style.color = '#64748b';
+                    msgEl.textContent = 'Saving…';
+                    try {
+                        let res, data;
+                        if (isSelf) {
+                            // Own account — verify current password via frontend API
+                            res  = await fetch('../api.php?action=change_password', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                                body: JSON.stringify({ current_password: box.querySelector('#cpw-current').value, new_password: pwd }),
+                            });
+                            data = await res.json();
+                            if (data.ok) { overlay.remove(); return; }
+                        } else {
+                            // Other user — admin override, no current password check
+                            res  = await fetch('api.php?action=users_change_password', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                                body: JSON.stringify({ id, password: pwd }),
+                            });
+                            data = await res.json();
+                            if (data.status === 'success') { overlay.remove(); return; }
+                        }
+                        msgEl.style.color = '#ef4444';
+                        msgEl.textContent = data.error || 'Error saving password.';
+                    } catch {
+                        msgEl.style.color = '#ef4444';
+                        msgEl.textContent = 'Network error.';
+                    }
+                });
             });
         });
 

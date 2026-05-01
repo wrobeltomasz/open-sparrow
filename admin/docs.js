@@ -13,14 +13,27 @@ export function renderDocumentation(ctx) {
                 Configure your frontend application, manage database connections, and build dynamic dashboards, calendars and workflows without writing a single line of code.
             </p>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">0. Admin Panel Layout</h3>
+            <h3 style="color: #2563eb; margin-top: 30px;">0. First-Run Setup</h3>
+            <p style="background:#fef3c7;padding:10px 14px;border-left:3px solid #f59e0b;border-radius:4px;font-size:14px;">
+                <strong>Fresh installation?</strong> The admin panel automatically detects that the database is not yet configured (no connection or missing <code>spw_users</code> table) and opens without requiring a login. Follow these steps exactly:
+            </p>
+            <ol style="padding-left: 20px;">
+                <li>Open <code>/admin</code> in your browser — the panel loads in setup mode with a yellow banner.</li>
+                <li>Go to <strong>System → Database</strong>, enter host, port, database name, user and password, then click <strong>Save config</strong>.</li>
+                <li>Still in the Database tab, click <strong>Initialize System Tables</strong>. This creates all <code>spw_*</code> tables and inserts a default admin account: username <code>admin</code>, password <code>admin</code>.</li>
+                <li>Go to <code>/login</code>, log in as <code>admin</code> / <code>admin</code>. You are redirected to <code>/admin</code> automatically.</li>
+                <li>Go to <strong>System → Users</strong>, find the <em>admin</em> row and click <strong>Change pwd</strong>. Enter your current password (<code>admin</code>) and set a strong new one.</li>
+            </ol>
+            <p>From that point the admin panel requires a valid session — the setup bypass is permanently closed once <code>spw_users</code> exists in the database.</p>
+
+            <h3 style="color: #2563eb; margin-top: 30px;">0b. Admin Panel Layout</h3>
             <p>The admin header exposes the main configuration tabs plus two drop-downs:</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files, Menu Preview.</li>
-                <li><strong>System drop-down:</strong> Database, Security, Users, System Health, Run Notifications Cron.</li>
+                <li><strong>System drop-down:</strong> Database, Users, System Health, Backup Tables, Run Notifications Cron.</li>
                 <li><strong>Configuration drop-down:</strong> Export / Import the entire configuration as a ZIP archive (recommended before every production deployment).</li>
                 <li><strong>Save config:</strong> Persists the currently edited JSON file to <code>includes/</code>. After a successful save a green status pill appears next to the button confirming which file was written. Error pills stay visible for 6 seconds so they are not missed.</li>
-                <li><strong>Unsaved-changes guard:</strong> The admin panel tracks whether any field has been modified since the last save. Switching to a different tab while there are pending changes shows a confirmation prompt so edits are not silently discarded. The browser also intercepts page reloads and closures when changes are pending.</li>
+                <li><strong>Unsaved-changes guard:</strong> Tracks pending changes in config-editing tabs (Schema, Dashboard, Calendar, etc.) and shows a confirmation prompt before discarding them. Tabs that save immediately via API (Users, Database, Health, Backup) never trigger this warning.</li>
                 <li><strong>Debug FE mode:</strong> Toggle in the header. When enabled, the frontend exposes a <code>#debug</code> panel with raw payloads for schema/API responses — useful when building new tables or troubleshooting grids.</li>
                 <li><strong>Docs icon (book):</strong> Opens this documentation page.</li>
             </ul>
@@ -126,27 +139,36 @@ export function renderDocumentation(ctx) {
             </ul>
 
             <h3 style="color: #2563eb; margin-top: 30px;">6. Users Management</h3>
-            <p>The <strong>Users</strong> tab manages access to the frontend application (records are stored in <code>spw_users</code>).</p>
+            <p>The <strong>Users</strong> tab (<em>System → Users</em>) is the single place to manage all accounts — including the admin's own password.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Create users:</strong> Provide a username and password. Passwords are hashed with <code>password_hash()</code> before being written to the database. A live strength meter ranks passwords from <em>Weak</em> to <em>Strong</em>.</li>
-                <li><strong>FE Permission (role):</strong> Each user has a frontend role that controls what they can do in the app:
+                <li><strong>Create users:</strong> Provide a username, password and role. Passwords are hashed with Argon2id before being stored. A live strength meter ranks passwords from <em>Weak</em> to <em>Strong</em>.</li>
+                <li><strong>Roles</strong> — three levels, stored in <code>spw_users.role</code>:
                     <ul style="padding-left: 20px; margin-top: 5px;">
-                        <li><strong>Full Access</strong> — default. Can create, read, update and delete records per schema permissions.</li>
-                        <li><strong>Read Only</strong> — can browse data and dashboards but cannot modify records. Enforced both in the UI and in <code>api_schema.php</code>, which returns reduced permissions for read-only sessions.</li>
+                        <li><strong>Admin</strong> — access to this admin panel only. Cannot log in to the frontend application. Use this role for operators who manage the schema and configuration.</li>
+                        <li><strong>Editor</strong> — full CRUD access to the frontend application (was <em>Full Access</em> in older versions). Cannot access the admin panel.</li>
+                        <li><strong>Viewer</strong> — read-only access to the frontend (was <em>Read Only</em>). Cannot modify records. Cannot access the admin panel.</li>
+                    </ul>
+                </li>
+                <li><strong>Change password:</strong> Click <strong>Change pwd</strong> next to any user row to open a password-change modal.
+                    <ul style="padding-left: 20px; margin-top: 5px;">
+                        <li>For <strong>your own account</strong> — the modal requires the current password first (self-verification).</li>
+                        <li>For <strong>other accounts</strong> — no current password needed (admin override). Use this to reset a forgotten password.</li>
                     </ul>
                 </li>
                 <li><strong>Active status:</strong> Toggle Active / Inactive to revoke or restore login access without deleting the user's historical records.</li>
                 <li><strong>Audit:</strong> Login events and data changes are written to <code>spw_users_log</code>.</li>
             </ul>
+            <p style="background:#f0f9ff;padding:10px 14px;border-left:3px solid #38bdf8;border-radius:4px;font-size:14px;">
+                <strong>Tip:</strong> There is no separate "admin password" file anymore. All accounts — including admin — live in <code>spw_users</code> and are managed from this tab.
+            </p>
 
-            <h3 style="color: #2563eb; margin-top: 30px;">7. Database &amp; Security</h3>
-            <p>Manage the core PostgreSQL connection and admin-panel authentication.</p>
+            <h3 style="color: #2563eb; margin-top: 30px;">7. Database Configuration</h3>
+            <p>Manage the core PostgreSQL connection from <strong>System → Database</strong>.</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Database configuration:</strong> Update host, port, database name, username and password. Settings are written to <code>includes/database.json</code> and take effect immediately.</li>
                 <li><strong>System Schema:</strong> The <em>System Schema</em> field sets the PostgreSQL schema used for all <code>spw_*</code> tables. Defaults to <code>app</code>. This value is read by <code>sys_schema()</code> in <code>includes/db.php</code> and used to qualify every system-table query (<code>sys_table('users')</code>, <code>sys_table('files')</code>, …).</li>
                 <li><strong>Test Saved Connection:</strong> Always click <em>Save config</em> first — the button reads the persisted <code>database.json</code>, not the in-form values.</li>
-                <li><strong>Security tab:</strong> Changes the master password for this admin panel (default after install: <code>admin</code>). Passwords stored in <code>includes/security.json</code> are auto-migrated to <code>password_hash()</code> on first successful login.</li>
-                <li><strong>Login protection:</strong> <code>login.php</code> applies a DB-backed rate limiter (IP-hash: 20 attempts / 15 min, username: 5 attempts / 15 min) plus CSRF tokens and strict session cookies.</li>
+                <li><strong>Login protection:</strong> <code>login.php</code> applies a DB-backed rate limiter (IP-hash: 20 attempts / 15 min, username: 5 attempts / 15 min) plus CSRF tokens, session fingerprinting (User-Agent hash), an 8-hour absolute session lifetime, and strict <code>SameSite=Strict</code> / <code>HttpOnly</code> cookies in production.</li>
             </ul>
 
             <h3 style="color: #2563eb; margin-top: 30px;">8. Backup Tables</h3>
@@ -165,7 +187,7 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">9. System Health, Cron &amp; Config</h3>
             <p>Keep the environment healthy and configuration portable.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Initialize System Tables:</strong> In the Health tab this creates <code>spw_users</code>, <code>spw_users_log</code>, <code>spw_users_notifications</code>, <code>spw_users_notifications_log</code>, <code>spw_files</code> and <code>spw_login_attempts</code> inside the configured schema (default <code>app</code>). Run it once on a fresh installation and after every upgrade that adds new system tables. The call is CSRF-protected via the <code>X-CSRF-Token</code> header.</li>
+                <li><strong>Initialize System Tables:</strong> Creates all <code>spw_*</code> tables inside the configured schema (default <code>app</code>) and runs any pending column migrations. On a <strong>clean install</strong> it also inserts a default admin account (<code>admin</code> / <code>admin</code>) — change this password immediately via <em>System → Users → Change pwd</em>. On an existing database it is safe to re-run: it uses <code>CREATE TABLE IF NOT EXISTS</code> and <code>ALTER TABLE … ADD COLUMN IF NOT EXISTS</code>. Also migrates legacy roles automatically: <code>full → editor</code>, <code>readonly → viewer</code>.</li>
                 <li><strong>System diagnostics:</strong> Live checks for PHP version, ZIP / pgsql extensions, write permissions on <code>includes/</code>, and database connectivity.</li>
                 <li><strong>Run Notifications Cron</strong> (System drop-down): Executes <code>cron/cron_notifications.php</code> ad-hoc from the admin panel without waiting for the scheduled task. A modal displays the full execution log in real time. Each run (whether triggered here or by the system scheduler) is recorded in <code>spw_users_notifications_log</code> with timestamp, status, trigger source (<code>admin</code> vs <code>cron</code>), sources processed, notifications created, and any error message. Only users that exist and are active in <code>spw_users</code> receive notifications — stale IDs in the calendar source configuration are silently skipped.</li>
                 <li><strong>Scheduling the cron automatically:</strong> Add a system cron job (e.g. daily at 07:00) to run <code>php /path/to/cron/cron_notifications.php</code>. The script sets the <code>triggered_by</code> flag to <code>cron</code> automatically when called from the command line.</li>
@@ -258,7 +280,7 @@ export function renderDocumentation(ctx) {
 
             <h3 style="color: #2563eb; margin-top: 30px;">12. Deployment Notes</h3>
             <ul style="padding-left: 20px;">
-                <li><strong>Deny public access to <code>includes/</code>:</strong> Configure your web server so <code>database.json</code>, <code>security.json</code> and <code>schema.json</code> cannot be fetched directly.</li>
+                <li><strong>Deny public access to <code>includes/</code>:</strong> Configure your web server so <code>database.json</code>, <code>schema.json</code> and other JSON config files cannot be fetched directly. An <code>.htaccess</code> rule blocking <code>*.json</code> is included by default.</li>
                 <li><strong>Environment variables:</strong> <code>PGHOST</code>, <code>PGPORT</code>, <code>PGDATABASE</code>, <code>PGUSER</code>, <code>PGPASSWORD</code>, <code>PGSCHEMA</code>. <code>PGSCHEMA</code> is the fallback for the system schema when <code>database.json</code> does not define <code>schema</code>.</li>
                 <li><strong>Storage permissions:</strong> Under Docker, <code>includes/</code> and <code>storage/</code> must be writable by the web-server user (UID/GID <code>82:82</code> for musl-based slim PHP images).</li>
                 <li><strong>Backups:</strong> Export the config ZIP before every upgrade and keep regular <code>pg_dump</code> snapshots of both application and <code>spw_*</code> tables.</li>
