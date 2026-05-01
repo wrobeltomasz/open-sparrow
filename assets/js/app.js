@@ -1,7 +1,13 @@
-import { loadTable, renderGrid, getState, setFilteredData, resetFilters } from './grid.js';
+import { loadTable, renderGrid, getState, setFilteredData, resetFilters, injectPagination } from './grid.js';
+import { state as gridState } from './grid/state.js';
+import { exportCSV } from './export_csv.js';
 import { debugLog } from './debug.js';
-import { setupPagination } from './pagination.js';
+import { setupPagination, getPageRows } from './pagination.js';
 import { initWorkflows } from './workflows.js';
+
+// Break circular dependency: grid/index.js cannot import pagination.js because
+// pagination.js imports renderGrid from grid.js. We wire them together here.
+injectPagination(getPageRows, setupPagination);
 
 const menuEl = document.getElementById('menu');
 const gridTitleEl = document.getElementById('gridTitle');
@@ -419,11 +425,18 @@ searchEl.addEventListener('input', () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
         activeFilters.search = searchEl.value;
+        gridState.searchTerm = searchEl.value.trim();
         applySearch();
     }, 300);
 });
 
 columnFilterEl.addEventListener('change', handleColumnFilterChange);
+
+// Export CSV button (wired here to avoid circular grid.js ↔ export_csv.js import)
+document.addEventListener('DOMContentLoaded', () => {
+    const exportBtn = document.getElementById('exportCsv');
+    if (exportBtn) exportBtn.addEventListener('click', exportCSV);
+});
 
 // Re-init column filter dropdown on every table load
 document.addEventListener("tableLoaded", () => {
