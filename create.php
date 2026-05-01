@@ -62,6 +62,11 @@ foreach ($tableCfg->writableColumns() as $col) {
 }
 
 $ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
+
+// Setup header variables for header_app.php
+$userRole  = $session->role();
+$avatarId  = $session->get('avatar_id');
+$uname     = $session->get('username', '');
 ?>
 <!doctype html>
 <html lang="en">
@@ -72,14 +77,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
     <link href="/assets/css/styles.css" rel="stylesheet">
 </head>
 <body>
-<header>
-    <a href="index.php" class="brand-logo">
-        <img src="assets/img/logo-blue.png" alt="OpenSparrow Logo" />
-    </a>
-    <div class="header-user-menu">
-        <button onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'" class="btn-logout">Back</button>
-    </div>
-</header>
+<?php include 'templates/header_app.php'; ?>
 
 <main style="padding: 20px; max-width: 800px; margin: 0 auto;">
     <h2>Add new record: <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
@@ -122,6 +120,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
         </form>
     </div>
 </main>
+</div>
 
 <?php include 'templates/footer.php'; ?>
 

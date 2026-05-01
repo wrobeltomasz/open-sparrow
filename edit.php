@@ -62,6 +62,11 @@ foreach ($tableCfg->foreignKeys as $colName => $fkCfg) {
 }
 
 $ctx = new RenderContext($isReadOnly, $fkOptions);
+
+// Setup header variables for header_app.php
+$userRole  = $session->role();
+$avatarId  = $session->get('avatar_id');
+$uname     = $session->get('username', '');
 ?>
 <!doctype html>
 <html lang="en">
@@ -77,14 +82,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
 </head>
 <body>
 
-<header>
-    <a href="index.php" class="brand-logo">
-        <img src="assets/img/logo-blue.png" alt="OpenSparrow Logo" />
-    </a>
-    <div class="header-user-menu">
-        <button onclick="window.history.back()" class="btn-logout">Back</button>
-    </div>
-</header>
+<?php include 'templates/header_app.php'; ?>
 
 <main style="padding: 20px; max-width: 1000px; margin: 0 auto;">
     <h2>Edit record #<?php echo htmlspecialchars((string)$id); ?> in <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
@@ -291,6 +289,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
     </div><!-- /tab-panel#tab-comments -->
 
 </main>
+</div>
 
 <?php include 'templates/footer.php'; ?>
 
