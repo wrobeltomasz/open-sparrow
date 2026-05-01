@@ -32,7 +32,7 @@ final class ForeignKeyField implements FieldTypeInterface
         $name    = htmlspecialchars($col->name, ENT_QUOTES, 'UTF-8');
         $reqAttr = ($col->notNull && !$locked) ? 'required' : '';
 
-        $html  = '<select name="' . $name . '" ' . ($locked ? 'disabled' : '') . ' ' . $reqAttr . ' style="width:100%;padding:8px;">';
+        $html  = '<select name="' . $name . '" ' . ($locked ? 'disabled' : '') . ' ' . $reqAttr . '>';
         $html .= '<option value="">-- Select --</option>';
         foreach ($ctx->fkOptionsFor($col->name) as $optValue => $optLabel) {
             $selected = (string)$val === (string)$optValue ? 'selected' : '';

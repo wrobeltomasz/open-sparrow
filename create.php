@@ -79,11 +79,11 @@ $uname     = $session->get('username', '');
 <body>
 <?php include 'templates/header_app.php'; ?>
 
-<main style="padding: 20px; max-width: 800px; margin: 0 auto;">
+<main style="padding: 20px; max-width: 1060px; margin: 0 auto;">
     <h2>Add new record: <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
 
     <?php if ($error) : ?>
-        <div style="color: red; margin-bottom: 15px; padding: 10px; border: 1px solid red; background: #fee;">
+        <div style="color: red; margin-bottom: 15px; padding: 10px; border: 1px solid red; background: #fee; border-radius: 6px;">
             Error: <?php echo htmlspecialchars($error); ?>
         </div>
     <?php endif; ?>
@@ -91,6 +91,7 @@ $uname     = $session->get('username', '');
     <div class="form-wrapper">
         <form method="POST" class="editor-form">
             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf->token(), ENT_QUOTES, 'UTF-8'); ?>">
+            <div class="form-grid">
             <?php foreach ($tableCfg->visibleColumns() as $col) : ?>
                 <?php
                 if ($col->name === $tableCfg->primaryKey || $col->readonly) {
@@ -98,24 +99,26 @@ $uname     = $session->get('username', '');
                 }
                 $hasFk   = $tableCfg->hasForeignKey($col->name);
                 $isColRo = $isReadOnly || ($locked[$col->name] ?? false);
-                $reqStar = ($col->notNull && !$isColRo) ? '<span style="color:red; margin-left:3px;">*</span>' : '';
                 ?>
-                <div class="form-group" style="margin-bottom: 15px;">
-                    <label style="display: block; font-weight: bold; margin-bottom: 5px;">
+                <div class="form-group">
+                    <label>
                         <?php echo htmlspecialchars($col->displayName); ?>
-                        <?php echo $reqStar; ?>
+                        <?php if ($col->notNull && !$isColRo) : ?>
+                            <span class="required">*</span>
+                        <?php endif; ?>
                     </label>
                     <?php echo $fieldRegistry->for($col, $hasFk)->render($col, null, $ctx); ?>
                 </div>
             <?php endforeach; ?>
+            </div>
 
-            <div class="form-actions" style="margin-top: 25px; display: flex; gap: 10px;">
+            <div class="form-actions">
                 <?php if ($isReadOnly) : ?>
-                    <button type="button" class="btn-save" style="padding: 10px 20px; background: #ccc; color: white; border: none; cursor: not-allowed; font-weight: bold; border-radius: 4px;" disabled>Add Record</button>
+                    <button type="button" class="btn-save" disabled>Add Record</button>
                 <?php else : ?>
-                    <button type="submit" class="btn-save" style="padding: 10px 20px; background: #007ACC; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px;">Add Record</button>
+                    <button type="submit" class="btn-save">Add Record</button>
                 <?php endif; ?>
-                <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'" style="padding: 10px 20px; background: #eee; color: #333; border: 1px solid #ccc; cursor: pointer; border-radius: 4px;">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'">Cancel</button>
             </div>
         </form>
     </div>
@@ -126,6 +129,14 @@ $uname     = $session->get('username', '');
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Enum select color update
+    document.querySelectorAll('select[data-enum-colors]').forEach(sel => {
+        const colors = JSON.parse(sel.dataset.enumColors || '{}');
+        const apply  = () => { sel.style.background = colors[sel.value] || ''; };
+        sel.addEventListener('change', apply);
+        apply();
+    });
+
     const inputs = document.querySelectorAll('input[data-pattern]');
     inputs.forEach(input => {
         const validate = () => {

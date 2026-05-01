@@ -32,7 +32,30 @@ final class EnumField implements FieldTypeInterface
         $name    = htmlspecialchars($col->name, ENT_QUOTES, 'UTF-8');
         $reqAttr = ($col->notNull && !$locked) ? 'required' : '';
 
-        $html  = '<select name="' . $name . '" ' . ($locked ? 'disabled' : '') . ' ' . $reqAttr . ' style="width:100%;padding:8px;">';
+        if ($locked) {
+            $color     = $col->enumColors[$val] ?? null;
+            $bgStyle   = $color ? 'background:' . htmlspecialchars($color, ENT_QUOTES, 'UTF-8') . ';' : 'background:#e2e8f0;';
+            $textColor = '#333';
+            if ($color) {
+                $hex = ltrim($color, '#');
+                if (strlen($hex) === 6) {
+                    $brightness = (hexdec(substr($hex, 0, 2)) * 299
+                                 + hexdec(substr($hex, 2, 2)) * 587
+                                 + hexdec(substr($hex, 4, 2)) * 114) / 1000;
+                    $textColor  = $brightness > 128 ? '#333' : '#fff';
+                }
+            }
+            $display = $val !== '' ? htmlspecialchars($val, ENT_QUOTES, 'UTF-8') : '&mdash;';
+            $html    = '<span class="enum-badge" style="' . $bgStyle . 'color:' . $textColor . ';">' . $display . '</span>';
+            $html   .= '<input type="hidden" name="' . $name . '" value="' . htmlspecialchars($val, ENT_QUOTES, 'UTF-8') . '" />';
+            return $html;
+        }
+
+        $colorsJson = htmlspecialchars((string)json_encode($col->enumColors), ENT_QUOTES, 'UTF-8');
+        $initBg     = $col->enumColors[$val] ?? '';
+        $initStyle  = $initBg ? 'background:' . htmlspecialchars($initBg, ENT_QUOTES, 'UTF-8') . ';' : '';
+
+        $html  = '<select name="' . $name . '" ' . $reqAttr . ' data-enum-colors="' . $colorsJson . '" style="' . $initStyle . '">';
         $html .= '<option value="">-- Select --</option>';
         foreach ($col->options as $opt) {
             $optStr   = (string)$opt;
@@ -42,9 +65,6 @@ final class EnumField implements FieldTypeInterface
                       . '</option>';
         }
         $html .= '</select>';
-        if ($locked) {
-            $html .= '<input type="hidden" name="' . $name . '" value="' . htmlspecialchars($val, ENT_QUOTES, 'UTF-8') . '" />';
-        }
         return $html;
     }
 }

@@ -95,7 +95,6 @@ $userCaps = [
 </script>
 <script src="assets/js/sidebar.js" nonce="<?php echo $cspNonce; ?>"></script>
 <script src="assets/js/notifications.js" nonce="<?php echo $cspNonce; ?>"></script>
-<script type="module" src="assets/js/user-menu.js" nonce="<?php echo $cspNonce; ?>"></script>
 <script type="module" src="assets/js/dashboard.js" nonce="<?php echo $cspNonce; ?>"></script>
 </body>
 </html>

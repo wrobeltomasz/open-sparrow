@@ -247,8 +247,6 @@ $userCaps = [
 
 <script src="assets/js/sidebar.js" nonce="<?php echo $cspNonce; ?>"></script>
 <script src="assets/js/notifications.js" nonce="<?php echo $cspNonce; ?>"></script>
-<script type="module" src="assets/js/user-menu.js" nonce="<?php echo $cspNonce; ?>"></script>
-
 <script nonce="<?php echo $cspNonce; ?>">
 document.addEventListener("DOMContentLoaded", () => {
     const API_URL = 'api_files.php';

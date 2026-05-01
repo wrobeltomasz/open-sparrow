@@ -127,7 +127,6 @@
 <script src="assets/js/sidebar.js?v=<?php echo @filemtime('assets/js/sidebar.js'); ?>"></script>
 <script src="assets/js/notifications.js?v=<?php echo @filemtime('assets/js/notifications.js'); ?>"></script>
 <script type="module" src="assets/js/app.js?v=<?php echo @filemtime('assets/js/app.js'); ?>"></script>
-<script type="module" src="assets/js/user-menu.js?v=<?php echo @filemtime('assets/js/user-menu.js'); ?>"></script>
 
 </body>
 </html>

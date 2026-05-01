@@ -55,5 +55,6 @@ $nonceAttr = isset($cspNonce)
         <?php endif; ?>
     </div>
 </header>
+<script type="module" src="assets/js/user-menu.js?v=<?php echo @filemtime(__DIR__ . '/../assets/js/user-menu.js'); ?>"<?= $nonceAttr ?>></script>
 <div class="app-container">
 <?php include __DIR__ . '/menu.php'; ?>
