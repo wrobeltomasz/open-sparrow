@@ -920,6 +920,127 @@ footer {
 }
 .dash-list li:last-child { border-bottom: none; }
 
+/* Stat Card */
+.dash-stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  background: var(--panel);
+  color: var(--text);
+}
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+.stat-title {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Vertical Bar Chart */
+.dash-vbar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 10px;
+  height: 250px;
+  padding-top: 20px;
+  border-bottom: 1px solid var(--border-light);
+  margin-top: 10px;
+}
+.dash-vbar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+  justify-content: flex-end;
+}
+.dash-vbar-value {
+  font-size: 12px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+.dash-vbar-track {
+  width: 100%;
+  max-width: 50px;
+  height: 100%;
+  background: var(--bg);
+  display: flex;
+  align-items: flex-end;
+  border-radius: 4px 4px 0 0;
+  overflow: hidden;
+}
+.dash-vbar-fill {
+  width: 100%;
+  transition: height 0.6s ease-out;
+  height: 0%;
+}
+.dash-vbar-label {
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* Pie Chart */
+.dash-pie-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.dash-pie-chart {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+.dash-pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 150px;
+}
+.dash-pie-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.dash-pie-color-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Dashboard error / loading states */
+.dash-error {
+  grid-column: 1 / -1;
+  color: var(--danger);
+  padding: 16px;
+}
+.dash-loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--muted);
+}
+
 /* =========================================
    DRILLDOWN / SUB-GRID
 ========================================= */
