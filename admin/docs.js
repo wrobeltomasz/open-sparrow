@@ -16,7 +16,7 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">0. Admin Panel Layout</h3>
             <p>The admin header exposes the main configuration tabs plus two drop-downs:</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files.</li>
+                <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files, Menu Preview.</li>
                 <li><strong>System drop-down:</strong> Database, Security, Users, System Health, Run Notifications Cron.</li>
                 <li><strong>Configuration drop-down:</strong> Export / Import the entire configuration as a ZIP archive (recommended before every production deployment).</li>
                 <li><strong>Save config:</strong> Persists the currently edited JSON file to <code>includes/</code>. After a successful save a green status pill appears next to the button confirming which file was written. Error pills stay visible for 6 seconds so they are not missed.</li>
