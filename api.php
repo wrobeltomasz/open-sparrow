@@ -612,7 +612,10 @@ try {
                 exit;
             }
 
-            log_user_action($conn, (int)$_SESSION['user_id'], 'UPDATE', $table, (int)$body['id']);
+            $logId = log_user_action($conn, (int)$_SESSION['user_id'], 'UPDATE', $table, (int)$body['id']);
+            if (RECORD_SNAPSHOTS_ENABLED && $logId !== null) {
+                snapshot_record($conn, $schemaName, $table, (int) $body['id'], $logId);
+            }
             echo json_encode(['ok' => true]);
             exit;
         }
@@ -683,7 +686,10 @@ try {
             $newId = $row[$idCol] ?? null;
 
             if ($newId !== null) {
-                log_user_action($conn, (int)$_SESSION['user_id'], 'INSERT', $table, (int)$newId);
+                $logId = log_user_action($conn, (int)$_SESSION['user_id'], 'INSERT', $table, (int)$newId);
+                if (RECORD_SNAPSHOTS_ENABLED && $logId !== null) {
+                    snapshot_record($conn, $schemaName, $table, (int) $newId, $logId);
+                }
             }
 
             echo json_encode(['ok' => true, 'id' => $newId]);

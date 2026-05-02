@@ -47,7 +47,7 @@ Demo: https://demo.opensparrow.org
 - **Dashboard engine** — COUNT / SUM / AVG / MIN / MAX / GROUP BY widgets defined in `dashboard.json`.
 - **Calendar & notifications** — date-based records on a calendar view, with scheduled reminders via cron.
 - **Admin panel** — visual editors for schema, dashboards, calendar, users at `/admin`. Unified login for all roles — no separate admin password.
-- **Audit logging** — data changes tracked in internal log tables.
+- **Audit logging & record snapshots** — every write is logged to `spw_users_log`; an optional record-snapshot module saves a full JSONB copy of each record after INSERT/UPDATE to `spw_record_snapshots`, toggled from the admin panel or via env var.
 - **CSV export & pagination** — built-in grid utilities.
 - **Workflows builder** — multi-step wizards linking parent/child records across tables.
 - **File management** — per-record attachments with tagging and search, configurable via the admin panel.
@@ -183,6 +183,7 @@ All variables are read by `includes/config.php` on every request — the single 
 |---|---|---|
 | `APP_ENV` | `production` | Runtime environment. |
 | `DEMO_MODE` | `false` | Set `true` to block all write operations in the admin API (safe for public demos). |
+| `RECORD_SNAPSHOTS_ENABLED` | `false` | Enable record snapshot capture after every INSERT/UPDATE. Overrides the admin panel toggle in `includes/settings.json`. |
 | `FILES_MAX_SIZE_MB` | `20` | Default upload size limit when not set in `files.json`. |
 | `THUMBNAIL_MAX_WIDTH` | `300` | Max thumbnail width in pixels. |
 | `NOTIFICATIONS_DROPDOWN_LIMIT` | `10` | Max items in the bell notification dropdown. |

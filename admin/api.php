@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Ensure state-changing actions use POST method to prevent CSRF via GET
-$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'users_change_password', 'create_table', 'add_column', 'run_cron_notifications', 'backup_tables'];
+$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'users_change_password', 'create_table', 'add_column', 'run_cron_notifications', 'backup_tables', 'set_snapshot_setting'];
 if (in_array($action, $postActions, true) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Content-Type: application/json');
     http_response_code(405);
@@ -77,6 +77,7 @@ if ($action === 'init_db') {
         $tFiles = sys_table('files');
         $tLoginAttempts = sys_table('login_attempts');
         $tComments = sys_table('comments');
+        $tRecordSnapshots = sys_table('record_snapshots');
 
         // Prepare missing DB updates and tables creation
         $queries = [
@@ -106,7 +107,11 @@ if ($action === 'init_db') {
             "ALTER TABLE $tUsers ADD COLUMN IF NOT EXISTS avatar_id smallint",
             "CREATE TABLE IF NOT EXISTS $tComments ( id serial4 NOT NULL, related_table varchar(100) NOT NULL, related_id int4 NOT NULL, user_id int4 NOT NULL, body text NOT NULL, created_at timestamp DEFAULT now() NOT NULL, deleted_at timestamp NULL, CONSTRAINT spw_comments_pkey PRIMARY KEY (id), CONSTRAINT spw_comments_body_len CHECK (char_length(body) <= 4000), CONSTRAINT spw_comments_user_id_fkey FOREIGN KEY (user_id) REFERENCES $tUsers(id) ON DELETE SET NULL )",
             "CREATE INDEX IF NOT EXISTS idx_spw_comments_related ON $tComments USING btree (related_table, related_id, created_at)",
-            "CREATE INDEX IF NOT EXISTS idx_spw_comments_user_id ON $tComments USING btree (user_id)"
+            "CREATE INDEX IF NOT EXISTS idx_spw_comments_user_id ON $tComments USING btree (user_id)",
+            "CREATE TABLE IF NOT EXISTS $tRecordSnapshots ( id serial4 NOT NULL, log_id int4 NOT NULL, table_name varchar(100) NOT NULL, record_id int4 NOT NULL, snapshot jsonb NOT NULL, created_at timestamp DEFAULT CURRENT_TIMESTAMP, CONSTRAINT spw_record_snapshots_pkey PRIMARY KEY (id), CONSTRAINT spw_record_snapshots_log_id_fkey FOREIGN KEY (log_id) REFERENCES $tUsersLog(id) ON DELETE CASCADE )",
+            "ALTER TABLE $tRecordSnapshots DROP COLUMN IF EXISTS snapshot_type",
+            "CREATE INDEX IF NOT EXISTS idx_spw_record_snapshots_log_id ON $tRecordSnapshots USING btree (log_id)",
+            "CREATE INDEX IF NOT EXISTS idx_spw_record_snapshots_table_record ON $tRecordSnapshots USING btree (table_name, record_id)"
         ];
         
         foreach ($queries as $q) {
@@ -616,6 +621,78 @@ if ($action === 'list_system_tables') {
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
     }
+    exit;
+}
+
+// GET: return current record-snapshot setting and whether it is locked by env var
+if ($action === 'get_snapshot_setting') {
+    header('Content-Type: application/json');
+    $envVal = getenv('RECORD_SNAPSHOTS_ENABLED');
+    $lockedByEnv = ($envVal !== false && $envVal !== '');
+    $enabled = false;
+    if ($lockedByEnv) {
+        $enabled = ($envVal === 'true');
+    } else {
+        $settingsFile = __DIR__ . '/../includes/settings.json';
+        if (is_file($settingsFile)) {
+            $raw = @file_get_contents($settingsFile);
+            if ($raw !== false) {
+                $s = @json_decode($raw, true);
+                $enabled = (bool) ($s['record_snapshots_enabled'] ?? false);
+            }
+        }
+    }
+
+    try {
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = @db_connect();
+        $tSnap = sys_table('record_snapshots');
+        $countRes = $conn ? @pg_query($conn, "SELECT COUNT(*) FROM $tSnap") : false;
+        $snapshotCount = ($countRes && ($cr = pg_fetch_row($countRes))) ? (int) $cr[0] : null;
+        $tableExists = ($countRes !== false);
+    } catch (Exception $e) {
+        $snapshotCount = null;
+        $tableExists = false;
+    }
+
+    echo json_encode([
+        'enabled'        => $enabled,
+        'locked_by_env'  => $lockedByEnv,
+        'table_exists'   => $tableExists,
+        'snapshot_count' => $snapshotCount,
+    ]);
+    exit;
+}
+
+// POST: toggle record-snapshot setting in includes/settings.json
+if ($action === 'set_snapshot_setting') {
+    header('Content-Type: application/json');
+    if ($isDemoMode) {
+        echo json_encode(['status' => 'error', 'error' => 'Action disabled in Demo Mode.']);
+        exit;
+    }
+    $envVal = getenv('RECORD_SNAPSHOTS_ENABLED');
+    if ($envVal !== false && $envVal !== '') {
+        echo json_encode(['status' => 'error', 'error' => 'Controlled by RECORD_SNAPSHOTS_ENABLED environment variable — cannot override from admin panel.']);
+        exit;
+    }
+    $body = json_decode(file_get_contents('php://input'), true) ?? [];
+    $enabled = (bool) ($body['enabled'] ?? false);
+    $settingsFile = __DIR__ . '/../includes/settings.json';
+    $settings = [];
+    if (is_file($settingsFile)) {
+        $raw = @file_get_contents($settingsFile);
+        if ($raw !== false) {
+            $settings = @json_decode($raw, true) ?? [];
+        }
+    }
+    $settings['record_snapshots_enabled'] = $enabled;
+    $written = @file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+    if ($written === false) {
+        echo json_encode(['status' => 'error', 'error' => 'Could not write includes/settings.json. Check directory permissions.']);
+        exit;
+    }
+    echo json_encode(['status' => 'success', 'enabled' => $enabled]);
     exit;
 }
 

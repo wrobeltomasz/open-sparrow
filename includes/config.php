@@ -146,3 +146,26 @@ define('CONFIG_FILE_MAX_BYTES', (int) get_env('CONFIG_FILE_MAX_BYTES', '524288')
 // max-age value (in seconds) for the Strict-Transport-Security header.
 // Default is 1 year (31 536 000 s). Set to 0 to disable HSTS on plain HTTP.
 define('HSTS_MAX_AGE', (int) get_env('HSTS_MAX_AGE', '31536000'));
+
+// -------------------------------------------------------------------------
+// Audit & record snapshots
+// -------------------------------------------------------------------------
+
+// When true, a JSONB snapshot of every inserted/updated/deleted record is
+// saved to spw_record_snapshots and linked to the corresponding audit log entry.
+// Can be toggled at runtime via Admin → System → Audit & Snapshots.
+// The RECORD_SNAPSHOTS_ENABLED env var takes precedence over the settings file.
+define('RECORD_SNAPSHOTS_ENABLED', (function (): bool {
+    $env = get_env('RECORD_SNAPSHOTS_ENABLED', '');
+    if ($env !== '') {
+        return $env === 'true';
+    }
+    $f = __DIR__ . '/settings.json';
+    if (is_file($f)) {
+        $s = @json_decode((string) file_get_contents($f), true);
+        if (is_array($s) && array_key_exists('record_snapshots_enabled', $s)) {
+            return (bool) $s['record_snapshots_enabled'];
+        }
+    }
+    return false;
+})());

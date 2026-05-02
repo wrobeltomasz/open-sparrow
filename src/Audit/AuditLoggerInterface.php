@@ -6,5 +6,5 @@ namespace App\Audit;
 
 interface AuditLoggerInterface
 {
-    public function log(int $userId, string $action, string $table, int $recordId): void;
+    public function log(int $userId, string $action, string $table, int $recordId): ?int;
 }

@@ -11,6 +11,7 @@ import { renderUsersEditor } from './users.js';
 import { renderWorkflowsEditor } from './workflows.js';
 import { renderFilesEditor } from './files_render.js';
 import { renderBackupPage } from './backup.js';
+import { renderAuditEditor } from './audit.js';
 
 let currentConfig = null;
 let currentFile = 'schema';
@@ -24,7 +25,7 @@ const btnSave = document.getElementById('btnSave');
 const tabs = document.querySelectorAll('.admin-tab');
 
 // Tabs that save immediately via API — no config file involved, never dirty.
-const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database']);
+const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database', 'audit']);
 
 // Dirty-state guards: every edit marks the config dirty; navigation and reload
 // refuse to drop pending changes silently.
@@ -212,7 +213,7 @@ function getColumnOptionsForTable(tableName) {
 }
 
 async function loadConfigFile(fileName) {
-    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu') {
+    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu' || fileName === 'audit') {
         currentConfig = null;
         renderSidebar();
         renderEditor(fileName.toUpperCase(), null, false);
@@ -294,7 +295,7 @@ function clearConfig() {
 function renderSidebar() {
     itemListEl.innerHTML = '';
     
-    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu') {
+    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu' || currentFile === 'audit') {
         document.getElementById('sidebarTitle').textContent = currentFile.charAt(0).toUpperCase() + currentFile.slice(1);
         const actionDiv = document.getElementById('sidebarActions');
         if (actionDiv) actionDiv.innerHTML = ''; 
@@ -306,6 +307,7 @@ function renderSidebar() {
         if (currentFile === 'users') title = "System Users";
         if (currentFile === 'backup') title = "Backup Tables";
         if (currentFile === 'menu') title = "View Preview";
+        if (currentFile === 'audit') title = "Audit & Snapshots";
         
         li.textContent = title; 
         li.style.fontWeight = 'bold'; 
@@ -455,7 +457,7 @@ function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    if (['health', 'docs', 'users', 'backup', 'menu'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
+    if (['health', 'docs', 'users', 'backup', 'menu', 'audit'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -467,6 +469,7 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'docs') return renderDocumentation(ctx);
     if (currentFile === 'users') return renderUsersEditor(ctx);
     if (currentFile === 'backup') return renderBackupPage(ctx);
+    if (currentFile === 'audit') return renderAuditEditor(ctx);
     if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
 
     if (currentFile === 'menu') {

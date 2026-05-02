@@ -120,6 +120,7 @@ if (empty($_SESSION['csrf_token'])) {
                     <button class="admin-tab" data-file="users">Users</button>
                     <button class="admin-tab" data-file="health">System Health</button>
                     <button class="admin-tab" data-file="backup">Backup Tables</button>
+                    <button class="admin-tab" data-file="audit">Audit &amp; Snapshots</button>
                     <button id="btnRunCron" type="button">Run Notifications Cron</button>
                 </div>
             </div>
