@@ -27,11 +27,12 @@ export function renderDocumentation(ctx) {
             <p>From that point the admin panel requires a valid session — the setup bypass is permanently closed once <code>spw_users</code> exists in the database.</p>
 
             <h3 style="color: #2563eb; margin-top: 30px;">0b. Admin Panel Layout</h3>
-            <p>The admin header exposes the main configuration tabs plus two drop-downs:</p>
+            <p>The admin panel uses a collapsible left sidebar with four sections. The header provides global actions.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files, Menu Preview.</li>
-                <li><strong>System drop-down:</strong> Database, Users, System Health, Backup Tables, Audit &amp; Snapshots, Run Notifications Cron.</li>
-                <li><strong>Configuration drop-down:</strong> Export / Import the entire configuration as a ZIP archive (recommended before every production deployment).</li>
+                <li><strong>Data Management:</strong> Schema, Dashboard, Calendar, Files, Menu Preview, Add Table.</li>
+                <li><strong>Workflows:</strong> Workflow Manager.</li>
+                <li><strong>System:</strong> Database, Users, Health Check, Backup Tables, Audit &amp; Snapshots.</li>
+                <li><strong>Configuration:</strong> Export Config, Import Config, Run Notifications Cron.</li>
                 <li><strong>Save config:</strong> Persists the currently edited JSON file to <code>includes/</code>. After a successful save a green status pill appears next to the button confirming which file was written. Error pills stay visible for 6 seconds so they are not missed.</li>
                 <li><strong>Unsaved-changes guard:</strong> Tracks pending changes in config-editing tabs (Schema, Dashboard, Calendar, etc.) and shows a confirmation prompt before discarding them. Tabs that save immediately via API (Users, Database, Health, Backup) never trigger this warning.</li>
                 <li><strong>Debug FE mode:</strong> Toggle in the header. When enabled, the frontend exposes a <code>#debug</code> panel with raw payloads for schema/API responses — useful when building new tables or troubleshooting grids.</li>
@@ -66,9 +67,28 @@ export function renderDocumentation(ctx) {
 
             <h3 style="color: #2563eb; margin-top: 30px;">2. Schema & Grid Configuration</h3>
             <p>The <strong>Schema</strong> tab is the core of your configuration. It maps your database tables to frontend grids and forms.</p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Add Table (Data Management → Add Table)</h4>
+            <p>The dedicated <strong>Add Table</strong> tab creates a new physical PostgreSQL table and optionally registers it in <code>schema.json</code> — no manual sync step required.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Add new tables:</strong> Use <em>+ Add Table</em> to create new physical tables in PostgreSQL. You specify the schema and table name; the system automatically creates the mandatory <code>id</code> primary key.</li>
-                <li><strong>Add new columns:</strong> Inside a table's configuration, click <em>+ Add Column</em> to append a physical column to the database. Specify name and native SQL type (e.g. <code>varchar(255)</code>, <code>boolean</code>, <code>int4</code>).</li>
+                <li><strong>Table Name &amp; Database Schema:</strong> Lowercase identifiers only. The <code>id serial PRIMARY KEY</code> column is always added automatically.</li>
+                <li><strong>Display Name:</strong> Auto-filled from the table name (underscores → spaces, title-case). Used as the label in menus and headings when registered in <code>schema.json</code>.</li>
+                <li><strong>Column Presets:</strong> Check <em>Timestamps</em> to automatically add <code>created_at</code> and <code>updated_at</code> columns (<code>timestamp DEFAULT now() NOT NULL</code>).</li>
+                <li><strong>Per-column options</strong> — each column block exposes:
+                    <ul style="padding-left: 20px; margin-top: 5px;">
+                        <li><strong>Name &amp; Type:</strong> <code>varchar(255)</code>, <code>text</code>, <code>int4</code>, <code>int8</code>, <code>boolean</code>, <code>date</code>, <code>timestamp</code>.</li>
+                        <li><strong>Not Null:</strong> Adds a <code>NOT NULL</code> constraint. Requires a Default value if the table already has rows.</li>
+                        <li><strong>Default:</strong> Accepts safe SQL expressions (<code>now()</code>, <code>current_timestamp</code>, <code>true</code>, <code>false</code>, <code>null</code>), plain integers, or arbitrary strings (escaped as a literal).</li>
+                        <li><strong>Index:</strong> <code>btree</code> (standard equality/range), <code>hash</code> (equality only), or <code>unique</code> (enforces uniqueness). Creates a <code>idx_tablename_colname</code> index.</li>
+                        <li><strong>Comment:</strong> Stored as <code>COMMENT ON COLUMN</code> in PostgreSQL. Visible via <em>Sync Columns from DB</em> and as a tooltip in the grid.</li>
+                        <li><strong>Foreign Key:</strong> Adds an <code>FK</code> constraint referencing any table and column already registered in <code>schema.json</code>.</li>
+                    </ul>
+                </li>
+                <li><strong>Register in schema.json</strong> (checked by default): After the table and all columns are created in the database, the table entry — including display name, column types, NOT NULL flags, and FK references — is written to <code>includes/schema.json</code> automatically. The table appears in the admin panel and frontend navigation on the next page load without any manual sync.</li>
+            </ul>
+
+            <ul style="padding-left: 20px;">
+                <li><strong>Add new columns (Schema tab):</strong> Inside an existing table's configuration, click <em>+ Add Column</em> to append a physical column to the database. Specify name and native SQL type (e.g. <code>varchar(255)</code>, <code>boolean</code>, <code>int4</code>).</li>
                 <li><strong>Sync DB Tables:</strong> Fetches all tables from the connected database and merges them into your schema configuration. System tables with the <code>spw_</code> prefix are skipped automatically.</li>
                 <li><strong>Sync Columns from DB:</strong> Inside a table's configuration, fetches all columns for that table and adds any that are missing. For each column it also reads the PostgreSQL <code>COMMENT ON COLUMN</code> value — new columns get the comment as their description, and existing columns have their description updated if one is found. Type mapping (text, number, boolean, date, enum) is applied automatically on import.</li>
                 <li><strong>Column Description (tooltip):</strong> Each column has an optional <em>Column Description</em> field. Fill it manually or populate it via <em>Sync Columns from DB</em> if the table has <code>COMMENT ON COLUMN</code> defined. The description appears as a native browser tooltip when the user hovers over the column header in the data grid — the header label also gains a dotted underline to indicate that a tooltip is available.</li>

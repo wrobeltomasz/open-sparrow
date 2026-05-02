@@ -46,7 +46,8 @@ Demo: https://demo.opensparrow.org
 - **Inline editing** — in-grid PATCH updates routed through a single `api.php` gateway.
 - **Dashboard engine** — COUNT / SUM / AVG / MIN / MAX / GROUP BY widgets defined in `dashboard.json`.
 - **Calendar & notifications** — date-based records on a calendar view, with scheduled reminders via cron.
-- **Admin panel** — visual editors for schema, dashboards, calendar, users at `/admin`. Unified login for all roles — no separate admin password.
+- **Admin panel** — collapsible sidebar navigation with visual editors for schema, dashboards, calendar, workflows, files, and users at `/admin`. Unified login for all roles — no separate admin password.
+- **Visual table builder** — create PostgreSQL tables from the admin UI with per-column type, NOT NULL, default value, index (btree/hash/unique), column comment (`COMMENT ON COLUMN`), and foreign key constraints. Timestamps preset adds `created_at`/`updated_at` automatically. Tables are registered in `schema.json` in the same step.
 - **Audit logging & record snapshots** — every write is logged to `spw_users_log`; an optional record-snapshot module saves a full JSONB copy of each record after INSERT/UPDATE to `spw_record_snapshots`, toggled from the admin panel or via env var.
 - **CSV export & pagination** — built-in grid utilities.
 - **Workflows builder** — multi-step wizards linking parent/child records across tables.

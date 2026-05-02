@@ -1,6 +1,6 @@
 // admin/app.js
 import { moveArrayItem, moveObjectKey, renderGlobalSettings, createFullMenuPreview } from './ui.js';
-import { syncSchemaTables, renderSchemaEditor, createAddTableButton } from './schema.js';
+import { syncSchemaTables, renderSchemaEditor } from './schema.js';
 import { renderDashboardLayout, renderDashboardEditor, initDashboardUI } from './dashboard.js';
 import { renderCalendarEditor } from './calendar.js';
 import { renderDatabaseEditor } from './database.js';
@@ -12,6 +12,7 @@ import { renderWorkflowsEditor } from './workflows.js';
 import { renderFilesEditor } from './files_render.js';
 import { renderBackupPage } from './backup.js';
 import { renderAuditEditor } from './audit.js';
+import { renderAddTableEditor } from './add_table.js';
 
 let currentConfig = null;
 let currentFile = 'schema';
@@ -25,7 +26,7 @@ const btnSave = document.getElementById('btnSave');
 const tabs = document.querySelectorAll('.admin-tab');
 
 // Tabs that save immediately via API — no config file involved, never dirty.
-const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database', 'audit']);
+const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database', 'audit', 'add_table']);
 
 // Dirty-state guards: every edit marks the config dirty; navigation and reload
 // refuse to drop pending changes silently.
@@ -213,7 +214,7 @@ function getColumnOptionsForTable(tableName) {
 }
 
 async function loadConfigFile(fileName) {
-    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu' || fileName === 'audit') {
+    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu' || fileName === 'audit' || fileName === 'add_table') {
         currentConfig = null;
         renderSidebar();
         renderEditor(fileName.toUpperCase(), null, false);
@@ -295,7 +296,7 @@ function clearConfig() {
 function renderSidebar() {
     itemListEl.innerHTML = '';
     
-    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu' || currentFile === 'audit') {
+    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu' || currentFile === 'audit' || currentFile === 'add_table') {
         document.getElementById('sidebarTitle').textContent = currentFile.charAt(0).toUpperCase() + currentFile.slice(1);
         const actionDiv = document.getElementById('sidebarActions');
         if (actionDiv) actionDiv.innerHTML = ''; 
@@ -308,6 +309,7 @@ function renderSidebar() {
         if (currentFile === 'backup') title = "Backup Tables";
         if (currentFile === 'menu') title = "View Preview";
         if (currentFile === 'audit') title = "Audit & Snapshots";
+        if (currentFile === 'add_table') title = "Add New Table";
         
         li.textContent = title; 
         li.style.fontWeight = 'bold'; 
@@ -318,26 +320,6 @@ function renderSidebar() {
     }
 
     document.getElementById('sidebarTitle').textContent = currentFile === 'schema' ? 'Tables' : currentFile === 'dashboard' ? 'Widgets' : currentFile === 'workflows' ? 'Workflows' : currentFile === 'files' ? 'Files Config' : 'Sources';
-    
-    // Remove existing button to prevent duplicates when sidebar re-renders
-    const existingBtn = document.getElementById('addTableBtn');
-    if (existingBtn) existingBtn.remove();
-
-    // Append the button only if the active tab is 'schema'
-    if (currentFile === 'schema') {
-        const btnAddTable = createAddTableButton(currentConfig, 'app', (newTableName) => {
-            markDirty();
-            showStatusPill(btnSave, `Table "${newTableName}" created. Remember to Save config.`, 'success');
-            renderSidebar();
-        }, (err) => {
-            showStatusPill(btnSave, err, 'error');
-        });
-
-        btnAddTable.id = 'addTableBtn';
-        btnAddTable.style.fontSize = '12px';
-        btnAddTable.style.float = 'right';
-        sidebarTitle.appendChild(btnAddTable);
-    }
     
     let actionDiv = document.getElementById('sidebarActions');
     if (!actionDiv) {
@@ -457,7 +439,7 @@ function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    if (['health', 'docs', 'users', 'backup', 'menu', 'audit'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
+    if (['health', 'docs', 'users', 'backup', 'menu', 'audit', 'add_table'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -470,6 +452,7 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'users') return renderUsersEditor(ctx);
     if (currentFile === 'backup') return renderBackupPage(ctx);
     if (currentFile === 'audit') return renderAuditEditor(ctx);
+    if (currentFile === 'add_table') return renderAddTableEditor(ctx);
     if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
 
     if (currentFile === 'menu') {
