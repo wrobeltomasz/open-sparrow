@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sparrow Admin - Redesign Mockup</title>
+    <style>
+        :root {
+            --bg: #F4F7F9;
+            --panel: #ffffff;
+            --text: #1E293B;
+            --muted: #64748B;
+            --accent: #005A9E;
+            --accent-dark: #003366;
+            --accent-light: #F0F6FA;
+            --accent-mid: #DDEAF4;
+            --danger: #DC2626;
+            --ok: #16A34A;
+            --border: #CBD5E1;
+            --border-light: #E2E8F0;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --radius: 6px;
+            --header-h: 60px;
+            --sidebar-w: 280px;
+            --transition: 150ms ease;
+        }
+
+        /* Icons */
+        .icon {
+            width: 18px;
+            height: 18px;
+            display: inline-block;
+            flex-shrink: 0;
+            filter: brightness(0.4);
+        }
+
+        .btn-header .icon {
+            filter: brightness(0) invert(1);
+        }
+
+        .sidebar-section-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-item-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ─────────────────────────────────────────────────────────────── */
+        /* Header */
+        /* ─────────────────────────────────────────────────────────────── */
+        header {
+            background-color: var(--accent-dark);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: var(--header-h);
+            box-shadow: var(--shadow-sm);
+            color: white;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .header-brand img {
+            width: 32px;
+            height: 32px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-header {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        /* ─────────────────────────────────────────────────────────────── */
+        /* Main layout */
+        /* ─────────────────────────────────────────────────────────────── */
+        .container {
+            display: flex;
+            height: calc(100vh - var(--header-h));
+            width: 100%;
+        }
+
+        /* ─────────────────────────────────────────────────────────────── */
+        /* Sidebar */
+        /* ─────────────────────────────────────────────────────────────── */
+        .sidebar {
+            flex: 0 0 var(--sidebar-w);
+            width: var(--sidebar-w);
+            background-color: var(--panel);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            transition: transform var(--transition);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(calc(-1 * var(--sidebar-w)));
+            position: absolute;
+            z-index: 50;
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            z-index: 60;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 6px 8px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .sidebar.collapsed ~ .sidebar-toggle {
+            display: block;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 20px 12px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            user-select: none;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all var(--transition);
+        }
+
+        .sidebar-section-title:hover {
+            color: var(--accent);
+        }
+
+        .sidebar-section-toggle {
+            margin-left: auto;
+            transition: transform var(--transition);
+            font-size: 12px;
+        }
+
+        .sidebar-section.open .sidebar-section-toggle {
+            transform: rotate(180deg);
+        }
+
+        .sidebar-items {
+            display: none;
+            padding-left: 8px;
+        }
+
+        .sidebar-section.open .sidebar-items {
+            display: block;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            border-radius: var(--radius);
+            color: var(--muted);
+            font-size: 14px;
+            transition: all var(--transition);
+            min-height: 36px;
+        }
+
+        .sidebar-item:hover {
+            background-color: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .sidebar-item.active {
+            background-color: var(--accent-light);
+            color: var(--accent);
+            font-weight: 600;
+            border-left: 3px solid var(--accent);
+            padding-left: 9px;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background-color: var(--border-light);
+            margin: 12px 0;
+        }
+
+        /* ─────────────────────────────────────────────────────────────── */
+        /* Main workspace */
+        /* ─────────────────────────────────────────────────────────────── */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .breadcrumb {
+            background-color: var(--panel);
+            border-bottom: 1px solid var(--border-light);
+            padding: 12px 30px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .breadcrumb a {
+            color: var(--accent);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background-color: var(--bg);
+        }
+
+        .content h1 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 28px;
+            color: var(--text);
+        }
+
+        .content-description {
+            color: var(--muted);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* ─────────────────────────────────────────────────────────────── */
+        /* Cards (mockup content) */
+        /* ─────────────────────────────────────────────────────────────── */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border-light);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card p {
+            color: var(--muted);
+            margin-bottom: 0;
+        }
+
+        /* ─────────────────────────────────────────────────────────────── */
+        /* Preview container */
+        /* ─────────────────────────────────────────────────────────────── */
+        .mockup-note {
+            background-color: #fef3c7;
+            border: 1px solid #fcd34d;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            color: #92400e;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                height: calc(100vh - var(--header-h));
+                z-index: 40;
+                transform: translateX(calc(-1 * var(--sidebar-w)));
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-brand">
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="flex-shrink: 0;">
+                <rect width="32" height="32" rx="6" fill="#DCE5ED"/>
+                <path d="M8 16C8 11.6 11.6 8 16 8C20.4 8 24 11.6 24 16" stroke="#005A9E" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="16" cy="16" r="3" fill="#005A9E"/>
+            </svg>
+            <span>Sparrow Admin</span>
+        </div>
+        <div class="header-actions">
+            <label style="color: white; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" style="width: 14px; height: 14px;">
+                Debug
+            </label>
+            <button class="btn-header" title="Documentation">
+                <img class="icon" src="../assets/icons/book_3s.png" alt="Docs">
+                Docs
+            </button>
+            <button class="btn-header" title="User Menu">
+                <img class="icon" src="../assets/icons/person.png" alt="User">
+                User
+            </button>
+            <button class="btn-header btn-danger" title="Logout">
+                <span style="font-size: 16px;">⊗</span>
+                Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- Main container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-content">
+                <!-- Data Management Section -->
+                <div class="sidebar-section open">
+                    <div class="sidebar-section-title" onclick="toggleSection(this)">
+                        <img class="sidebar-section-icon" src="../assets/icons/dashboard.png" alt="Data">
+                        <span>Data Management</span>
+                        <span class="sidebar-section-toggle">▼</span>
+                    </div>
+                    <div class="sidebar-items">
+                        <div class="sidebar-item active">
+                            <img class="sidebar-item-icon" src="../assets/icons/table_chart_view.png" alt="Schema">
+                            <span>Schema</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/bar_chart.png" alt="Dashboard">
+                            <span>Dashboard</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/calendar.png" alt="Calendar">
+                            <span>Calendar</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/files.png" alt="Files">
+                            <span>Files</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workflows Section -->
+                <div class="sidebar-section open">
+                    <div class="sidebar-section-title" onclick="toggleSection(this)">
+                        <img class="sidebar-section-icon" src="../assets/icons/automation.png" alt="Workflows">
+                        <span>Workflows</span>
+                        <span class="sidebar-section-toggle">▼</span>
+                    </div>
+                    <div class="sidebar-items">
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/automation.png" alt="Manager">
+                            <span>Workflow Manager</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Section -->
+                <div class="sidebar-section open">
+                    <div class="sidebar-section-title" onclick="toggleSection(this)">
+                        <img class="sidebar-section-icon" src="../assets/icons/computer.png" alt="System">
+                        <span>System</span>
+                        <span class="sidebar-section-toggle">▼</span>
+                    </div>
+                    <div class="sidebar-items">
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/computer.png" alt="Database">
+                            <span>Database</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/person.png" alt="Users">
+                            <span>Users</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/watch_screentime.png" alt="Health">
+                            <span>Health Check</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/folder_zip.png" alt="Backup">
+                            <span>Backup</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/id_card.png" alt="Security">
+                            <span>Security</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Section -->
+                <div class="sidebar-section open">
+                    <div class="sidebar-section-title" onclick="toggleSection(this)">
+                        <img class="sidebar-section-icon" src="../assets/icons/package_2.png" alt="Config">
+                        <span>Configuration</span>
+                        <span class="sidebar-section-toggle">▼</span>
+                    </div>
+                    <div class="sidebar-items">
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/folder_zip.png" alt="Import">
+                            <span>Import Config</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/folder_zip.png" alt="Export">
+                            <span>Export Config</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/autorenew.png" alt="Cron">
+                            <span>Run Cron</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-divider"></div>
+
+                <!-- Quick Links -->
+                <div class="sidebar-section" style="margin-bottom: 0;">
+                    <div class="sidebar-section-title" style="cursor: default; color: var(--muted);">
+                        <svg style="width: 14px; height: 14px; flex-shrink: 0;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2Z"/></svg>
+                        <span style="font-size: 11px; text-transform: none; font-weight: 500;">Favorites</span>
+                    </div>
+                    <div class="sidebar-items" style="display: block;">
+                        <div class="sidebar-item">
+                            <img class="sidebar-item-icon" src="../assets/icons/person.png" alt="users">
+                            <span>users (Schema)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+
+        <!-- Workspace -->
+        <div class="workspace">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                <a>Dashboard</a> /
+                <a>Data Management</a> /
+                <a>Schema</a> /
+                <strong>users (table)</strong>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <h1>Schema Editor</h1>
+                <p class="content-description">Edit database table structures, columns, and constraints.</p>
+
+                <div class="mockup-note">
+                    <strong>ℹ️ Mockup view:</strong> Pokazuje nową strukturę navigacji. Sekcje można zwijać/rozwijać (kliknij na tytuł).
+                </div>
+
+                <div class="card">
+                    <h3>
+                        <img class="icon" src="../assets/icons/table_chart_view.png" alt="users">
+                        users Table
+                    </h3>
+                    <p><strong>Columns:</strong> id, email, password, role, created_at, updated_at</p>
+                    <p><strong>Status:</strong> ✓ Synced with database</p>
+                </div>
+
+                <div class="card">
+                    <h3>
+                        <svg style="width: 18px; height: 18px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 1 3 5 3 19 12 23 21 19 21 5 12 1"></polyline><polyline points="12 12 3 7"></polyline><polyline points="12 23 12 12"></polyline><line x1="12" y1="12" x2="21" y2="7"></line></svg>
+                        Zalety nowego layoutu
+                    </h3>
+                    <ul style="color: var(--muted); margin: 0; padding-left: 20px;">
+                        <li>✅ Jasna hierarchia funkcji (Data → System → Config)</li>
+                        <li>✅ Sidebar głównym sposobem nawigacji (jak WordPress/Drupal)</li>
+                        <li>✅ Ikony z assets/icons/ dla consistency</li>
+                        <li>✅ Sekcje zwijane oszczędzają przestrzeń</li>
+                        <li>✅ Breadcrumbs orientują gdzie jesteś</li>
+                        <li>✅ Header uproszczony do essentials</li>
+                        <li>✅ Favorites/Recently used pinning</li>
+                        <li>✅ Responsywny na mobile (sidebar drawer)</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>
+                        <svg style="width: 18px; height: 18px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 10V3L4 14h7v7l9-11h-7Z"></path></svg>
+                        Next steps
+                    </h3>
+                    <p><strong>1.</strong> Dodać search do sidebar'a (szukaj tabeli/widgetu)</p>
+                    <p><strong>2.</strong> Animacje collapse/expand (smooth transitions)</p>
+                    <p><strong>3.</strong> Save button context-aware (tylko gdy editing config)</p>
+                    <p style="margin-bottom: 0;"><strong>4.</strong> Wdrożyć w admin/index.php</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSection(titleEl) {
+            const section = titleEl.closest('.sidebar-section');
+            section.classList.toggle('open');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+    </script>
+</body>
+</html>

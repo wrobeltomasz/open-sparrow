@@ -35,9 +35,12 @@ if ($request->isPost()) {
         die('Invalid CSRF token.');
     }
     try {
-        $data = $mapper->fromPost($tableCfg, $request->postAll());
+        $data  = $mapper->fromPost($tableCfg, $request->postAll());
         $records->update($tableCfg, $id, $data);
-        $audit->log($session->userId(), 'UPDATE', $tableCfg->name, (int)$id);
+        $logId = $audit->log($session->userId(), 'UPDATE', $tableCfg->name, (int)$id);
+        if (RECORD_SNAPSHOTS_ENABLED && $logId !== null) {
+            snapshot_record($GLOBALS['conn'], $tableCfg->schema, $tableCfg->name, (int)$id, $logId);
+        }
         header('Location: index.php?table=' . urlencode($table));
         exit;
     } catch (\RuntimeException $e) {

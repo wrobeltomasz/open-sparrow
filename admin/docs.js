@@ -30,7 +30,7 @@ export function renderDocumentation(ctx) {
             <p>The admin header exposes the main configuration tabs plus two drop-downs:</p>
             <ul style="padding-left: 20px;">
                 <li><strong>Main tabs:</strong> Schema, Dashboard, Calendar, Workflows, Files, Menu Preview.</li>
-                <li><strong>System drop-down:</strong> Database, Users, System Health, Backup Tables, Run Notifications Cron.</li>
+                <li><strong>System drop-down:</strong> Database, Users, System Health, Backup Tables, Audit &amp; Snapshots, Run Notifications Cron.</li>
                 <li><strong>Configuration drop-down:</strong> Export / Import the entire configuration as a ZIP archive (recommended before every production deployment).</li>
                 <li><strong>Save config:</strong> Persists the currently edited JSON file to <code>includes/</code>. After a successful save a green status pill appears next to the button confirming which file was written. Error pills stay visible for 6 seconds so they are not missed.</li>
                 <li><strong>Unsaved-changes guard:</strong> Tracks pending changes in config-editing tabs (Schema, Dashboard, Calendar, etc.) and shows a confirmation prompt before discarding them. Tabs that save immediately via API (Users, Database, Health, Backup) never trigger this warning.</li>
@@ -58,6 +58,7 @@ export function renderDocumentation(ctx) {
                 <li><code>spw_files</code> — metadata for files uploaded through the Files module.</li>
                 <li><code>spw_login_attempts</code> — rolling log used by the DB-backed rate limiter on <code>login.php</code> (IP-hash and username counters).</li>
                 <li><code>spw_comments</code> — user comments attached to any record. Each row links to a specific record via <code>related_table</code> + <code>related_id</code>, stores the author (<code>user_id</code>), body text (max 4000 chars), and a soft-delete timestamp.</li>
+                <li><code>spw_record_snapshots</code> — JSONB snapshots of records captured after every INSERT or UPDATE. Each row is linked to the corresponding <code>spw_users_log</code> entry via <code>log_id</code> (CASCADE DELETE). Only active when the Record Snapshots module is enabled (see section 9b).</li>
             </ul>
             <p style="background: #fef3c7; padding: 10px 14px; border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 14px;">
                 <strong>Note:</strong> Tables starting with <code>spw_</code> are treated as system tables. They are <strong>filtered out</strong> from the <em>Sync DB Tables</em> list in the Schema tab and will not appear in your application schema, even if they live in the same PostgreSQL schema as your business tables.
@@ -194,6 +195,30 @@ export function renderDocumentation(ctx) {
                 <li><strong>Export / Import config:</strong> The <em>Configuration</em> drop-down downloads or uploads a ZIP of all JSON settings. Recommended for backups and migrations to production.</li>
             </ul>
 
+            <h3 style="color: #2563eb; margin-top: 30px;">9b. Audit &amp; Record Snapshots</h3>
+            <p>
+                <strong>System → Audit &amp; Snapshots</strong> controls the record snapshot module — an optional extension of the audit trail that captures the full state of a record after every write operation.
+            </p>
+            <ul style="padding-left: 20px;">
+                <li><strong>How it works:</strong> When enabled, every INSERT (via <code>create.php</code> or the grid) and every UPDATE (via <code>edit.php</code> or the inline grid PATCH) saves a JSONB copy of the record's current state to <code>spw_record_snapshots</code>. Each snapshot is linked to the corresponding row in <code>spw_users_log</code> via <code>log_id</code>. DELETE operations are logged to <code>spw_users_log</code> but do not produce a snapshot.</li>
+                <li><strong>Toggle:</strong> The on/off switch writes to <code>includes/settings.json</code>. The setting takes effect on the next request — no server restart required. If the <code>RECORD_SNAPSHOTS_ENABLED</code> environment variable is set, the toggle is read-only (the env var wins).</li>
+                <li><strong>Prerequisite:</strong> Run <em>Initialize System Tables</em> (System → System Health) at least once after upgrading to create the <code>spw_record_snapshots</code> table. The panel shows the table status and current snapshot count.</li>
+                <li><strong>Schema of <code>spw_record_snapshots</code>:</strong>
+                    <ul style="padding-left: 20px; margin-top: 5px;">
+                        <li><code>id</code> — serial primary key.</li>
+                        <li><code>log_id</code> — FK to <code>spw_users_log.id</code> (CASCADE DELETE).</li>
+                        <li><code>table_name</code> — name of the affected table.</li>
+                        <li><code>record_id</code> — primary key of the affected record.</li>
+                        <li><code>snapshot</code> — JSONB: full record state captured with <code>row_to_json()</code> after the write.</li>
+                        <li><code>created_at</code> — timestamp of the snapshot.</li>
+                    </ul>
+                </li>
+                <li><strong>Storage growth:</strong> Every update to a frequently-changed table produces one row in <code>spw_record_snapshots</code>. Monitor table size and implement a retention policy (e.g. a cron job deleting rows older than N days) for high-volume installations.</li>
+            </ul>
+            <p style="background:#f0f9ff;padding:10px 14px;border-left:3px solid #38bdf8;border-radius:4px;font-size:14px;">
+                <strong>Tip:</strong> Use <code>SELECT s.snapshot FROM spw_record_snapshots s JOIN spw_users_log l ON l.id = s.log_id WHERE l.target_table = 'your_table' AND s.record_id = 42 ORDER BY s.created_at DESC</code> to retrieve the full change history of a specific record.
+            </p>
+
             <h3 style="color: #2563eb; margin-top: 30px;">10. Files Module</h3>
             <p>The <strong>Files</strong> tab is a central repository for documents and media, backed by the <code>spw_files</code> table.</p>
             <ul style="padding-left: 20px;">
@@ -312,6 +337,7 @@ export function renderDocumentation(ctx) {
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>THUMBNAIL_MAX_WIDTH</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>300</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Max thumbnail width in pixels.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>NOTIFICATIONS_DROPDOWN_LIMIT</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>10</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Max items shown in the bell notification dropdown.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>HSTS_MAX_AGE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>31536000</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">HSTS max-age in seconds (1 year). Set <code>0</code> to disable on plain HTTP.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>RECORD_SNAPSHOTS_ENABLED</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>false</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Enable record snapshots system-wide. When set, overrides the admin panel toggle in <code>includes/settings.json</code>.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGDATABASE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL database name.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGUSER</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL user.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGPASSWORD</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL password.</td></tr>

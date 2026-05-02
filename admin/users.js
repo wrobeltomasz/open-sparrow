@@ -234,8 +234,6 @@ export async function renderUsersEditor(ctx) {
                 overlay.appendChild(box);
                 document.body.appendChild(overlay);
 
-                const msgEl    = box.querySelector('#cpw-msg');
-                const newInput = box.querySelector('#cpw-new');
                 (box.querySelector('#cpw-current') ?? newInput).focus();
 
                 box.querySelector('#cpw-cancel').addEventListener('click', () => overlay.remove());

@@ -130,9 +130,46 @@ function type_min_value(string $type)
     return '';
 }
 
-// Log action to db
-function log_user_action($conn, int $userId, string $action, ?string $targetTable = null, ?int $recordId = null): void
+// Log action to db — returns the new log row id so callers can attach snapshots.
+function log_user_action($conn, int $userId, string $action, ?string $targetTable = null, ?int $recordId = null): ?int
 {
-    $sql = 'INSERT INTO ' . sys_table('users_log') . ' (user_id, action, target_table, record_id) VALUES ($1, $2, $3, $4)';
-    @pg_query_params($conn, $sql, [$userId, $action, $targetTable, $recordId]);
+    $sql = 'INSERT INTO ' . sys_table('users_log')
+         . ' (user_id, action, target_table, record_id) VALUES ($1, $2, $3, $4) RETURNING id';
+    $res = @pg_query_params($conn, $sql, [$userId, $action, $targetTable, $recordId]);
+    if ($res && ($row = pg_fetch_row($res))) {
+        return (int) $row[0];
+    }
+    return null;
+}
+
+// Fetch a single record as a JSON string using row_to_json().
+// row_to_json requires SELECT * to capture all columns dynamically regardless of schema.
+function fetch_record_json($conn, string $schemaName, string $table, int $recordId): ?string
+{
+    $safeRef = pg_ident($schemaName) . '.' . pg_ident($table);
+    $res = pg_query_params(
+        $conn,
+        "SELECT row_to_json(t) FROM (SELECT * FROM {$safeRef} WHERE id = \$1) t",
+        [$recordId]
+    );
+    if (!$res) {
+        return null;
+    }
+    $row = pg_fetch_row($res);
+    return ($row && $row[0] !== null) ? $row[0] : null;
+}
+
+// Save a JSONB snapshot of the current record state linked to a log entry.
+function snapshot_record($conn, string $schemaName, string $table, int $recordId, int $logId): void
+{
+    $json = fetch_record_json($conn, $schemaName, $table, $recordId);
+    if ($json === null) {
+        return;
+    }
+    @pg_query_params(
+        $conn,
+        'INSERT INTO ' . sys_table('record_snapshots')
+            . ' (log_id, table_name, record_id, snapshot) VALUES ($1, $2, $3, $4)',
+        [$logId, $table, $recordId, $json]
+    );
 }
