@@ -1,4 +1,4 @@
-/* admin/style.css */
+﻿/* admin/style.css */
 /* Modern UI configuration variables */
 :root {
   --bg:           #F4F7F9;
@@ -17,130 +17,418 @@
   --shadow-md:    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --radius:       6px;
   --radius-lg:    10px;
-  --header-h:     60px;
+  --header-h:     56px;
+  --nav-w:        260px;
   --transition:   150ms ease;
 }
 
-/* Base styles and typography */
+/* ===== Base ===== */
+* { box-sizing: border-box; }
+
 body {
     margin: 0;
     padding: 0;
-    background-color: var(--bg); 
+    background-color: var(--bg);
     color: var(--text);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
 }
 
-/* Top header navigation */
-header {
+/* ===== First-run banner ===== */
+.first-run-banner {
+    background: #fef3c7;
+    border-bottom: 2px solid #f59e0b;
+    padding: 10px 20px;
+    font-size: 13px;
+    color: #92400e;
+    text-align: center;
+}
+
+.first-run-banner a {
+    color: #92400e;
+    font-weight: bold;
+}
+
+/* ===== Header ===== */
+.admin-header {
     background-color: var(--accent-dark);
     display: flex;
     align-items: center;
-    padding: 0 20px;
+    justify-content: space-between;
+    padding: 0 16px;
     height: var(--header-h);
     box-shadow: var(--shadow-sm);
     color: white;
+    position: relative;
+    z-index: 20;
 }
 
-/* Header tabs layout */
-.admin-header-tabs {
+.admin-header-left {
     display: flex;
+    align-items: center;
     gap: 12px;
-    margin-right: auto;
-    margin-left: 30px;
 }
 
-/* Individual header tab */
-.admin-tab {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--accent-light);
-    padding: 8px 16px;
+.admin-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Hamburger button */
+.nav-collapse-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-radius: var(--radius);
+    transition: background var(--transition);
+    flex-shrink: 0;
+}
+
+.nav-collapse-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-collapse-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: white;
+    border-radius: 1px;
+}
+
+/* Brand logo + name */
+.brand-logo img {
+    display: block;
+    height: 28px;
+    width: auto;
+}
+
+.brand-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+}
+
+/* Debug toggle */
+.debug-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.debug-toggle-label input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* Save button */
+.btn-save {
+    background: var(--ok);
+    color: white;
+    border: none;
+    padding: 7px 14px;
     border-radius: var(--radius);
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all var(--transition);
+    font-size: 13px;
+    font-weight: 600;
+    transition: background var(--transition);
+    white-space: nowrap;
 }
 
-/* Tab active and hover states */
-.admin-tab.active, .admin-tab:hover {
-    background: rgba(255, 255, 255, 0.15);
+.btn-save:hover { background: #15803d; }
+
+/* Docs button in header */
+.btn-header-icon {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     color: white;
-    border-color: rgba(255, 255, 255, 0.3);
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background var(--transition);
 }
 
-/* Main content wrapper */
-.admin-container {
+.btn-header-icon:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-header-icon img {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+}
+
+/* Logout button */
+.btn-header-logout {
+    background: #ef4444;
+    color: white;
+    border: 1px solid #ef4444;
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background var(--transition);
+    white-space: nowrap;
+}
+
+.btn-header-logout:hover { background: #b91c1c; }
+
+/* ===== Main layout: nav + content ===== */
+.admin-layout {
     display: flex;
-    flex-direction: row;
-    align-items: stretch;
     height: calc(100vh - var(--header-h));
-    width: 100%;
     overflow: hidden;
 }
 
-/* Sidebar navigation */
+/* ===== Navigation sidebar ===== */
+.admin-nav {
+    flex: 0 0 var(--nav-w);
+    width: var(--nav-w);
+    background-color: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: width 200ms ease, flex-basis 200ms ease;
+}
+
+.admin-nav.collapsed {
+    flex: 0 0 0;
+    width: 0;
+}
+
+.nav-sections {
+    padding: 16px 10px;
+    flex: 1;
+}
+
+/* Section group */
+.nav-section {
+    margin-bottom: 4px;
+}
+
+/* Section header (clickable, collapsible) */
+.nav-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    cursor: pointer;
+    user-select: none;
+    border-radius: var(--radius);
+    transition: background var(--transition), color var(--transition);
+}
+
+.nav-section-header:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+.nav-section-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.5;
+}
+
+.nav-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    flex: 1;
+}
+
+.nav-chevron {
+    font-size: 10px;
+    color: var(--muted);
+    transition: transform 200ms ease;
+    margin-left: auto;
+}
+
+.nav-section.open .nav-chevron {
+    transform: rotate(180deg);
+}
+
+/* Section items container */
+.nav-section-items {
+    display: none;
+    padding: 2px 0 6px 0;
+}
+
+.nav-section.open .nav-section-items {
+    display: block;
+}
+
+/* Nav item — admin-tab inside sidebar */
+.admin-nav .admin-tab,
+.admin-nav .nav-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 9px 10px 9px 20px;
+    background: none;
+    border: none;
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition), color var(--transition);
+    white-space: nowrap;
+}
+
+.admin-nav .admin-tab:hover,
+.admin-nav .nav-action-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+.admin-nav .admin-tab.active {
+    background: var(--accent-mid);
+    color: var(--accent);
+    font-weight: 600;
+    border-left: 3px solid var(--accent);
+    padding-left: 17px;
+}
+
+/* Nav item icon */
+.nav-item-icon {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    opacity: 0.45;
+}
+
+.admin-nav .admin-tab.active .nav-item-icon,
+.admin-nav .admin-tab:hover .nav-item-icon,
+.admin-nav .nav-action-btn:hover .nav-item-icon {
+    opacity: 0.75;
+}
+
+/* ===== Main content column ===== */
+.admin-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Breadcrumb bar */
+.admin-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 24px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border-light);
+    font-size: 13px;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+
+.breadcrumb-root {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.breadcrumb-sep {
+    color: var(--border);
+    font-size: 15px;
+}
+
+.breadcrumb-current {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* Editor area: item list sidebar + workspace */
+.admin-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+/* ===== Item list sidebar (existing — tables/widgets list) ===== */
 .admin-sidebar {
     flex: 0 0 260px;
     width: 260px;
-    background-color: var(--panel); 
+    background-color: var(--panel);
     border-right: 1px solid var(--border);
     padding: 20px 15px;
     overflow-y: auto;
 }
 
-/* Sidebar title */
 .admin-sidebar h3 {
     margin-top: 0;
     margin-bottom: 20px;
     color: var(--text);
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     padding-left: 10px;
 }
 
-/* Sidebar list reset */
 .admin-sidebar ul {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-/* Sidebar items */
 .admin-sidebar li {
-    padding: 12px 15px;
+    padding: 10px 14px;
     cursor: pointer;
     border-radius: var(--radius);
     color: var(--muted);
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     transition: all var(--transition);
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
-/* Sidebar active item */
-.admin-sidebar li:hover, .admin-sidebar li.active {
+.admin-sidebar li:hover,
+.admin-sidebar li.active {
     background-color: var(--accent-light);
     color: var(--accent);
     font-weight: 600;
 }
 
-/* Main workspace area */
+/* ===== Main workspace area ===== */
 .admin-workspace {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 30px;
+    padding: 28px;
     overflow-y: auto;
     background-color: var(--bg);
 }
 
-/* Form group spacing */
+/* ===== Form elements ===== */
 .form-group {
     margin-bottom: 24px;
 }
 
-/* Form field labels */
 .form-group label {
     display: block;
     margin-bottom: 6px;
@@ -149,7 +437,6 @@ header {
     color: var(--text);
 }
 
-/* Form field hints */
 .help-text {
     display: block;
     font-size: 12px;
@@ -157,7 +444,6 @@ header {
     margin-top: 6px;
 }
 
-/* Standard inputs and selects */
 .form-group input[type="text"],
 .form-group input[type="password"],
 .form-group input[type="number"],
@@ -176,7 +462,6 @@ header {
     box-sizing: border-box;
 }
 
-/* Input focus state */
 .form-group input[type="text"]:focus,
 .form-group input[type="password"]:focus,
 .form-group input[type="number"]:focus,
@@ -187,13 +472,11 @@ header {
     box-shadow: 0 0 0 3px var(--accent-mid);
 }
 
-/* Textarea specific styles */
 .form-group textarea {
     resize: vertical;
     min-height: 100px;
 }
 
-/* Color picker specific styles */
 .form-group input[type="color"] {
     width: 60px;
     height: 40px;
@@ -203,7 +486,6 @@ header {
     cursor: pointer;
 }
 
-/* Checkbox specific styles */
 .form-group input[type="checkbox"] {
     margin-right: 12px;
     width: 16px;
@@ -212,8 +494,9 @@ header {
     cursor: pointer;
 }
 
-/* Section blocks */
-.column-block, .subtable-block {
+/* ===== Section blocks (column/subtable editors) ===== */
+.column-block,
+.subtable-block {
     background: var(--panel);
     border: 1px solid var(--border-light);
     padding: 20px;
@@ -222,8 +505,8 @@ header {
     box-shadow: var(--shadow-sm);
 }
 
-/* Section block titles */
-.column-block h4, .subtable-block h4 {
+.column-block h4,
+.subtable-block h4 {
     margin-top: 0;
     color: var(--text);
     border-bottom: 1px solid var(--border-light);
@@ -231,7 +514,7 @@ header {
     font-size: 15px;
 }
 
-/* Standard primary button */
+/* ===== Buttons ===== */
 .btn-add {
     background: var(--ok);
     color: white;
@@ -245,11 +528,9 @@ header {
     transition: background var(--transition), transform 100ms;
 }
 
-/* Button active and hover */
 .btn-add:hover { background: #15803d; }
 .btn-add:active { transform: scale(0.98); }
 
-/* Danger removal button */
 .btn-remove {
     background: var(--danger);
     color: white;
@@ -263,15 +544,14 @@ header {
     transition: background var(--transition);
 }
 
-/* Danger hover */
 .btn-remove:hover { background: #b91c1c; }
 
-/* Standard secondary logout button */
+/* Legacy btn-logout kept for backward-compat with JS-rendered content */
 .btn-logout {
     background: transparent;
     color: white;
     border: 1px solid rgba(255,255,255,0.3);
-    padding: 8px 16px;
+    padding: 7px 14px;
     border-radius: var(--radius);
     cursor: pointer;
     font-size: 13px;
@@ -279,105 +559,24 @@ header {
     transition: all var(--transition);
 }
 
-/* Logout hover */
 .btn-logout:hover { background: rgba(255,255,255,0.1); }
 
-/* User menu layout right side */
-.header-user-menu {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-/* Save main button - Zmieniony na zielony */
+/* Save button alias — referenced by app.js via id="btnSave" */
 #btnSave {
-    background: var(--ok); 
+    background: var(--ok);
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 7px 14px;
     border-radius: var(--radius);
     cursor: pointer;
     font-size: 13px;
-    font-weight: bold;
+    font-weight: 600;
     transition: background var(--transition);
 }
 
-/* Save button hover */
 #btnSave:hover { background: #15803d; }
 
-/* Header dropdown container */
-.config-dropdown { 
-    position: relative; 
-    display: inline-block; 
-    margin-right: 15px; 
-    padding-right: 15px; 
-    border-right: 1px solid rgba(255, 255, 255, 0.2); 
-}
-
-/* Dropdown list layout */
-.config-dropdown-content { 
-    display: none; 
-    position: absolute; 
-    right: 15px; 
-    top: 100%; 
-    margin-top: 8px; 
-    background-color: var(--panel); 
-    min-width: 200px; 
-    box-shadow: var(--shadow-md); 
-    border-radius: var(--radius); 
-    z-index: 100; 
-    overflow: hidden; 
-    border: 1px solid var(--border); 
-}
-
-/* Dropdown list buttons */
-.config-dropdown-content button { 
-    width: 100%; 
-    text-align: left; 
-    padding: 12px 16px; 
-    border: none; 
-    background: transparent; 
-    color: var(--text); 
-    font-size: 13px; 
-    cursor: pointer; 
-    border-bottom: 1px solid var(--border-light); 
-    transition: background var(--transition), color var(--transition); 
-    font-weight: 500; 
-    border-radius: 0;
-}
-
-/* Naprawa kolorów dla przycisków .admin-tab wewnątrz dropdown */
-.config-dropdown-content .admin-tab {
-    color: var(--text);
-}
-
-/* Dropdown hover element */
-.config-dropdown-content button:hover,
-.config-dropdown-content .admin-tab:hover { 
-    background-color: var(--accent-light); 
-    color: var(--accent); 
-    border-color: transparent;
-}
-
-/* Dropdown active element fix */
-.config-dropdown-content .admin-tab.active {
-    background-color: var(--accent-mid);
-    color: var(--accent-dark);
-    font-weight: 600;
-    border-color: transparent;
-}
-
-/* Dropdown last child fix */
-.config-dropdown-content button:last-child { 
-    border-bottom: none; 
-}
-
-/* Dropdown open state */
-.config-dropdown.active .config-dropdown-content { 
-    display: block; 
-}
-
-/* Data tables general class */
+/* ===== Data tables ===== */
 .admin-table {
     width: 100%;
     border-collapse: collapse;
@@ -388,7 +587,6 @@ header {
     border: 1px solid var(--border-light);
 }
 
-/* Data tables header */
 .admin-table th {
     background: var(--bg);
     padding: 12px;
@@ -398,14 +596,13 @@ header {
     border-bottom: 1px solid var(--border-light);
 }
 
-/* Data tables cells */
 .admin-table td {
     padding: 12px;
     border-bottom: 1px solid var(--border-light);
     color: var(--muted);
 }
 
-/* Menu Preview tab — wraps the FE nav structure; resets sticky/full-height layout */
+/* ===== Menu Preview tab ===== */
 .menu-preview-wrap {
     display: inline-block;
 }
@@ -420,12 +617,10 @@ header {
     border-radius: var(--radius);
 }
 
-/* Dimmed appearance for hidden items so admins can still see them */
 .menu-preview-wrap .preview-hidden {
     opacity: 0.4;
 }
 
-/* HIDDEN badge appended inside the link for suppressed items */
 .menu-preview-badge {
     font-size: 10px;
     font-weight: 700;
@@ -445,7 +640,7 @@ header {
     margin: 0;
 }
 
-/* ── Drag-and-drop: Menu Preview ─────────────────────────────────────────── */
+/* ===== Drag-and-drop: Menu Preview ===== */
 .menu-dnd-item {
     cursor: grab;
     position: relative;
@@ -455,12 +650,10 @@ header {
     cursor: grabbing;
 }
 
-/* Ghost for the item being dragged */
 .dnd-dragging {
     opacity: 0.35;
 }
 
-/* Target highlighted for nesting (drop-on-item → become child) */
 .dnd-nest-target > .custom-nav-link,
 .dnd-nest-target > details > summary {
     outline: 2px dashed var(--accent);
@@ -469,7 +662,6 @@ header {
     border-radius: var(--radius);
 }
 
-/* Horizontal insert-position indicator line */
 .menu-drop-line {
     height: 2px;
     background: var(--accent);

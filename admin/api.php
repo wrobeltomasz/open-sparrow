@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Ensure state-changing actions use POST method to prevent CSRF via GET
-$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'users_change_password', 'create_table', 'add_column', 'run_cron_notifications', 'backup_tables', 'set_snapshot_setting'];
+$postActions = ['save', 'import', 'init_db', 'users_add', 'users_toggle', 'users_update_role', 'users_change_password', 'create_table', 'add_column', 'schema_add_table', 'run_cron_notifications', 'backup_tables', 'set_snapshot_setting'];
 if (in_array($action, $postActions, true) && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Content-Type: application/json');
     http_response_code(405);
@@ -362,12 +362,18 @@ if ($action === 'create_table') {
 if ($action === 'add_column') {
     header('Content-Type: application/json');
     $input = json_decode(file_get_contents('php://input'), true);
-    
+
     // Strict input sanitization
     $schemaName = preg_replace('/[^a-z0-9_]/', '', strtolower($input['schema'] ?? 'public'));
-    $tableName = preg_replace('/[^a-z0-9_]/', '', strtolower($input['table'] ?? ''));
-    $colName = preg_replace('/[^a-z0-9_]/', '', strtolower($input['column'] ?? ''));
-    $colType = $input['type'] ?? 'varchar(255)';
+    $tableName  = preg_replace('/[^a-z0-9_]/', '', strtolower($input['table']  ?? ''));
+    $colName    = preg_replace('/[^a-z0-9_]/', '', strtolower($input['column'] ?? ''));
+    $colType    = $input['type'] ?? 'varchar(255)';
+    $comment    = isset($input['comment']) ? trim((string)$input['comment']) : '';
+    $fkTable    = preg_replace('/[^a-z0-9_]/', '', strtolower($input['fk_table']  ?? ''));
+    $fkCol      = preg_replace('/[^a-z0-9_]/', '', strtolower($input['fk_column'] ?? ''));
+    $indexType  = $input['index'] ?? '';
+    $notNull    = !empty($input['not_null']);
+    $default    = trim((string)($input['default'] ?? ''));
 
     if (empty($tableName) || empty($colName) || empty($schemaName)) {
         echo json_encode(['status' => 'error', 'error' => 'Invalid schema, table or column name.']);
@@ -377,30 +383,172 @@ if ($action === 'add_column') {
     try {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
-        
-        // Escape parameters properly
-        $safeSchema = pg_escape_identifier($conn, $schemaName);
-        $safeTable = pg_escape_identifier($conn, $tableName);
-        $safeCol = pg_escape_identifier($conn, $colName);
 
-        // Allow predefined data types only
+        $safeSchema = pg_escape_identifier($conn, $schemaName);
+        $safeTable  = pg_escape_identifier($conn, $tableName);
+        $safeCol    = pg_escape_identifier($conn, $colName);
+
         $allowedTypes = ['varchar(255)', 'int4', 'int8', 'boolean', 'text', 'date', 'timestamp'];
         if (!in_array($colType, $allowedTypes, true)) {
             throw new Exception('Invalid data type provided.');
         }
 
-        // Alter table using explicit schema syntax
         $sql = "ALTER TABLE " . $safeSchema . "." . $safeTable . " ADD COLUMN " . $safeCol . " " . $colType;
-        $res = @pg_query($conn, $sql);
 
+        if ($default !== '') {
+            $safeExpressions = ['now()', 'current_timestamp', 'current_date', 'current_time', 'true', 'false', 'null'];
+            if (in_array(strtolower($default), $safeExpressions, true)) {
+                $sql .= ' DEFAULT ' . strtolower($default);
+            } elseif (preg_match('/^\-?\d+(\.\d+)?$/', $default)) {
+                $sql .= ' DEFAULT ' . $default;
+            } else {
+                $sql .= ' DEFAULT ' . pg_escape_literal($conn, $default);
+            }
+        }
+
+        if ($notNull) {
+            $sql .= ' NOT NULL';
+        }
+
+        $res = @pg_query($conn, $sql);
         if (!$res) {
             admin_db_fail($conn, 'add_column');
+        }
+
+        if ($comment !== '') {
+            $safeComment = pg_escape_literal($conn, $comment);
+            $sqlComment = "COMMENT ON COLUMN " . $safeSchema . "." . $safeTable . "." . $safeCol . " IS " . $safeComment;
+            @pg_query($conn, $sqlComment);
+        }
+
+        if ($fkTable !== '' && $fkCol !== '') {
+            $safeFkTable  = pg_escape_identifier($conn, $fkTable);
+            $safeFkCol    = pg_escape_identifier($conn, $fkCol);
+            $constraintName = pg_escape_identifier($conn, 'fk_' . $tableName . '_' . $colName);
+            $sqlFk = "ALTER TABLE " . $safeSchema . "." . $safeTable
+                . " ADD CONSTRAINT " . $constraintName
+                . " FOREIGN KEY (" . $safeCol . ")"
+                . " REFERENCES " . $safeSchema . "." . $safeFkTable . " (" . $safeFkCol . ")";
+            $resFk = @pg_query($conn, $sqlFk);
+            if (!$resFk) {
+                admin_db_fail($conn, 'add_column_fk');
+            }
+        }
+
+        $allowedIndexTypes = ['btree', 'hash', 'unique'];
+        if (in_array($indexType, $allowedIndexTypes, true)) {
+            $idxName = pg_escape_identifier($conn, 'idx_' . $tableName . '_' . $colName);
+            $unique  = $indexType === 'unique' ? 'UNIQUE ' : '';
+            $using   = $indexType === 'hash' ? 'HASH' : 'BTREE';
+            $sqlIdx  = "CREATE {$unique}INDEX {$idxName} ON " . $safeSchema . "." . $safeTable
+                . " USING {$using} (" . $safeCol . ")";
+            $resIdx  = @pg_query($conn, $sqlIdx);
+            if (!$resIdx) {
+                admin_db_fail($conn, 'add_column_index');
+            }
         }
 
         echo json_encode(['status' => 'success']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'error' => $e->getMessage()]);
     }
+    exit;
+}
+
+// Register a newly created table in schema.json
+if ($action === 'schema_add_table') {
+    header('Content-Type: application/json');
+
+    if ($isDemoMode) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'error' => 'Disabled in Demo Mode.']);
+        exit;
+    }
+
+    $input       = json_decode(file_get_contents('php://input'), true);
+    $tableName   = preg_replace('/[^a-z0-9_]/', '', strtolower($input['table']   ?? ''));
+    $schemaName  = preg_replace('/[^a-z0-9_]/', '', strtolower($input['schema']  ?? 'public'));
+    $displayName = trim(strip_tags((string)($input['display_name'] ?? '')));
+    $columns     = is_array($input['columns'] ?? null) ? $input['columns'] : [];
+
+    if (empty($tableName)) {
+        echo json_encode(['status' => 'error', 'error' => 'Table name is required.']);
+        exit;
+    }
+
+    if ($displayName === '') {
+        $displayName = ucwords(str_replace('_', ' ', $tableName));
+    }
+
+    $typeMap = [
+        'varchar(255)' => 'text',
+        'text'         => 'text',
+        'int4'         => 'number',
+        'int8'         => 'number',
+        'boolean'      => 'boolean',
+        'date'         => 'date',
+        'timestamp'    => 'datetime',
+    ];
+
+    $colsObj = [
+        'id' => ['display_name' => 'ID', 'type' => 'number', 'not_null' => true, 'show_in_grid' => false, 'show_in_edit' => false, 'readonly' => true],
+    ];
+
+    foreach ($columns as $col) {
+        $cName = preg_replace('/[^a-z0-9_]/', '', strtolower($col['name'] ?? ''));
+        $cType = $col['type'] ?? 'varchar(255)';
+        if ($cName === '' || !isset($typeMap[$cType])) {
+            continue;
+        }
+        $cDisplay = trim(strip_tags((string)($col['display_name'] ?? '')));
+        if ($cDisplay === '') {
+            $cDisplay = ucwords(str_replace('_', ' ', $cName));
+        }
+        $entry = [
+            'display_name' => $cDisplay,
+            'type'         => $typeMap[$cType],
+            'not_null'     => !empty($col['not_null']),
+            'show_in_grid' => true,
+            'show_in_edit' => true,
+            'readonly'     => false,
+        ];
+        if (!empty($col['description'])) {
+            $entry['description'] = trim(strip_tags((string)$col['description']));
+        }
+        if (!empty($col['fk_table']) && !empty($col['fk_column'])) {
+            $entry['fk_table']  = preg_replace('/[^a-z0-9_]/', '', strtolower($col['fk_table']));
+            $entry['fk_column'] = preg_replace('/[^a-z0-9_]/', '', strtolower($col['fk_column']));
+        }
+        $colsObj[$cName] = $entry;
+    }
+
+    $schemaFile = __DIR__ . '/../includes/schema.json';
+    $schemaData = [];
+    if (file_exists($schemaFile)) {
+        $schemaData = json_decode(file_get_contents($schemaFile), true) ?? [];
+    }
+    if (!isset($schemaData['tables'])) {
+        $schemaData['tables'] = [];
+    }
+
+    $schemaData['tables'][$tableName] = [
+        'display_name' => $displayName,
+        'schema'       => $schemaName,
+        'columns'      => $colsObj,
+        'foreign_keys' => [],
+        'subtables'    => [],
+        'hidden'       => false,
+        'icon'         => '',
+    ];
+
+    $encoded = json_encode($schemaData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    if (strlen($encoded) > CONFIG_FILE_MAX_BYTES) {
+        echo json_encode(['status' => 'error', 'error' => 'schema.json would exceed maximum allowed size.']);
+        exit;
+    }
+
+    file_put_contents($schemaFile, $encoded);
+    echo json_encode(['status' => 'success']);
     exit;
 }
 

@@ -77,99 +77,228 @@ if (empty($_SESSION['csrf_token'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="current-user-id" content="<?php echo (int)($_SESSION['user_id'] ?? 0); ?>">
-    <title>Sparrow Admin | Dashboard</title>
+    <title>Sparrow Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES); ?>">
-    
+
     <link rel="stylesheet" href="../assets/css/styles.css">
     <link rel="stylesheet" href="style.css?v=<?php echo @filemtime('style.css'); ?>">
 </head>
 <body>
-    <?php if ($firstRun) : ?>
-    <div style="background:#fef3c7; border-bottom:2px solid #f59e0b; padding:12px 20px; font-size:14px; color:#92400e; text-align:center;">
-        <strong>First-run setup mode.</strong>
-        Go to <strong>System &rarr; Database</strong> and click <strong>Initialize System Tables</strong>.
-        This will create the default admin account (<code>admin</code> / <code>admin</code>).
-        Afterwards <a href="../login.php" style="color:#92400e; font-weight:bold;">log in</a> and change the password immediately.
-    </div>
-    <?php endif; ?>
-    <header>
-    <a href="/" class="brand-logo">
-        <img src="../assets/img/logo-blue.png" alt="Sparrow Logo" />
-    </a>
-        
-        <div class="admin-header-tabs">
-            <button class="admin-tab active" data-file="schema">Schema</button>
-            <button class="admin-tab" data-file="dashboard">Dashboard</button>
-            <button class="admin-tab" data-file="calendar">Calendar</button>
-            <button class="admin-tab" data-file="workflows">Workflows</button>
-            <button class="admin-tab" data-file="files">Files</button>
-            <button class="admin-tab" data-file="menu">Menu Preview</button>
-        </div>
 
-        <div class="header-user-menu">
-            <label style="color: white; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; opacity: 0.9; margin-right: 10px;">
-                <input type="checkbox" id="debugToggle" style="cursor: pointer; width: 16px; height: 16px; accent-color: var(--accent);">
-                Debug FE mode
-            </label>
-            
-            <div class="config-dropdown" id="systemDropdownContainer">
-                <button type="button" class="btn-logout" style="background: #334155; border-color: #475569;" onclick="document.getElementById('systemDropdownContainer').classList.toggle('active')">System &#9662;</button>
-                <div class="config-dropdown-content">
-                    <button class="admin-tab" data-file="database">Database</button>
-                    <button class="admin-tab" data-file="users">Users</button>
-                    <button class="admin-tab" data-file="health">System Health</button>
-                    <button class="admin-tab" data-file="backup">Backup Tables</button>
-                    <button class="admin-tab" data-file="audit">Audit &amp; Snapshots</button>
-                    <button id="btnRunCron" type="button">Run Notifications Cron</button>
-                </div>
-            </div>
-            
-            <button id="btnSave" type="button">Save config</button>
-            
-            <div class="config-dropdown" id="configDropdownContainer">
-                <button type="button" class="btn-logout" style="background: var(--accent); border-color: var(--accent);" onclick="document.getElementById('configDropdownContainer').classList.toggle('active')">Configuration &#9662;</button>
-                <div class="config-dropdown-content">
-                    <button id="btnExport" type="button">Export config files</button>
-                    <button id="btnImport" type="button">Import config files</button>
-                </div>
-                <input type="file" id="importFileInput" accept=".zip" style="display: none;">
-            </div>
+<?php if ($firstRun) : ?>
+<div class="first-run-banner">
+    <strong>First-run setup mode.</strong>
+    Go to <strong>System &rarr; Database</strong> and click <strong>Initialize System Tables</strong>.
+    This will create the default admin account (<code>admin</code> / <code>admin</code>).
+    Afterwards <a href="../login.php">log in</a> and change the password immediately.
+</div>
+<?php endif; ?>
 
-        <button class="admin-tab" data-file="docs" title="Admin panel documentation" style="background: transparent; border: none; cursor: pointer; padding: 0; margin-right: 10px; display: flex; align-items: center;">
-            <img src="../assets/icons/book_3s.png" alt="Docs" style="width: 24px; height: 24px; filter: brightness(0) invert(1); opacity: 0.9; pointer-events: none;">
+<!-- Header -->
+<header class="admin-header">
+    <div class="admin-header-left">
+        <button class="nav-collapse-btn" id="navCollapseBtn" title="Toggle sidebar" aria-label="Toggle sidebar">
+            <span></span><span></span><span></span>
         </button>
-            
-            <button onclick="window.location.href='../logout.php'" class="btn-logout" style="background: #ef4444; border-color: #ef4444;">Logout</button>
+        <a href="/" class="brand-logo">
+            <img src="../assets/img/logo-blue.png" alt="Sparrow Logo">
+        </a>
+        <span class="brand-name">Sparrow Admin</span>
+    </div>
+
+    <div class="admin-header-right">
+        <label class="debug-toggle-label">
+            <input type="checkbox" id="debugToggle">
+            Debug FE
+        </label>
+
+        <button id="btnSave" type="button" class="btn-save">Save config</button>
+
+        <button class="admin-tab btn-header-icon" data-file="docs" title="Documentation">
+            <img src="../assets/icons/book_3s.png" alt="Docs">
+            <span>Docs</span>
+        </button>
+
+        <button onclick="window.location.href='../logout.php'" class="btn-header-logout">Logout</button>
+    </div>
+</header>
+
+<!-- Main layout -->
+<div class="admin-layout">
+
+    <!-- Navigation sidebar -->
+    <nav class="admin-nav" id="adminNav">
+        <div class="nav-sections">
+
+            <!-- DATA MANAGEMENT -->
+            <div class="nav-section open">
+                <div class="nav-section-header">
+                    <img class="nav-section-icon" src="../assets/icons/ballot.png" alt="">
+                    <span class="nav-section-label">Data Management</span>
+                    <span class="nav-chevron">▼</span>
+                </div>
+                <div class="nav-section-items">
+                    <button class="admin-tab active" data-file="schema">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Schema
+                    </button>
+                    <button class="admin-tab" data-file="dashboard">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Dashboard
+                    </button>
+                    <button class="admin-tab" data-file="calendar">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Calendar
+                    </button>
+                    <button class="admin-tab" data-file="files">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Files
+                    </button>
+                    <button class="admin-tab" data-file="menu">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Menu Preview
+                    </button>
+                    <button class="admin-tab" data-file="add_table">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Add Table
+                    </button>
+                </div>
+            </div>
+
+            <!-- WORKFLOWS -->
+            <div class="nav-section open">
+                <div class="nav-section-header">
+                    <img class="nav-section-icon" src="../assets/icons/ballot.png" alt="">
+                    <span class="nav-section-label">Workflows</span>
+                    <span class="nav-chevron">▼</span>
+                </div>
+                <div class="nav-section-items">
+                    <button class="admin-tab" data-file="workflows">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Workflow Manager
+                    </button>
+                </div>
+            </div>
+
+            <!-- SYSTEM -->
+            <div class="nav-section open">
+                <div class="nav-section-header">
+                    <img class="nav-section-icon" src="../assets/icons/ballot.png" alt="">
+                    <span class="nav-section-label">System</span>
+                    <span class="nav-chevron">▼</span>
+                </div>
+                <div class="nav-section-items">
+                    <button class="admin-tab" data-file="database">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Database
+                    </button>
+                    <button class="admin-tab" data-file="users">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Users
+                    </button>
+                    <button class="admin-tab" data-file="health">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Health Check
+                    </button>
+                    <button class="admin-tab" data-file="backup">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Backup Tables
+                    </button>
+                    <button class="admin-tab" data-file="audit">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Audit &amp; Snapshots
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONFIGURATION -->
+            <div class="nav-section open">
+                <div class="nav-section-header">
+                    <img class="nav-section-icon" src="../assets/icons/ballot.png" alt="">
+                    <span class="nav-section-label">Configuration</span>
+                    <span class="nav-chevron">▼</span>
+                </div>
+                <div class="nav-section-items">
+                    <button id="btnExport" type="button" class="nav-action-btn">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Export Config
+                    </button>
+                    <button id="btnImport" type="button" class="nav-action-btn">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Import Config
+                    </button>
+                    <button id="btnRunCron" type="button" class="nav-action-btn">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Run Notifications Cron
+                    </button>
+                </div>
+            </div>
+
+        </div><!-- /nav-sections -->
+    </nav><!-- /admin-nav -->
+
+    <!-- Main content area -->
+    <div class="admin-main">
+
+        <!-- Breadcrumb -->
+        <div class="admin-breadcrumb">
+            <span class="breadcrumb-root">Admin</span>
+            <span class="breadcrumb-sep">›</span>
+            <span class="breadcrumb-current" id="breadcrumbCurrent">Schema</span>
         </div>
-    </header>
 
-    <main class="admin-container">
-        <aside class="admin-sidebar" id="sidebar">
-            <h3 id="sidebarTitle">Tables</h3>
-            <ul id="itemList"></ul>
-        </aside>
+        <!-- Editor area: item list sidebar + workspace -->
+        <div class="admin-content">
+            <aside class="admin-sidebar" id="sidebar">
+                <h3 id="sidebarTitle">Tables</h3>
+                <ul id="itemList"></ul>
+            </aside>
 
-        <section class="admin-workspace" id="workspace">
-            <h2 style="margin-top: 0;">Select an item to edit</h2>
-            <div id="editorForm"></div>
-        </section>
-    </main>
+            <section class="admin-workspace" id="workspace">
+                <h2 style="margin-top: 0;">Select an item to edit</h2>
+                <div id="editorForm"></div>
+            </section>
+        </div>
 
-    <script type="module" src="app.js?v=<?php echo @filemtime('app.js'); ?>"></script>
-    <script>
-        // Close the dropdowns when clicking outside of them
-        window.addEventListener('click', function(e) {
-            const configDropdown = document.getElementById('configDropdownContainer');
-            if (configDropdown && !configDropdown.contains(e.target)) {
-                configDropdown.classList.remove('active');
-            }
-            
-            const systemDropdown = document.getElementById('systemDropdownContainer');
-            if (systemDropdown && !systemDropdown.contains(e.target)) {
-                systemDropdown.classList.remove('active');
-            }
+    </div><!-- /admin-main -->
+
+</div><!-- /admin-layout -->
+
+<!-- Hidden file input for import (must remain in DOM) -->
+<input type="file" id="importFileInput" accept=".zip" style="display: none;">
+
+<script type="module" src="app.js?v=<?php echo @filemtime('app.js'); ?>"></script>
+<script>
+    // Collapsible nav sections
+    document.querySelectorAll('.nav-section-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            header.closest('.nav-section').classList.toggle('open');
         });
-    </script>
+    });
+
+    // Sidebar collapse toggle
+    var navCollapseBtn = document.getElementById('navCollapseBtn');
+    var adminNav = document.getElementById('adminNav');
+    navCollapseBtn.addEventListener('click', function() {
+        adminNav.classList.toggle('collapsed');
+        document.querySelector('.admin-layout').classList.toggle('nav-collapsed');
+    });
+
+    // Breadcrumb: update on tab click
+    var breadcrumbLabels = {
+        schema: 'Schema', dashboard: 'Dashboard', calendar: 'Calendar',
+        files: 'Files', menu: 'Menu Preview', workflows: 'Workflows',
+        database: 'Database', users: 'Users', health: 'Health Check',
+        backup: 'Backup Tables', audit: 'Audit & Snapshots', docs: 'Documentation'
+    };
+    var breadcrumbCurrent = document.getElementById('breadcrumbCurrent');
+    document.querySelectorAll('.admin-tab[data-file]').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            var label = breadcrumbLabels[tab.dataset.file] || tab.dataset.file;
+            breadcrumbCurrent.textContent = label;
+        });
+    });
+</script>
 </body>
 </html>
