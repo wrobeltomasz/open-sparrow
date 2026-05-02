@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../includes/config.php';
+
 session_start();
 if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     header('Content-Type: application/json');
@@ -11,8 +13,7 @@ if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
 
 $action = $_GET['action'] ?? '';
 $file = $_GET['file'] ?? '';
-// Set this to false for GitHub public release
-$isDemoMode = false;
+$isDemoMode = DEMO_MODE;
 
 // Never leak raw Postgres errors (schema names, constraint names, column lists)
 // into the HTTP response. Details go to the PHP error log; the client gets a
@@ -661,7 +662,7 @@ if ($action === 'backup_tables') {
 }
 
 // Shared helpers for menu_config GET and POST
-$menuMaxBytes = 524288;
+$menuMaxBytes = CONFIG_FILE_MAX_BYTES;
 $menuSafeReadJson = static function (string $path) use ($menuMaxBytes) : ?array {
     if (!file_exists($path) || filesize($path) > $menuMaxBytes) {
         return null;

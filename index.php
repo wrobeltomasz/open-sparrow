@@ -7,7 +7,7 @@ session_set_cookie_params([
     'domain' => '',
     'secure' => SECURE_COOKIES,
     'httponly' => true,
-    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
+    'samesite' => SESSION_SAMESITE,
 ]);
 session_start();
 
@@ -34,7 +34,7 @@ $cspNonce = bin2hex(random_bytes(16));
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+header('Strict-Transport-Security: max-age=' . HSTS_MAX_AGE . '; includeSubDomains');
 // style-src allows 'unsafe-inline' for element style attributes used throughout the template
 header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'nonce-$cspNonce'; connect-src 'self'");
 

@@ -99,7 +99,7 @@ if ($mime === 'image/svg+xml') {
 }
 
 header('Content-Length: ' . filesize($realFile));
-header('Cache-Control: private, max-age=3600');
+header('Cache-Control: private, max-age=' . FILE_CACHE_MAX_AGE);
 
 // Output physical file content
 readfile($realFile);
@@ -111,7 +111,7 @@ function serveThumbnail(string $path, string $mime): void
     // Serve original if GD library is not installed
     if (!extension_loaded('gd')) {
         header('Content-Type: ' . $mime);
-        header('Cache-Control: private, max-age=3600');
+        header('Cache-Control: private, max-age=' . FILE_CACHE_MAX_AGE);
         readfile($path);
         return;
     }
@@ -128,12 +128,12 @@ function serveThumbnail(string $path, string $mime): void
     // Serve original if format is unsupported by GD like SVG
     if (!$src) {
         header('Content-Type: ' . $mime);
-        header('Cache-Control: private, max-age=3600');
+        header('Cache-Control: private, max-age=' . FILE_CACHE_MAX_AGE);
         readfile($path);
         return;
     }
 
-    $maxW = 300;
+    $maxW = THUMBNAIL_MAX_WIDTH;
     $origW = imagesx($src);
     $origH = imagesy($src);
 
@@ -156,7 +156,7 @@ function serveThumbnail(string $path, string $mime): void
 
     // Set cache headers for thumbnails
     header('Content-Type: ' . $mime);
-    header('Cache-Control: public, max-age=86400');
+    header('Cache-Control: public, max-age=' . THUMBNAIL_CACHE_MAX_AGE);
 
     // Render scaled image
     match ($mime) {

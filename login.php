@@ -8,7 +8,7 @@ session_set_cookie_params([
     'domain' => '',
     'secure' => SECURE_COOKIES,
     'httponly' => true,
-    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
+    'samesite' => SESSION_SAMESITE,
 ]);
 
 session_start();
@@ -80,9 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     
-    // Secret salt for IP hashing (move to env in production)
-    $ipSalt = 'c7a4b8f1d9e2a3c5b6f8d0e1a2b3c4d5'; 
-    $ipHash = hash_hmac('sha256', $_SERVER['REMOTE_ADDR'], $ipSalt);
+    $ipHash = hash_hmac('sha256', $_SERVER['REMOTE_ADDR'], IP_HASH_SALT);
     
     // Basic input validation
     if (!preg_match('/^[a-zA-Z0-9_.-]{3,50}$/', $username)) {
@@ -95,11 +93,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $conn = db_connect();
         
-        // Higher threshold for IP — a single IP may serve many users behind NAT
-        $maxAttemptsPerIp       = 20;
-        // Lower threshold for username — protects a specific account regardless of how many IPs the attacker rotates
-        $maxAttemptsPerUsername = 5;
-        $lockoutMinutes         = 15;
+        $maxAttemptsPerIp       = LOGIN_MAX_ATTEMPTS_PER_IP;
+        $maxAttemptsPerUsername = LOGIN_MAX_ATTEMPTS_PER_USERNAME;
+        $lockoutMinutes         = LOGIN_LOCKOUT_MINUTES;
 
         // Check rate limit by IP hash and username in a single round-trip.
         // The OR condition combined with two conditional SUMs lets PostgreSQL

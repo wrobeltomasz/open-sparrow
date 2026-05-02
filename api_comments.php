@@ -19,7 +19,7 @@ session_set_cookie_params([
     'domain'   => '',
     'secure'   => SECURE_COOKIES,
     'httponly' => true,
-    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
+    'samesite' => SESSION_SAMESITE,
 ]);
 session_start();
 
@@ -114,7 +114,7 @@ function actionList($conn): void
 
     $relatedTable = validatedTable(trim($_GET['related_table'] ?? ''));
     $relatedId    = (int)($_GET['related_id'] ?? 0);
-    $limit        = isset($_GET['limit']) ? min(50, max(1, (int)$_GET['limit'])) : null;
+    $limit        = isset($_GET['limit']) ? min(COMMENTS_PAGE_LIMIT_MAX, max(1, (int)$_GET['limit'])) : null;
 
     if ($relatedId <= 0) {
         jsonError('related_id must be a positive integer.', 400);

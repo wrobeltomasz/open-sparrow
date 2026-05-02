@@ -173,20 +173,64 @@ export async function renderUsersEditor(ctx) {
 
                 const box = document.createElement('div');
                 box.style.cssText = 'background:#fff;border-radius:10px;padding:28px 24px;width:340px;box-shadow:0 8px 24px rgba(0,0,0,.2);';
-                box.innerHTML = `
-                    <h3 style="margin:0 0 4px;">Change password</h3>
-                    <p style="margin:0 0 16px;font-size:13px;color:#64748b;">User: <strong>${username}</strong></p>
-                    ${isSelf ? `<input type="password" id="cpw-current" placeholder="Current password"
-                        style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:8px;">` : ''}
-                    <input type="password" id="cpw-new" placeholder="New password (min 8 chars)"
-                        style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:8px;">
-                    <input type="password" id="cpw-confirm" placeholder="Confirm new password"
-                        style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:12px;">
-                    <p id="cpw-msg" style="font-size:13px;min-height:18px;margin:0 0 12px;"></p>
-                    <div style="display:flex;gap:8px;justify-content:flex-end;">
-                        <button id="cpw-cancel" style="padding:7px 16px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;">Cancel</button>
-                        <button id="cpw-save" style="padding:7px 16px;border:none;border-radius:6px;background:#6366f1;color:#fff;font-weight:600;cursor:pointer;">Save</button>
-                    </div>`;
+
+                const h3 = document.createElement('h3');
+                h3.style.cssText = 'margin:0 0 4px;';
+                h3.textContent = 'Change password';
+                box.appendChild(h3);
+
+                const userP = document.createElement('p');
+                userP.style.cssText = 'margin:0 0 16px;font-size:13px;color:#64748b;';
+                userP.textContent = 'User: ';
+                const userStrong = document.createElement('strong');
+                userStrong.textContent = username;
+                userP.appendChild(userStrong);
+                box.appendChild(userP);
+
+                if (isSelf) {
+                    const currentInput = document.createElement('input');
+                    currentInput.type = 'password';
+                    currentInput.id = 'cpw-current';
+                    currentInput.placeholder = 'Current password';
+                    currentInput.style.cssText = 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:8px;';
+                    box.appendChild(currentInput);
+                }
+
+                const newInput = document.createElement('input');
+                newInput.type = 'password';
+                newInput.id = 'cpw-new';
+                newInput.placeholder = 'New password (min 8 chars)';
+                newInput.style.cssText = 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:8px;';
+                box.appendChild(newInput);
+
+                const confirmInput = document.createElement('input');
+                confirmInput.type = 'password';
+                confirmInput.id = 'cpw-confirm';
+                confirmInput.placeholder = 'Confirm new password';
+                confirmInput.style.cssText = 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box;font-size:14px;margin-bottom:12px;';
+                box.appendChild(confirmInput);
+
+                const msgEl = document.createElement('p');
+                msgEl.id = 'cpw-msg';
+                msgEl.style.cssText = 'font-size:13px;min-height:18px;margin:0 0 12px;';
+                box.appendChild(msgEl);
+
+                const buttonDiv = document.createElement('div');
+                buttonDiv.style.cssText = 'display:flex;gap:8px;justify-content:flex-end;';
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.id = 'cpw-cancel';
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.style.cssText = 'padding:7px 16px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer;';
+                buttonDiv.appendChild(cancelBtn);
+
+                const saveBtn = document.createElement('button');
+                saveBtn.id = 'cpw-save';
+                saveBtn.textContent = 'Save';
+                saveBtn.style.cssText = 'padding:7px 16px;border:none;border-radius:6px;background:#6366f1;color:#fff;font-weight:600;cursor:pointer;';
+                buttonDiv.appendChild(saveBtn);
+
+                box.appendChild(buttonDiv);
                 overlay.appendChild(box);
                 document.body.appendChild(overlay);
 

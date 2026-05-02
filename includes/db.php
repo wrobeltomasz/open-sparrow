@@ -30,12 +30,13 @@ function db_connect(): \PgSql\Connection
 
     // Build connection string
     $connStr = sprintf(
-        "host=%s port=%s dbname=%s user=%s password=%s connect_timeout=5",
+        "host=%s port=%s dbname=%s user=%s password=%s connect_timeout=%d",
         $host,
         $port,
         $dbname,
         $user,
-        $password
+        $password,
+        DB_CONNECT_TIMEOUT
     );
 
     // Suppress native warnings and throw a safe generic exception
@@ -46,7 +47,7 @@ function db_connect(): \PgSql\Connection
     }
 
     // Set timezone
-    pg_query($conn, "SET TIME ZONE 'Europe/Warsaw'");
+    pg_query($conn, "SET TIME ZONE '" . APP_TIMEZONE . "'");
     
     return $conn;
 }
