@@ -8,7 +8,7 @@ session_set_cookie_params([
     'domain' => '',
     'secure' => SECURE_COOKIES,
     'httponly' => true,
-    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
+    'samesite' => SESSION_SAMESITE,
 ]);
 session_start();
 
@@ -23,9 +23,7 @@ if (($_SESSION['role'] ?? 'viewer') === 'admin') {
     exit;
 }
 
-// Enforce absolute session lifetime (8 hours) regardless of browser state
-$sessionMaxLifetime = 8 * 60 * 60;
-if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > $sessionMaxLifetime) {
+if (isset($_SESSION['created_at']) && (time() - $_SESSION['created_at']) > SESSION_MAX_LIFETIME) {
     session_destroy();
     header("Location: login.php");
     exit;
@@ -48,7 +46,7 @@ $cspNonce = bin2hex(random_bytes(16));
 header("X-Frame-Options: DENY");
 header("X-Content-Type-Options: nosniff");
 header("Referrer-Policy: strict-origin-when-cross-origin");
-header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
+header("Strict-Transport-Security: max-age=" . HSTS_MAX_AGE . "; includeSubDomains");
 // style-src uses nonce instead of unsafe-inline to prevent CSS injection attacks
 header("Content-Security-Policy: default-src 'self'; style-src 'self' 'nonce-$cspNonce'; script-src 'self' 'nonce-$cspNonce'");
 

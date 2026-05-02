@@ -40,7 +40,7 @@ try {
     // Fetch the list of notifications for the dropdown menu
     if ($action === 'get_list') {
 // Removed notify_date <= today to show upcoming notifications immediately
-        $sql = 'SELECT * FROM ' . sys_table('users_notifications') . ' WHERE user_id = $1 ORDER BY is_read ASC, created_at DESC LIMIT 10';
+        $sql = 'SELECT * FROM ' . sys_table('users_notifications') . ' WHERE user_id = $1 ORDER BY is_read ASC, created_at DESC LIMIT ' . NOTIFICATIONS_DROPDOWN_LIMIT;
         $res = pg_query_params($conn, $sql, [$userId]);
         $notifications = pg_fetch_all($res) ?: [];
         echo json_encode(['status' => 'success', 'notifications' => $notifications]);

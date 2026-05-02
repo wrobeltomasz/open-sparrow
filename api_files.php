@@ -23,7 +23,7 @@ session_set_cookie_params([
     'domain'   => '',
     'secure'   => SECURE_COOKIES,
     'httponly' => true,
-    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
+    'samesite' => SESSION_SAMESITE,
 ]);
 session_start();
 
@@ -146,7 +146,7 @@ function actionList($conn): void {
     requireLogin();
 
     $page   = max(1, (int) ($_GET['page']   ?? 1));
-    $limit  = min(100, max(1, (int) ($_GET['limit'] ?? 25)));
+    $limit  = min(FILES_PAGE_LIMIT_MAX, max(1, (int) ($_GET['limit'] ?? FILES_PAGE_LIMIT)));
     $offset = ($page - 1) * $limit;
     $type   = $_GET['type']   ?? 'all';
     $search = trim($_GET['search'] ?? '');
@@ -244,7 +244,7 @@ function actionUpload($conn): void {
 
     $config = loadConfig();
 
-    $maxBytes = ($config['max_file_size_mb'] ?? 20) * 1024 * 1024;
+    $maxBytes = ($config['max_file_size_mb'] ?? FILES_MAX_SIZE_MB) * 1024 * 1024;
     if ($file['size'] > $maxBytes) {
         jsonError('File exceeds maximum size.', 413);
     }

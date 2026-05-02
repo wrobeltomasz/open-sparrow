@@ -104,20 +104,22 @@ If you are deploying to shared hosting or any server without Docker, download th
 Each release ZIP is built automatically by GitHub Actions and includes:
 - All PHP, JS, and CSS files ready to serve
 - `includes/VERSION` stamped with the release tag (e.g. `v1.2.3`) — used by the admin System Health panel to display the current version
+- `includes/database.json.example` — template for PostgreSQL connection configuration (see step 3 below)
 - An empty `storage/files/` directory placeholder
 
 **Steps:**
 
 1. Download `opensparrow-vX.Y.Z.zip` from the Releases page.
 2. Extract and upload the contents to your server root (e.g. `public_html/`) via FTP.
-3. Create the `includes/` directory and make it writable by the web server.
-4. Open `/admin` — the panel opens without login on a fresh installation (no database yet).
-5. Go to **System → Database**, enter your connection details, and click **Save config**.
-6. Click **Initialize System Tables**. This creates all system tables and a default admin account (`admin` / `admin`).
-7. Go to `/login`, sign in as `admin` / `admin`. You are redirected to `/admin` automatically.
-8. Go to **System → Users → Change pwd** and set a strong password immediately.
+3. Configure the database (choose one method):
+   - **Method A (recommended):** Open `/admin` without configuration — the panel is unlocked on first launch. Go to **System → Database**, enter your PostgreSQL credentials, and click **Save config**. The application will create `includes/database.json` automatically.
+   - **Method B (manual):** Copy `includes/database.json.example` to `includes/database.json`, edit it with your PostgreSQL host, port, database name, user, and password, then save. The file includes detailed instructions for each field.
+4. Make the `includes/` and `storage/files/` directories writable by the web server (typically `chmod 755` or `775`, depending on your host).
+5. Go to `/admin` and click **Initialize System Tables**. This creates all system tables and inserts a default admin account (`admin` / `admin`).
+6. Go to `/login`, sign in as `admin` / `admin`. You are redirected to `/admin` automatically.
+7. Go to **System → Users → Change pwd** and set a strong password immediately.
 
-> **Note:** The ZIP contains no JSON configuration files. Your `includes/*.json` files are never overwritten during an upload — existing configuration is always preserved.
+> **Note:** The ZIP contains no pre-configured JSON files except `database.json.example`. Your `includes/*.json` configuration files are created on first setup and are never overwritten during updates — existing configuration is always preserved.
 
 ### 3. Run with Docker (quick start)
 
@@ -141,22 +143,50 @@ None. The repository has no composer/npm step.
 
 ### 5. Environment variables (optional)
 
-All variables are read by `includes/config.php` on every request. If a variable is absent, the documented default applies.
+All variables are read by `includes/config.php` on every request — the single source of configuration. If a variable is absent the documented default applies. There is no `.env` loader: export in your shell, container, or web-server virtual-host config.
+
+**Docker dev shortcut:** `docker-compose.override.yml` sets `APP_ENV=development` and `SECURE_COOKIES=false` automatically when you run `docker compose up` locally.
+
+#### Database
 
 | Variable | Default | Description |
 |---|---|---|
-| `APP_ENV` | `production` | Runtime environment. Set to `development` to enable `SameSite=Lax` cookies (required on HTTP). |
-| `SECURE_COOKIES` | `true` | Set to `false` when running on plain HTTP (local dev, Docker on localhost). |
-| `DB_HOST` | `localhost` | PostgreSQL host. Falls back to `PGHOST` if `DB_HOST` is unset. |
-| `DB_PORT` | `5432` | PostgreSQL port. Falls back to `PGPORT` if `DB_PORT` is unset. |
+| `DB_HOST` | `localhost` | PostgreSQL host. Falls back to `PGHOST`. |
+| `DB_PORT` | `5432` | PostgreSQL port. Falls back to `PGPORT`. |
+| `DB_CONNECT_TIMEOUT` | `5` | Seconds before connection attempt times out. |
+| `APP_TIMEZONE` | `Europe/Warsaw` | IANA timezone applied per PostgreSQL session. |
 | `PGDATABASE` | — | PostgreSQL database name. |
 | `PGUSER` | — | PostgreSQL user. |
 | `PGPASSWORD` | — | PostgreSQL password. |
-| `PGSCHEMA` | `app` | Schema for OpenSparrow system tables (`spw_*`). Overridden by `schema` key in `includes/database.json`. |
+| `PGSCHEMA` | `app` | Schema for `spw_*` tables. Overridden by `schema` key in `database.json`. |
 
-> There is no `.env` loader. Export these in your shell, container environment, or web-server virtual-host config. All connection details can alternatively be configured from the admin UI (written to `includes/database.json`).
+#### Session & cookies
 
-**Docker dev shortcut:** `docker-compose.override.yml` (included in the repo) sets `APP_ENV=development` and `SECURE_COOKIES=false` automatically when you run `docker compose up` locally.
+| Variable | Default | Description |
+|---|---|---|
+| `SECURE_COOKIES` | `true` | Set `false` on plain HTTP (local dev). |
+| `SESSION_SAMESITE` | `Lax` | Cookie SameSite policy. Do not change to `Strict` — it causes `ERR_TOO_MANY_REDIRECTS` on the login→admin redirect. |
+| `SESSION_MAX_LIFETIME` | `28800` | Hard session expiry in seconds (8 h). |
+
+#### Authentication & rate limiting
+
+| Variable | Default | Description |
+|---|---|---|
+| `IP_HASH_SALT` | *(none)* | **Required in production.** HMAC secret for IP pseudonymisation in login rate-limiting. |
+| `LOGIN_MAX_ATTEMPTS_PER_IP` | `20` | Failed login threshold per IP before lockout. |
+| `LOGIN_MAX_ATTEMPTS_PER_USERNAME` | `5` | Failed login threshold per username before lockout. |
+| `LOGIN_LOCKOUT_MINUTES` | `15` | Lockout window in minutes. |
+
+#### Application behaviour
+
+| Variable | Default | Description |
+|---|---|---|
+| `APP_ENV` | `production` | Runtime environment. |
+| `DEMO_MODE` | `false` | Set `true` to block all write operations in the admin API (safe for public demos). |
+| `FILES_MAX_SIZE_MB` | `20` | Default upload size limit when not set in `files.json`. |
+| `THUMBNAIL_MAX_WIDTH` | `300` | Max thumbnail width in pixels. |
+| `NOTIFICATIONS_DROPDOWN_LIMIT` | `10` | Max items in the bell notification dropdown. |
+| `HSTS_MAX_AGE` | `31536000` | HSTS `max-age` in seconds (1 year). Set `0` to disable on plain HTTP. |
 
 ### 6. First-run setup (Docker or bare server)
 

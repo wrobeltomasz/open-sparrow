@@ -10,7 +10,7 @@ session_set_cookie_params([
     'domain' => '',
     'secure' => SECURE_COOKIES,
     'httponly' => true,
-    'samesite' => (APP_ENV === 'production' ? 'Strict' : 'Lax'),
+    'samesite' => SESSION_SAMESITE,
 ]);
 
 session_start();

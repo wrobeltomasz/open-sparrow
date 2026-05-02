@@ -168,7 +168,7 @@ export function renderDocumentation(ctx) {
                 <li><strong>Database configuration:</strong> Update host, port, database name, username and password. Settings are written to <code>includes/database.json</code> and take effect immediately.</li>
                 <li><strong>System Schema:</strong> The <em>System Schema</em> field sets the PostgreSQL schema used for all <code>spw_*</code> tables. Defaults to <code>app</code>. This value is read by <code>sys_schema()</code> in <code>includes/db.php</code> and used to qualify every system-table query (<code>sys_table('users')</code>, <code>sys_table('files')</code>, …).</li>
                 <li><strong>Test Saved Connection:</strong> Always click <em>Save config</em> first — the button reads the persisted <code>database.json</code>, not the in-form values.</li>
-                <li><strong>Login protection:</strong> <code>login.php</code> applies a DB-backed rate limiter (IP-hash: 20 attempts / 15 min, username: 5 attempts / 15 min) plus CSRF tokens, session fingerprinting (User-Agent hash), an 8-hour absolute session lifetime, and strict <code>SameSite=Strict</code> / <code>HttpOnly</code> cookies in production.</li>
+                <li><strong>Login protection:</strong> <code>login.php</code> applies a DB-backed rate limiter (IP-hash: 20 attempts / 15 min, username: 5 attempts / 15 min, configurable via env) plus CSRF tokens, session fingerprinting (User-Agent hash), an 8-hour absolute session lifetime, and <code>SameSite=Lax</code> / <code>HttpOnly</code> cookies. All thresholds are tunable via environment variables — see <em>Deployment Notes</em> below.</li>
             </ul>
 
             <h3 style="color: #2563eb; margin-top: 30px;">8. Backup Tables</h3>
@@ -281,10 +281,43 @@ export function renderDocumentation(ctx) {
             <h3 style="color: #2563eb; margin-top: 30px;">12. Deployment Notes</h3>
             <ul style="padding-left: 20px;">
                 <li><strong>Deny public access to <code>includes/</code>:</strong> Configure your web server so <code>database.json</code>, <code>schema.json</code> and other JSON config files cannot be fetched directly. An <code>.htaccess</code> rule blocking <code>*.json</code> is included by default.</li>
-                <li><strong>Environment variables:</strong> <code>PGHOST</code>, <code>PGPORT</code>, <code>PGDATABASE</code>, <code>PGUSER</code>, <code>PGPASSWORD</code>, <code>PGSCHEMA</code>. <code>PGSCHEMA</code> is the fallback for the system schema when <code>database.json</code> does not define <code>schema</code>.</li>
                 <li><strong>Storage permissions:</strong> Under Docker, <code>includes/</code> and <code>storage/</code> must be writable by the web-server user (UID/GID <code>82:82</code> for musl-based slim PHP images).</li>
                 <li><strong>Backups:</strong> Export the config ZIP before every upgrade and keep regular <code>pg_dump</code> snapshots of both application and <code>spw_*</code> tables.</li>
+                <li><strong>Demo mode:</strong> Set <code>DEMO_MODE=true</code> to block all write operations in the admin API — safe for public demonstrations.</li>
             </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Environment variables</h4>
+            <p>All configuration lives in <code>includes/config.php</code> and is fully overridable via environment variables. No <code>.env</code> loader — export in your shell, container, or virtual-host config.</p>
+            <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:10px;">
+                <thead><tr style="background:#f1f5f9;">
+                    <th style="text-align:left;padding:6px 10px;border:1px solid #e2e8f0;">Variable</th>
+                    <th style="text-align:left;padding:6px 10px;border:1px solid #e2e8f0;">Default</th>
+                    <th style="text-align:left;padding:6px 10px;border:1px solid #e2e8f0;">Description</th>
+                </tr></thead>
+                <tbody>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>APP_ENV</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>production</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Runtime environment.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>DB_HOST</code> / <code>PGHOST</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>localhost</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL host.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>DB_PORT</code> / <code>PGPORT</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>5432</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL port.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>DB_CONNECT_TIMEOUT</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>5</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Seconds before connection attempt times out.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>APP_TIMEZONE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>Europe/Warsaw</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">IANA timezone applied to every PostgreSQL session.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>SECURE_COOKIES</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>true</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Set <code>false</code> on plain HTTP (local dev).</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>SESSION_SAMESITE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>Lax</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Cookie SameSite policy. Do not set to <code>Strict</code> — it breaks the login→admin redirect flow.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>SESSION_MAX_LIFETIME</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>28800</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Hard session expiry in seconds (default 8 h).</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>IP_HASH_SALT</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><em>none</em></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><strong>Required in production.</strong> HMAC secret for IP pseudonymisation in login rate-limiting.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>LOGIN_MAX_ATTEMPTS_PER_IP</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>20</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Failed login threshold per IP before lockout.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>LOGIN_MAX_ATTEMPTS_PER_USERNAME</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>5</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Failed login threshold per username before lockout.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>LOGIN_LOCKOUT_MINUTES</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>15</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Lockout window duration in minutes.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>DEMO_MODE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>false</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Set <code>true</code> to block all write operations in the admin API.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>FILES_MAX_SIZE_MB</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>20</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Default upload size limit when not set in <code>files.json</code>.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>THUMBNAIL_MAX_WIDTH</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>300</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Max thumbnail width in pixels.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>NOTIFICATIONS_DROPDOWN_LIMIT</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>10</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Max items shown in the bell notification dropdown.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>HSTS_MAX_AGE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>31536000</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">HSTS max-age in seconds (1 year). Set <code>0</code> to disable on plain HTTP.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGDATABASE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL database name.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGUSER</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL user.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGPASSWORD</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL password.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGSCHEMA</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>app</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Schema for <code>spw_*</code> system tables. Overridden by <code>schema</code> key in <code>database.json</code>.</td></tr>
+                </tbody>
+            </table>
         </div>
     `;
 }
