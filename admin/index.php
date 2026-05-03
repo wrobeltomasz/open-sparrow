@@ -134,13 +134,13 @@ if (empty($_SESSION['csrf_token'])) {
             <!-- DATA MANAGEMENT -->
             <div class="nav-section open">
                 <div class="nav-section-header">
-                    <img class="nav-section-icon" src="../assets/icons/ballot.png" alt="">
+                    <img class="nav-section-icon" src="../assets/icons/data_table.png" alt="">
                     <span class="nav-section-label">Data Management</span>
                     <span class="nav-chevron">▼</span>
                 </div>
                 <div class="nav-section-items">
                     <button class="admin-tab active" data-file="schema">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/data_table.png" alt="">
                         Schema
                     </button>
                     <button class="admin-tab" data-file="dashboard">
@@ -148,19 +148,19 @@ if (empty($_SESSION['csrf_token'])) {
                         Dashboard
                     </button>
                     <button class="admin-tab" data-file="calendar">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/manage_history.png" alt="">
                         Calendar
                     </button>
                     <button class="admin-tab" data-file="files">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/upload.png" alt="">
                         Files
                     </button>
                     <button class="admin-tab" data-file="menu">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/table_edit.png" alt="">
                         Menu Preview
                     </button>
                     <button class="admin-tab" data-file="add_table">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/build.png" alt="">
                         Add Table
                     </button>
                 </div>
@@ -169,13 +169,13 @@ if (empty($_SESSION['csrf_token'])) {
             <!-- WORKFLOWS -->
             <div class="nav-section open">
                 <div class="nav-section-header">
-                    <img class="nav-section-icon" src="../assets/icons/ballot.png" alt="">
+                    <img class="nav-section-icon" src="../assets/icons/build.png" alt="">
                     <span class="nav-section-label">Workflows</span>
                     <span class="nav-chevron">▼</span>
                 </div>
                 <div class="nav-section-items">
                     <button class="admin-tab" data-file="workflows">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/build.png" alt="">
                         Workflow Manager
                     </button>
                 </div>
@@ -184,29 +184,29 @@ if (empty($_SESSION['csrf_token'])) {
             <!-- SYSTEM -->
             <div class="nav-section open">
                 <div class="nav-section-header">
-                    <img class="nav-section-icon" src="../assets/icons/ballot.png" alt="">
+                    <img class="nav-section-icon" src="../assets/icons/database.png" alt="">
                     <span class="nav-section-label">System</span>
                     <span class="nav-chevron">▼</span>
                 </div>
                 <div class="nav-section-items">
                     <button class="admin-tab" data-file="database">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/database.png" alt="">
                         Database
                     </button>
                     <button class="admin-tab" data-file="users">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/user_attributes.png" alt="">
                         Users
                     </button>
                     <button class="admin-tab" data-file="health">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/health_and_safety.png" alt="">
                         Health Check
                     </button>
                     <button class="admin-tab" data-file="backup">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/inventory.png" alt="">
                         Backup Tables
                     </button>
                     <button class="admin-tab" data-file="audit">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/fact_check.png" alt="">
                         Audit &amp; Snapshots
                     </button>
                 </div>
@@ -215,21 +215,21 @@ if (empty($_SESSION['csrf_token'])) {
             <!-- CONFIGURATION -->
             <div class="nav-section open">
                 <div class="nav-section-header">
-                    <img class="nav-section-icon" src="../assets/icons/ballot.png" alt="">
+                    <img class="nav-section-icon" src="../assets/icons/table_edit.png" alt="">
                     <span class="nav-section-label">Configuration</span>
                     <span class="nav-chevron">▼</span>
                 </div>
                 <div class="nav-section-items">
                     <button id="btnExport" type="button" class="nav-action-btn">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/download.png" alt="">
                         Export Config
                     </button>
                     <button id="btnImport" type="button" class="nav-action-btn">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/upload.png" alt="">
                         Import Config
                     </button>
                     <button id="btnRunCron" type="button" class="nav-action-btn">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        <img class="nav-item-icon" src="../assets/icons/manage_history.png" alt="">
                         Run Notifications Cron
                     </button>
                 </div>
