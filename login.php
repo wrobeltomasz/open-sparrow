@@ -1,6 +1,12 @@
 <?php
 require __DIR__ . '/includes/config.php';
 
+// First-run check: if database.json doesn't exist, redirect to setup wizard
+if (!file_exists(__DIR__ . '/includes/database.json')) {
+    header('Location: setup.php');
+    exit;
+}
+
 // Set secure session cookie parameters before starting the session
 session_set_cookie_params([
     'lifetime' => 0,

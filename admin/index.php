@@ -3,6 +3,12 @@
 
 require __DIR__ . '/../includes/config.php';
 
+// First-run check: if database.json doesn't exist, redirect to setup wizard
+if (!file_exists(__DIR__ . '/../includes/database.json')) {
+    header('Location: ../setup.php');
+    exit;
+}
+
 // Set secure session cookie parameters before starting the session
 session_set_cookie_params([
     'lifetime' => 0,
@@ -104,7 +110,7 @@ if (empty($_SESSION['csrf_token'])) {
         <a href="/" class="brand-logo">
             <img src="../assets/img/logo-blue.png" alt="Sparrow Logo">
         </a>
-        <span class="brand-name">Sparrow Admin</span>
+        <span class="brand-name">OpenSparrow Admin</span>
     </div>
 
     <div class="admin-header-right">
