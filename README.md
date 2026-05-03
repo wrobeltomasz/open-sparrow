@@ -41,7 +41,7 @@ Demo: https://demo.opensparrow.org
 
 ## Features
 
-- **Zero-configuration setup** — configure PostgreSQL and initialize system tables from the admin UI.
+- **First-run setup wizard** — guided `setup.php` wizard appears automatically on first launch (no `database.json` present). Collects PostgreSQL credentials, tests the connection, creates the schema, initializes all system tables, and seeds the default admin account in one flow.
 - **JSON-driven CRUD** — tables and forms generated from `schema.json` with nested relations, constraints, and enum color states.
 - **Inline editing** — in-grid PATCH updates routed through a single `api.php` gateway.
 - **Dashboard engine** — COUNT / SUM / AVG / MIN / MAX / GROUP BY widgets defined in `dashboard.json`.
@@ -70,6 +70,7 @@ Demo: https://demo.opensparrow.org
 - **`storage/files/`** — user-uploaded files.
 
 ### Key files
+- **`setup.php` / `setup_api.php`** — first-run setup wizard and its API backend. Active only when `includes/database.json` is absent.
 - **`api.php`** — main API gateway (GET / POST / PATCH / DELETE).
 - **`index.php`** — default landing / data entry page.
 - **`dashboard.php` / `calendar.php`** — user-facing visualization and scheduling modules.
@@ -112,13 +113,13 @@ Each release ZIP is built automatically by GitHub Actions and includes:
 
 1. Download `opensparrow-vX.Y.Z.zip` from the Releases page.
 2. Extract and upload the contents to your server root (e.g. `public_html/`) via FTP.
-3. Configure the database (choose one method):
-   - **Method A (recommended):** Open `/admin` without configuration — the panel is unlocked on first launch. Go to **System → Database**, enter your PostgreSQL credentials, and click **Save config**. The application will create `includes/database.json` automatically.
-   - **Method B (manual):** Copy `includes/database.json.example` to `includes/database.json`, edit it with your PostgreSQL host, port, database name, user, and password, then save. The file includes detailed instructions for each field.
-4. Make the `includes/` and `storage/files/` directories writable by the web server (typically `chmod 755` or `775`, depending on your host).
-5. Go to `/admin` and click **Initialize System Tables**. This creates all system tables and inserts a default admin account (`admin` / `admin`).
-6. Go to `/login`, sign in as `admin` / `admin`. You are redirected to `/admin` automatically.
-7. Go to **System → Users → Change pwd** and set a strong password immediately.
+3. Make the `includes/` and `storage/files/` directories writable by the web server (typically `chmod 755` or `775`, depending on your host).
+4. Open your site root in a browser — you will be automatically redirected to `/setup.php`. The **setup wizard** guides you through:
+   - Testing your PostgreSQL connection
+   - Choosing a schema name (default: `app`)
+   - Initializing all system tables and creating the default admin account (`admin` / `admin`)
+5. Go to `/login`, sign in as `admin` / `admin`. You are redirected to `/admin` automatically.
+6. Go to **System → Users → Change pwd** and set a strong password immediately.
 
 > **Note:** The ZIP contains no pre-configured JSON files except `database.json.example`. Your `includes/*.json` configuration files are created on first setup and are never overwritten during updates — existing configuration is always preserved.
 
@@ -192,16 +193,18 @@ All variables are read by `includes/config.php` on every request — the single 
 
 ### 6. First-run setup (Docker or bare server)
 
-Open **http://localhost:8080/admin**.
+On a fresh installation — when `includes/database.json` does not exist — any request to the application is automatically redirected to the **setup wizard** at `/setup.php`.
 
-On a fresh installation the admin panel detects that the database is not yet configured (no connection or missing `spw_users` table) and opens **without requiring a login**. A yellow banner at the top guides you through setup:
+The wizard walks you through four steps:
 
-1. Go to **System → Database** — enter host, port, database name, username and password, then click **Save config**. *(Optional)* Change **System Schema** (default: `app`).
-2. Click **Initialize System Tables** in the same tab. This creates all `spw_*` tables and inserts a default admin account: **username `admin`, password `admin`**.
-3. Open **http://localhost:8080/login** and sign in as `admin` / `admin`. You are redirected to `/admin` automatically.
-4. Go to **System → Users**, find the `admin` row and click **Change pwd**. Enter `admin` as the current password and set a strong new one.
+1. **Welcome** — intro and requirements overview.
+2. **Database Connection** — enter host, port, database name, username, and password. Click **Test Connection** to verify before proceeding.
+3. **Schema** — choose the PostgreSQL schema name (default: `app`). Optionally tick *Create schema if not exists*. The default admin account (`admin` / `admin`) is shown here for reference.
+4. **Review & Initialize** — confirm settings and click **Initialize System Tables**. The wizard creates all `spw_*` tables, seeds the admin account, and writes `includes/database.json`.
 
-> The setup bypass closes permanently once `spw_users` exists. Every subsequent visit to `/admin` requires a valid session with the `admin` role.
+After initialization you are redirected to `/login`. Sign in as `admin` / `admin`, then immediately go to **System → Users → Change pwd** and set a strong password.
+
+> Once `includes/database.json` exists, the setup wizard is permanently inaccessible — all entry points redirect to `/login` instead.
 
 ### 7. User roles
 
