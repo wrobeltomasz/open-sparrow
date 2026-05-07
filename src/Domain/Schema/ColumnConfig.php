@@ -20,6 +20,11 @@ final class ColumnConfig
     ) {
     }
 
+    public function isVirtual(): bool
+    {
+        return $this->type === 'virtual';
+    }
+
     public function isBool(): bool
     {
         return str_contains(strtolower($this->type), 'bool');

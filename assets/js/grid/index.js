@@ -6,6 +6,7 @@ import { renderThead } from './header/render.js';
 import { renderTbody } from './body/render.js';
 import { loadCommentCounts } from './comments/counts.js';
 import { initPreviewPopup, clearPreviewCache } from './comments/preview-popup.js';
+import { computeVirtual } from './cells/virtual-cell.js';
 
 export { getState, setFilteredData };
 
@@ -24,9 +25,25 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
         state.fkCache = new Map();
         clearPreviewCache();
         state.fullData = data.rows || [];
-        state.displayedColumns = (data.columns || []).filter(c => {
+
+        // Pre-compute virtual column values into each row so sort/filter work transparently
+        const tableCols = schema.tables[table]?.columns || {};
+        for (const [colName, colCfg] of Object.entries(tableCols)) {
+            if (colCfg.type !== 'virtual') continue;
+            state.fullData.forEach(row => {
+                row[colName] = computeVirtual(colCfg.formula, row);
+            });
+        }
+
+        // Build displayedColumns from schema key order — preserves user-defined position
+        // for both real and virtual columns. Real columns must also be present in the
+        // API response; virtual columns are always included (they were just pre-computed).
+        const fetchedColSet = new Set(data.columns || []);
+        state.displayedColumns = Object.keys(tableCols).filter(c => {
             if (c === 'id') return false;
-            return schema.tables[table].columns[c]?.show_in_grid !== false;
+            const cfg = tableCols[c];
+            if (cfg.show_in_grid === false) return false;
+            return fetchedColSet.has(c) || cfg.type === 'virtual';
         });
         state.filteredData = state.fullData.slice();
         state.unsortedFilteredData = state.filteredData.slice();

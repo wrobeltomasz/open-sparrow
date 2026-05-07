@@ -21,7 +21,7 @@ final class PgRecordRepository implements RecordRepositoryInterface
 
     public function find(TableConfig $cfg, string|int $id): ?array
     {
-        $cols       = array_unique(array_merge([$cfg->primaryKey], array_keys($cfg->columns)));
+        $cols       = array_unique(array_merge([$cfg->primaryKey], array_keys($cfg->dbColumns())));
         $selectList = implode(', ', array_map([Identifier::class, 'quote'], $cols));
         $sql        = sprintf(
             'SELECT %s FROM %s WHERE %s = $1',

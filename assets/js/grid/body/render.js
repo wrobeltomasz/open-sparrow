@@ -9,8 +9,10 @@ import '../cells/enum-cell.js';
 import '../cells/boolean-cell.js';
 import '../cells/date-cell.js';
 import '../cells/text-cell.js';
+import '../cells/virtual-cell.js';
 
 function resolveCellType(colCfg, hasFk) {
+    if (colCfg.type === 'virtual') return 'virtual';
     if (hasFk) return 'fk';
     const t = (colCfg.type || '').toLowerCase();
     if (t === 'enum') return 'enum';

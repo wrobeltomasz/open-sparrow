@@ -615,6 +615,21 @@ thead th:last-child  { padding-right: 0.6rem; }
   display: block;
 }
 
+.th-virtual-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 600;
+  color: #8b5cf6;
+  background: #ede9fe;
+  border-radius: 3px;
+  padding: 0px 5px 2px 1px;
+  margin-left: 1px;
+  vertical-align: middle;
+  letter-spacing: 0;
+  pointer-events: none;
+}
+
 .th-label {
   display: block;
   background: var(--accent-mid);

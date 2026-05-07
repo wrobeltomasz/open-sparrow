@@ -23,19 +23,25 @@ final class TableConfig
     ) {
     }
 
-    /** Columns shown in edit/create forms (respects show_in_edit). */
+    /** Columns shown in edit/create forms (respects show_in_edit; virtual columns excluded). */
     public function visibleColumns(): array
     {
-        return array_filter($this->columns, fn(ColumnConfig $c) => $c->showInEdit);
+        return array_filter($this->columns, fn(ColumnConfig $c) => $c->showInEdit && !$c->isVirtual());
     }
 
-    /** Columns that may be written via POST — skips PK and readonly. */
+    /** Columns that may be written via POST — skips PK, readonly, and virtual. */
     public function writableColumns(): array
     {
         return array_filter(
             $this->columns,
-            fn(ColumnConfig $c) => $c->name !== $this->primaryKey && !$c->readonly
+            fn(ColumnConfig $c) => $c->name !== $this->primaryKey && !$c->readonly && !$c->isVirtual()
         );
+    }
+
+    /** Columns that exist in the database — excludes virtual (computed) columns. */
+    public function dbColumns(): array
+    {
+        return array_filter($this->columns, fn(ColumnConfig $c) => !$c->isVirtual());
     }
 
     public function column(string $name): ColumnConfig

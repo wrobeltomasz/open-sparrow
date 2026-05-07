@@ -12,7 +12,9 @@ function safe_table(array $schema, string $table): array
 
 function column_list(array $tableCfg): array
 {
-    return array_keys($tableCfg['columns'] ?? []);
+    $cols = $tableCfg['columns'] ?? [];
+    // Virtual columns don't exist in the database — exclude from SELECT
+    return array_keys(array_filter($cols, fn($c) => ($c['type'] ?? '') !== 'virtual'));
 }
 
 function id_column(): string

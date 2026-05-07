@@ -303,6 +303,32 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
     };
     workspaceEl.appendChild(btnAddCol);
 
+    // Add Virtual Column — schema-only, no DB interaction
+    const btnAddVirtual = document.createElement('button');
+    btnAddVirtual.type = 'button';
+    btnAddVirtual.className = 'btn-add';
+    btnAddVirtual.textContent = '+ Add Virtual Column';
+    btnAddVirtual.style.cssText = 'background:#8b5cf6;margin-left:10px;';
+    btnAddVirtual.onclick = () => {
+        const colName = prompt('Enter virtual column name (lowercase, no spaces):');
+        if (!colName) return;
+        const formattedColName = colName.toLowerCase().replace(/[^a-z0-9_]/g, '');
+        if (!formattedColName) return;
+        if (tableData.columns[formattedColName]) {
+            showStatusPill(btnAddVirtual, 'Column already exists.', 'error');
+            return;
+        }
+        tableData.columns[formattedColName] = {
+            display_name: formattedColName.replace(/_/g, ' ').charAt(0).toUpperCase() + formattedColName.replace(/_/g, ' ').slice(1),
+            type: 'virtual',
+            show_in_grid: true,
+            formula: { op: 'sum', cols: [] },
+        };
+        markDirty();
+        renderEditor(tableName, tableData, false);
+    };
+    workspaceEl.appendChild(btnAddVirtual);
+
     // Live FE sidebar preview — mirrors the menu entry produced by this table
     // in templates/menu.php so changes to display_name/icon/hidden are visible
     // immediately without saving.
@@ -339,11 +365,21 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
 
     // Standard field types allowed in the application
     const dataTypeOptions = [
-        { value: 'text', label: 'Text' },
-        { value: 'number', label: 'Number' },
+        { value: 'text',    label: 'Text' },
+        { value: 'number',  label: 'Number' },
         { value: 'boolean', label: 'Boolean' },
-        { value: 'date', label: 'Date' },
-        { value: 'enum', label: 'Enum' }
+        { value: 'date',    label: 'Date' },
+        { value: 'enum',    label: 'Enum' },
+        { value: 'virtual', label: 'Virtual (Computed)' },
+    ];
+
+    const virtualOpsNumeric = [
+        { value: 'sum',      label: 'Sum (col1 + col2 + …)' },
+        { value: 'subtract', label: 'Subtract (col1 − col2)' },
+        { value: 'multiply', label: 'Multiply (col1 × col2 × …)' },
+        { value: 'divide',   label: 'Divide (col1 ÷ col2)' },
+        { value: 'average',  label: 'Average' },
+        { value: 'concat',   label: 'Concat (text join)' },
     ];
 
     const colKeys = Object.keys(tableData.columns);
@@ -403,7 +439,7 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
 
         // Clean up any rogue legacy DB types just in case they slipped through earlier
         let currentType = String(colCfg.type || 'text').toLowerCase();
-        if (!['text', 'number', 'boolean', 'date', 'enum'].includes(currentType)) {
+        if (!['text', 'number', 'boolean', 'date', 'enum', 'virtual'].includes(currentType)) {
             if (/int|num|float|double|real|serial|dec/i.test(currentType)) currentType = 'number';
             else if (/bool/i.test(currentType)) currentType = 'boolean';
             else if (/date|time|timestamp/i.test(currentType)) currentType = 'date';
@@ -414,9 +450,141 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
         // Dropdown instead of input field for clean type selection
         block.appendChild(createSelectInput('type', 'Data Type', dataTypeOptions, currentType, (val) => {
             colCfg.type = val;
-            renderEditor(tableName, tableData, false); 
+            if (val === 'virtual' && !colCfg.formula) {
+                colCfg.formula = { op: 'sum', cols: [] };
+            }
+            renderEditor(tableName, tableData, false);
         }));
         
+        // ── Virtual column formula builder ────────────────────────────────────
+        if (currentType === 'virtual') {
+            if (!colCfg.formula || typeof colCfg.formula !== 'object') {
+                colCfg.formula = { op: 'sum', cols: [] };
+            }
+            const f = colCfg.formula;
+
+            const vBlock = document.createElement('div');
+            vBlock.style.cssText = 'margin-left:20px;padding-left:10px;border-left:2px solid #8b5cf6;margin-bottom:15px;';
+
+            const vTitle = document.createElement('h5');
+            vTitle.textContent = 'Formula Configuration';
+            vTitle.style.cssText = 'margin-top:0;margin-bottom:10px;color:#8b5cf6;';
+            vBlock.appendChild(vTitle);
+
+            // Operation selector
+            vBlock.appendChild(createSelectInput('v_op', 'Operation', virtualOpsNumeric, f.op || 'sum', val => {
+                f.op = val;
+            }));
+
+            // Available non-virtual columns for this table
+            const nonVirtualCols = Object.entries(tableData.columns)
+                .filter(([n, c]) => c.type !== 'virtual' && n !== colName)
+                .map(([n, c]) => ({ value: n, label: c.display_name || n }));
+
+            // Selected columns list
+            const colsContainer = document.createElement('div');
+            colsContainer.style.cssText = 'margin-top:4px;';
+
+            const colsLabel = document.createElement('label');
+            colsLabel.style.cssText = 'font-size:13px;font-weight:600;display:block;margin-bottom:6px;';
+            colsLabel.textContent = 'Source Columns (in order)';
+            colsContainer.appendChild(colsLabel);
+
+            const selectedList = document.createElement('div');
+            selectedList.style.cssText = 'display:flex;flex-direction:column;gap:4px;margin-bottom:6px;';
+
+            function rebuildSelectedList() {
+                selectedList.innerHTML = '';
+                (f.cols || []).forEach((c, i) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex;gap:6px;align-items:center;';
+
+                    const lbl = document.createElement('span');
+                    lbl.style.cssText = 'flex:1;font-size:13px;background:var(--bg);padding:3px 8px;border-radius:4px;border:1px solid var(--border-light);';
+                    lbl.textContent = nonVirtualCols.find(o => o.value === c)?.label ?? c;
+
+                    const rmBtn = document.createElement('button');
+                    rmBtn.type = 'button';
+                    rmBtn.textContent = '✕';
+                    rmBtn.style.cssText = 'background:var(--danger,#dc2626);color:#fff;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:12px;';
+                    rmBtn.addEventListener('click', () => {
+                        f.cols.splice(i, 1);
+                        rebuildSelectedList();
+                        markDirty();
+                    });
+
+                    row.append(lbl, rmBtn);
+                    selectedList.appendChild(row);
+                });
+            }
+
+            rebuildSelectedList();
+            colsContainer.appendChild(selectedList);
+
+            // Add column picker
+            const addRow = document.createElement('div');
+            addRow.style.cssText = 'display:flex;gap:6px;align-items:center;';
+
+            const colPicker = document.createElement('select');
+            colPicker.style.cssText = 'flex:1;font-size:13px;';
+            nonVirtualCols.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt.value; o.textContent = opt.label;
+                colPicker.appendChild(o);
+            });
+
+            const addColBtn = document.createElement('button');
+            addColBtn.type = 'button';
+            addColBtn.textContent = '+ Add';
+            addColBtn.style.cssText = 'font-size:13px;padding:3px 10px;cursor:pointer;';
+            addColBtn.addEventListener('click', () => {
+                if (!colPicker.value) return;
+                if (!Array.isArray(f.cols)) f.cols = [];
+                f.cols.push(colPicker.value);
+                rebuildSelectedList();
+                markDirty();
+            });
+
+            addRow.append(colPicker, addColBtn);
+            colsContainer.appendChild(addRow);
+            vBlock.appendChild(colsContainer);
+
+            // Separator (concat only)
+            const sepWrapper = document.createElement('div');
+            sepWrapper.style.display = (f.op === 'concat') ? '' : 'none';
+            sepWrapper.appendChild(createTextInput('v_sep', 'Separator', f.separator ?? ' ', val => {
+                f.separator = val;
+            }));
+            vBlock.appendChild(sepWrapper);
+
+            // Show/hide separator when op changes
+            const opSel = vBlock.querySelector('select');
+            opSel?.addEventListener('change', e => {
+                sepWrapper.style.display = e.target.value === 'concat' ? '' : 'none';
+            });
+
+            block.appendChild(vBlock);
+
+            // Virtual columns: skip enum, FK, regex, not_null, readonly sections
+            block.appendChild(createCheckbox('show_in_grid', 'Show in Grid', colCfg.show_in_grid, val => colCfg.show_in_grid = val, true));
+
+            const btnDelVirtual = document.createElement('button');
+            btnDelVirtual.type = 'button';
+            btnDelVirtual.textContent = 'Delete Virtual Column';
+            btnDelVirtual.style.cssText = 'background:#ef4444;color:#fff;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;margin-top:8px;font-size:13px;';
+            btnDelVirtual.addEventListener('click', () => {
+                if (confirm(`Delete virtual column "${colName}"?`)) {
+                    delete tableData.columns[colName];
+                    markDirty();
+                    renderEditor(tableName, tableData, false);
+                }
+            });
+            block.appendChild(btnDelVirtual);
+
+            workspaceEl.appendChild(block);
+            return; // skip remaining non-virtual fields for this column
+        }
+
         const optsStr = colCfg.options ? colCfg.options.join(', ') : '';
         // Build this input inline (instead of createTextInput) so we can update
         // the model on every keystroke without re-rendering the whole editor —

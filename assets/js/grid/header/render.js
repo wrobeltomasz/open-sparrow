@@ -21,15 +21,24 @@ export function renderThead(schema, isReadOnly, onRerender) {
 
         const thLabel = document.createElement('span');
         thLabel.className = 'th-label';
-        thLabel.textContent = colCfg.display_name || col;
-        if (state.sortState.column === col) {
-            thLabel.textContent += state.sortState.asc ? ' ↑' : ' ↓';
-        }
         if (colCfg.description) {
             th.title = colCfg.description;
             thLabel.style.borderBottom = '1px dotted currentColor';
             thLabel.style.cursor = 'help';
         }
+
+        if (colCfg.type === 'virtual') {
+            const badge = document.createElement('span');
+            badge.className = 'th-virtual-badge';
+            badge.textContent = 'f(x)';
+            thLabel.appendChild(badge);
+        }
+
+        let labelText = colCfg.display_name || col;
+        if (state.sortState.column === col) {
+            labelText += state.sortState.asc ? ' ↑' : ' ↓';
+        }
+        thLabel.appendChild(document.createTextNode(labelText));
         th.appendChild(thLabel);
 
         th.style.cursor = 'pointer';

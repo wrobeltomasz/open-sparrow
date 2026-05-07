@@ -85,6 +85,11 @@ foreach ($schemaData['tables'] as $tableName => $tableConfig) {
             $pub['description'] = $colDef['description'];
         }
 
+        // Pass formula definition for virtual (computed) columns
+        if (!empty($colDef['formula'])) {
+            $pub['formula'] = $colDef['formula'];
+        }
+
         // Keep dropdown options for UI
         if (!empty($colDef['options'])) {
             $pub['options'] = $colDef['options'];
