@@ -75,6 +75,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
     <meta charset="utf-8">
     <title>OpenSparrow | Add Record - <?php echo htmlspecialchars($tableCfg->displayName); ?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars($csrf->token(), ENT_QUOTES, 'UTF-8'); ?>">
     <link href="/assets/css/styles.css" rel="stylesheet">
 </head>
 <body>

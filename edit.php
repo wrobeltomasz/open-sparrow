@@ -41,7 +41,11 @@ if ($request->isPost()) {
         if (RECORD_SNAPSHOTS_ENABLED && $logId !== null) {
             snapshot_record($GLOBALS['conn'], $tableCfg->schema, $tableCfg->name, (int)$id, $logId);
         }
-        header('Location: index.php?table=' . urlencode($table));
+        if (($request->post('_save_action') ?? 'exit') === 'stay') {
+            header('Location: edit.php?table=' . urlencode($table) . '&id=' . urlencode((string)$id) . '&saved=1');
+        } else {
+            header('Location: index.php?table=' . urlencode($table));
+        }
         exit;
     } catch (\RuntimeException $e) {
         error_log('[edit.php] ' . $e->getMessage());
@@ -85,6 +89,12 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
 
 <main style="padding: 20px; max-width: 1060px; margin: 0 auto;">
     <h2>Edit record in <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
+
+    <?php if ($request->query('saved') === '1') : ?>
+        <div style="color: #166534; margin-bottom: 15px; padding: 10px 14px; border: 1px solid #86efac; background: #dcfce7; border-radius: 6px; font-weight: 500;">
+            Record saved successfully.
+        </div>
+    <?php endif; ?>
 
     <?php if ($error) : ?>
         <div style="color: red; margin-bottom: 15px; padding: 10px; border: 1px solid red; background: #fee; border-radius: 6px;">
@@ -154,11 +164,15 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
             <?php endforeach; ?>
             </div>
 
+            <input type="hidden" name="_save_action" id="saveAction" value="exit">
             <div class="form-actions">
                 <?php if ($isReadOnly) : ?>
                     <button type="button" class="btn-save" disabled>Update Record</button>
                 <?php else : ?>
-                    <button type="submit" class="btn-save">Save Changes</button>
+                    <button type="submit" class="btn-save"
+                        onclick="document.getElementById('saveAction').value='stay'">Save</button>
+                    <button type="submit" class="btn-cancel"
+                        onclick="document.getElementById('saveAction').value='exit'">Save &amp; Exit</button>
                 <?php endif; ?>
                 <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'">Cancel</button>
             </div>
