@@ -8,6 +8,64 @@ function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
+// Global grid settings form (page size, etc.)
+export function renderSchemaGlobalSettings(config, ctx) {
+    const { workspaceEl } = ctx;
+    workspaceEl.innerHTML = '';
+
+    const PAGE_SIZES = [10, 25, 50, 100];
+    const current = Number(config.default_page_size) || 25;
+
+    const card = document.createElement('div');
+    card.style.cssText = 'max-width:560px;';
+
+    const h3 = document.createElement('h3');
+    h3.style.cssText = 'margin:0 0 6px;';
+    h3.textContent = 'Global Grid Settings';
+    const sub = document.createElement('p');
+    sub.style.cssText = 'color:var(--muted); font-size:14px; margin:0 0 24px;';
+    sub.textContent = 'Settings that apply to all data grids in the frontend application.';
+    card.append(h3, sub);
+
+    // Page size setting
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:16px; padding:16px; background:white; border:1px solid var(--border); border-radius:6px;';
+
+    const labelWrap = document.createElement('div');
+    labelWrap.style.flex = '1';
+    const lbl = document.createElement('label');
+    lbl.style.cssText = 'display:block; font-weight:600; font-size:14px; margin-bottom:4px;';
+    lbl.textContent = 'Default Page Size';
+    const hint = document.createElement('span');
+    hint.style.cssText = 'font-size:12px; color:var(--muted);';
+    hint.textContent = 'Records shown per page. Users can override this per-session from the grid pagination bar.';
+    labelWrap.append(lbl, hint);
+
+    const sel = document.createElement('select');
+    sel.style.cssText = 'padding:6px 10px; border:1px solid var(--border); border-radius:4px; font-size:14px; min-width:80px;';
+    PAGE_SIZES.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = n;
+        opt.textContent = n;
+        if (n === current) opt.selected = true;
+        sel.appendChild(opt);
+    });
+    sel.addEventListener('change', () => {
+        config.default_page_size = Number(sel.value);
+        markDirty();
+    });
+
+    row.append(labelWrap, sel);
+    card.appendChild(row);
+
+    const note = document.createElement('p');
+    note.style.cssText = 'font-size:12px; color:var(--muted); margin-top:12px;';
+    note.textContent = 'Stored in schema.json as "default_page_size". Included in config export/import.';
+    card.appendChild(note);
+
+    workspaceEl.appendChild(card);
+}
+
 // Function to generate the Add Table button and handle its logic
 export function createAddTableButton(currentConfig, defaultSchema, onSuccess, onError) {
     const btnAddTable = document.createElement('button');

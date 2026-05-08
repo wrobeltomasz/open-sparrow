@@ -380,6 +380,18 @@ export function renderDocumentation(ctx) {
                 <strong>Note:</strong> The quick <em>Run Notifications Cron</em> button in the <em>Configuration</em> section of the left nav still exists as a shortcut modal. The Cron Notifications tab provides the full history, stats, and cleanup tools.
             </p>
 
+            <h3 id="doc-9i" style="color: #2563eb; margin-top: 30px;">9i. Grid Page Size</h3>
+            <p>
+                Each data grid shows a configurable number of records per page. A global default is set in the admin panel; individual users can override it from the grid itself — their choice persists across browser sessions.
+            </p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Admin default:</strong> Schema tab → <em>Global Grid Settings</em> (first item in the sidebar) → <em>Default Page Size</em> select (10 / 25 / 50 / 100) → <em>Save File</em>. Stored as <code>default_page_size</code> at the top level of <code>includes/schema.json</code>. Included in config export/import ZIP.</li>
+                <li><strong>User override:</strong> The <em>Rows per page</em> selector in the left side of every pagination bar. Selecting a value saves it to <code>localStorage</code> (<code>sparrow_page_size</code>) immediately and re-renders the grid. The override survives page refreshes and table switches for that browser.</li>
+                <li><strong>Priority chain:</strong> <code>localStorage</code> value → <code>schema.default_page_size</code> → built-in fallback of 25.</li>
+                <li><strong>Pagination bar layout:</strong> <em>Rows per page: [select]</em> on the left — spacer — <em>Showing X–Y of Z records</em> — <em>Prev</em> / <em>Page N of M</em> / <em>Next</em> on the right.</li>
+                <li><strong>Valid values:</strong> 10, 25, 50, 100. Values outside this set are ignored (both from <code>localStorage</code> and from the admin config) and the fallback applies.</li>
+            </ul>
+
             <h3 id="doc-10" style="color: #2563eb; margin-top: 30px;">10. Files Module</h3>
             <p>The <strong>Files</strong> tab is a central repository for documents and media, backed by the <code>spw_files</code> table.</p>
             <ul style="padding-left: 20px;">

@@ -120,4 +120,16 @@ foreach ($schemaData['tables'] as $tableName => $tableConfig) {
     ];
 }
 
-echo json_encode(['tables' => $publicSchema]);
+$pageSize = null;
+if (isset($schemaData['default_page_size'])) {
+    $ps = (int) $schemaData['default_page_size'];
+    if (in_array($ps, [10, 25, 50, 100], true)) {
+        $pageSize = $ps;
+    }
+}
+
+$response = ['tables' => $publicSchema];
+if ($pageSize !== null) {
+    $response['default_page_size'] = $pageSize;
+}
+echo json_encode($response);

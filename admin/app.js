@@ -1,6 +1,6 @@
 // admin/app.js
 import { moveArrayItem, moveObjectKey, renderGlobalSettings, createFullMenuPreview } from './ui.js';
-import { syncSchemaTables, renderSchemaEditor } from './schema.js';
+import { syncSchemaTables, renderSchemaEditor, renderSchemaGlobalSettings } from './schema.js';
 import { renderDashboardLayout, renderDashboardEditor, initDashboardUI } from './dashboard.js';
 import { renderCalendarEditor } from './calendar.js';
 import { renderDatabaseEditor } from './database.js';
@@ -441,6 +441,19 @@ function renderSidebar() {
         actionDiv.appendChild(btnClear);
     }
 
+    if (currentFile === 'schema') {
+        const globalLi = document.createElement('li');
+        globalLi.textContent = 'Global Grid Settings';
+        globalLi.style.cssText = 'font-weight:bold; border-bottom:2px solid var(--accent); cursor:pointer;';
+        if (currentItemKey === 'GLOBAL_SCHEMA') globalLi.classList.add('active');
+        globalLi.onclick = () => {
+            currentItemKey = 'GLOBAL_SCHEMA';
+            renderSidebar();
+            renderEditor('GLOBAL_SCHEMA', null, false);
+        };
+        itemListEl.appendChild(globalLi);
+    }
+
     if (currentFile === 'dashboard' || currentFile === 'calendar' || currentFile === 'workflows' || currentFile === 'files') {
         const layoutLi = document.createElement('li');
         layoutLi.textContent = "Global Settings"; layoutLi.style.fontWeight = 'bold'; layoutLi.style.borderBottom = '2px solid var(--accent)';
@@ -583,6 +596,7 @@ function renderEditor(key, itemData, isArray) {
         }
     }
     
+    if (currentFile === 'schema' && key === 'GLOBAL_SCHEMA') return renderSchemaGlobalSettings(currentConfig, ctx);
     if (currentFile === 'schema') return renderSchemaEditor(key, itemData, ctx);
 
     const headerDiv = document.createElement('div');

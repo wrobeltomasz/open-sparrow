@@ -2,7 +2,7 @@ import { loadTable, renderGrid, getState, setFilteredData, resetFilters, injectP
 import { state as gridState } from './grid/state.js';
 import { exportCSV } from './export_csv.js';
 import { debugLog } from './debug.js';
-import { setupPagination, getPageRows } from './pagination.js';
+import { setupPagination, getPageRows, initPageSize } from './pagination.js';
 import { initWorkflows } from './workflows.js';
 
 // Break circular dependency: grid/index.js cannot import pagination.js because
@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Define globally so other functions and modules can access it
         window.schema = schemaData;
+        initPageSize(schemaData);
         window.AppState = window.AppState || {};
         window.AppState.schema = schemaData;
 
