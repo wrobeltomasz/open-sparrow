@@ -463,6 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const formData = new FormData();
             formData.append('action', 'upload');
+            formData.append('csrf_token', window.CSRF_TOKEN);
             formData.append('file', fileInput.files[0]);
             if (nameInput.value.trim()) formData.append('display_name', nameInput.value.trim());
             if (tagsInput && tagsInput.value.trim()) formData.append('tags', tagsInput.value.trim());

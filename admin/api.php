@@ -181,12 +181,23 @@ if ($action === 'init_db') {
         }
 
         // Create default admin account for a clean installation (only when no users exist at all).
-        // Default credentials: admin / admin — must be changed immediately after first login.
-        $firstAdminHash = password_hash('admin', PASSWORD_DEFAULT);
+        // Generates a random temporary password logged to PHP error_log — must be changed immediately.
+        $tmpPassword    = bin2hex(random_bytes(12));
+        $firstAdminSalt = bin2hex(random_bytes(32));
+        $argonOpts      = ['memory_cost' => 1 << 17, 'time_cost' => 4, 'threads' => 1];
+        $firstAdminHash = password_hash($firstAdminSalt . $tmpPassword, PASSWORD_ARGON2ID, $argonOpts);
+        error_log('[OpenSparrow] First-run admin password: ' . $tmpPassword . ' — change immediately after login!');
         $resAdmin = @pg_query_params(
             $conn,
-            "INSERT INTO $tUsers (username, password_hash, is_active, role) SELECT 'admin', \$1, true, 'admin' WHERE NOT EXISTS (SELECT 1 FROM $tUsers LIMIT 1)",
-            [$firstAdminHash]
+            "INSERT INTO $tUsers (username, password_hash, salt, password_algo, password_params, is_active, role)
+             SELECT 'admin', \$1, \$2, \$3, \$4, true, 'admin'
+             WHERE NOT EXISTS (SELECT 1 FROM $tUsers LIMIT 1)",
+            [
+                $firstAdminHash,
+                $firstAdminSalt,
+                'argon2id',
+                json_encode($argonOpts),
+            ]
         );
         if (!$resAdmin) {
             admin_db_fail($conn, 'init_db:first_admin');
@@ -298,10 +309,17 @@ if ($action === 'users_add') {
     try {
         require_once __DIR__ . '/../includes/db.php';
         require_once __DIR__ . '/../includes/api_helpers.php';
-        $conn = db_connect();
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO " . sys_table('users') . " (username, password_hash, is_active, role) VALUES ($1, $2, true, $3) RETURNING id";
-        $res = @pg_query_params($conn, $sql, [$username, $hash, $role]);
+        $conn    = db_connect();
+        $newSalt = bin2hex(random_bytes(32));
+        $opts    = ['memory_cost' => 1 << 17, 'time_cost' => 4, 'threads' => 1];
+        $hash    = password_hash($newSalt . $password, PASSWORD_ARGON2ID, $opts);
+        $sql     = 'INSERT INTO ' . sys_table('users')
+            . ' (username, password_hash, salt, password_algo, password_params, is_active, role)'
+            . ' VALUES ($1, $2, $3, $4, $5, true, $6) RETURNING id';
+        $res = @pg_query_params($conn, $sql, [
+            $username, $hash, $newSalt, 'argon2id',
+            json_encode($opts), $role,
+        ]);
         if (!$res) {
             admin_db_fail($conn, 'users_add');
         }
@@ -753,11 +771,12 @@ if ($action === 'export') {
     }
 
     $zip = new ZipArchive();
-    $zipFile = sys_get_temp_dir() . '/sparrow_config_' . time() . '.zip';
+    // Random suffix prevents temp file enumeration attacks
+    $zipFile = sys_get_temp_dir() . '/sparrow_config_' . bin2hex(random_bytes(8)) . '.zip';
     if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
         $includesDir = __DIR__ . '/../includes/';
-        // Dodałem files.json do backupu
-        $filesToBackup = ['schema.json', 'dashboard.json', 'calendar.json', 'database.json', 'security.json', 'workflows.json', 'files.json'];
+        // database.json excluded — contains plaintext DB credentials
+        $filesToBackup = ['schema.json', 'dashboard.json', 'calendar.json', 'security.json', 'workflows.json', 'files.json'];
         foreach ($filesToBackup as $f) {
             if (file_exists($includesDir . $f)) {
                 $zip->addFile($includesDir . $f, $f);
