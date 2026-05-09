@@ -808,6 +808,82 @@ try {
             exit;
         }
 
+        // POST: DUPLICATE ROW
+        if ($method === 'POST' && ($body['action'] ?? '') === 'duplicate' && isset($body['id'])) {
+            $srcId = (int)$body['id'];
+            if ($srcId <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Invalid ID']);
+                exit;
+            }
+
+            $dupCols = [];
+            foreach ($tableCfg['columns'] as $colName => $colCfg) {
+                if ($colName === $idCol) {
+                    continue;
+                }
+                if (strtolower($colCfg['type'] ?? '') === 'virtual') {
+                    continue;
+                }
+                $dupCols[] = $colName;
+            }
+
+            if (empty($dupCols)) {
+                http_response_code(422);
+                echo json_encode(['error' => 'No columns to duplicate']);
+                exit;
+            }
+
+            $colIdents = implode(', ', array_map('pg_ident', $dupCols));
+            $sql = sprintf(
+                'INSERT INTO "%s"."%s" (%s) SELECT %s FROM "%s"."%s" WHERE %s = $1 RETURNING %s',
+                $schemaName,
+                $table,
+                $colIdents,
+                $colIdents,
+                $schemaName,
+                $table,
+                pg_ident($idCol),
+                pg_ident($idCol)
+            );
+
+            $res = @pg_query_params($conn, $sql, [$srcId]);
+            if (!$res) {
+                $pgErr = pg_last_error($conn);
+                error_log('[api][duplicate] ' . $pgErr);
+                http_response_code(422);
+                if (stripos($pgErr, 'unique') !== false || stripos($pgErr, 'unikaln') !== false) {
+                    $col = '';
+                    if (preg_match('/[Kk]ey\s*\(([^)]+)\)|Klucz\s*\(([^)]+)\)/', $pgErr, $m)) {
+                        $col = $m[1] ?: $m[2];
+                    }
+                    $msg = $col
+                        ? "Duplicate failed: column \"$col\" must be unique. Edit it in the new record."
+                        : 'Duplicate failed: a unique column conflict occurred. Edit the value in the new record.';
+                    echo json_encode(['error' => $msg]);
+                } else {
+                    echo json_encode(['error' => 'Database error']);
+                }
+                exit;
+            }
+
+            $row = pg_fetch_assoc($res);
+            pg_free_result($res);
+            $newId = $row[$idCol] ?? null;
+
+            if ($newId !== null) {
+                $userId = (int)$_SESSION['user_id'];
+                $logId  = log_user_action($conn, $userId, 'INSERT', $table, (int)$newId);
+                if (RECORD_SNAPSHOTS_ENABLED && $logId !== null) {
+                    snapshot_record($conn, $schemaName, $table, (int)$newId, $logId);
+                }
+                set_record_owner($conn, $table, (int)$newId, $userId, $userId);
+            }
+
+            echo json_encode(['ok' => true, 'id' => $newId]);
+            exit;
+        }
+
         // DELETE: REMOVE ROW
         if ($method === 'DELETE' && isset($body['id'])) {
             $sql = sprintf(

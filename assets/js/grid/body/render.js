@@ -1,4 +1,4 @@
-import { deleteRow } from '../../grid_actions.js';
+import { deleteRow, duplicateRow } from '../../grid_actions.js';
 import { state } from '../state.js';
 import { CellRenderer } from '../cells/registry.js';
 import { buildExpandButton } from './drilldown.js';
@@ -158,6 +158,7 @@ export async function renderTbody(schema, isReadOnly, getPageRows, onTableReload
 
 function buildActionsCell(row, schema, isReadOnly, onTableReload) {
     const tdActions = document.createElement('td');
+    tdActions.className = 'td-actions';
 
     const editBtn = document.createElement('button');
     editBtn.className = 'btn-icon';
@@ -170,6 +171,19 @@ function buildActionsCell(row, schema, isReadOnly, onTableReload) {
         window.location.href = `edit.php?table=${state.currentTable}&id=${row['id']}`;
     });
     tdActions.appendChild(editBtn);
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn-icon';
+    copyBtn.title = 'Duplicate';
+    const copyImg = document.createElement('img');
+    copyImg.src = 'assets/img/content_copy.png';
+    copyImg.alt = 'Duplicate';
+    copyBtn.appendChild(copyImg);
+    copyBtn.addEventListener('click', async () => {
+        const result = await duplicateRow(row['id']);
+        if (result?.ok) await onTableReload();
+    });
+    tdActions.appendChild(copyBtn);
 
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-icon btn-icon-danger';

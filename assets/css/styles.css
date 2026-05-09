@@ -686,9 +686,16 @@ thead th:last-child  { padding-right: 0.6rem; }
 }
 
 .th-actions {
-  width: 70px;
-  min-width: 70px;
-  max-width: 70px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
+
+.td-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
 }
 
 .btn-icon {
