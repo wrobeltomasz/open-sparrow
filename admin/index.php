@@ -166,6 +166,10 @@ if (empty($_SESSION['csrf_token'])) {
                         <img class="nav-item-icon" src="../assets/icons/build.png" alt="">
                         Add Table
                     </button>
+                    <button class="admin-tab" data-file="erd">
+                        <img class="nav-item-icon" src="../assets/icons/account_tree.png" alt="">
+                        Schema Map
+                    </button>
                 </div>
             </div>
 

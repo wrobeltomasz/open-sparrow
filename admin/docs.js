@@ -337,6 +337,18 @@ export function renderDocumentation(ctx) {
                 <li>URL format: <code>create.php?table=&lt;child_table&gt;&amp;&lt;fk_column&gt;=&lt;parent_id&gt;</code>.</li>
             </ul>
 
+            <h3 id="doc-9f2" style="color: #2563eb; margin-top: 30px;">9f2. Grid Action Buttons</h3>
+            <p>
+                The <strong>Actions</strong> column in the data grid uses icon buttons instead of text labels. Icons are served from <code>assets/img/</code>.
+            </p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Edit</strong> — <code>edit_square.png</code> icon, navigates to <code>edit.php</code> for the row.</li>
+                <li><strong>Delete</strong> — <code>delete.png</code> icon (red hover), requires confirmation before deleting the record.</li>
+                <li>Both buttons are 30×30 px with transparent background, 70 % opacity at rest, full opacity on hover. Delete hover background turns red.</li>
+                <li>The Actions column header is intentionally empty (no label) and fixed at 70 px width.</li>
+                <li>Only visible to <strong>Editor</strong> role — hidden entirely for <strong>Viewer</strong>.</li>
+            </ul>
+
             <h3 id="doc-9g" style="color: #2563eb; margin-top: 30px;">9g. Performance Tab</h3>
             <p>
                 <strong>Admin → System → Performance</strong> — a read-only diagnostic panel that scans <code>schema.json</code>, <code>dashboard.json</code>, and live PostgreSQL statistics to identify bottlenecks. Contains six independent sections; each has its own <em>Scan</em> button. The <strong>Run Full Analysis</strong> button at the top fires all six in parallel.
@@ -502,6 +514,33 @@ export function renderDocumentation(ctx) {
                 <li>No new API endpoint for form sync — runs entirely server-side within the existing PHP request lifecycle.</li>
                 <li>Grid batch fetch: <code>api.php?api=m2m_rows</code> — GET endpoint returning <code>{"data": {"rowId": ["Label A", …]}}</code>. The <code>many_to_many</code> array is included in the public schema served by <code>api_schema.php</code>.</li>
             </ul>
+
+            <h3 id="doc-9k" style="color: #2563eb; margin-top: 30px;">9k. Schema Map (ERD)</h3>
+            <p>
+                <strong>Data Management → Schema Map</strong> renders an interactive entity-relationship diagram of your entire schema — tables, foreign keys, subtables, and M2M links — directly from <code>schema.json</code>. No external libraries are used.
+            </p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Auto-layout:</strong> Tables are positioned using a force-directed algorithm (repulsion + spring attraction along edges). Runs automatically on open and when toggling hidden tables.</li>
+                <li><strong>Connection types:</strong>
+                    <ul style="padding-left: 20px; margin-top: 4px;">
+                        <li><span style="color:#2563eb;">●</span> <strong>Foreign key</strong> — solid blue arrow from referencing table to referenced table.</li>
+                        <li><span style="color:#16a34a;">●</span> <strong>Subtable</strong> — dashed green line.</li>
+                        <li><span style="color:#7c3aed;">●</span> <strong>Many-to-many</strong> — dotted purple line.</li>
+                    </ul>
+                </li>
+                <li><strong>Pan:</strong> Click and drag the canvas background.</li>
+                <li><strong>Zoom:</strong> Scroll wheel — zoom anchored to cursor position.</li>
+                <li><strong>Reposition table:</strong> Click and drag any table node.</li>
+                <li><strong>Highlight connections:</strong> Click a table to highlight its direct relationships and dim everything else. Click again to deselect.</li>
+                <li><strong>Search:</strong> Type in the <em>Search tables…</em> input to highlight matching tables (by internal name or display name). Non-matching tables are dimmed.</li>
+                <li><strong>Hidden tables:</strong> Check <em>Hidden tables</em> to include tables marked <code>"hidden": true</code> in the diagram (shown with a grey header).</li>
+                <li><strong>Fit View:</strong> The <em>⌖ Fit View</em> button resets pan and zoom to fit all visible tables in the viewport.</li>
+                <li><strong>Export PNG:</strong> The <em>↓ PNG</em> button renders the full diagram (all tables, not just the visible viewport) to a <code>schema-map.png</code> file at 2× resolution.</li>
+                <li><strong>Stats bar:</strong> Shows a live count of tables, FK relationships, subtable links, and M2M links in the current view.</li>
+            </ul>
+            <p style="background:#f0f9ff;padding:10px 14px;border-left:3px solid #38bdf8;border-radius:4px;font-size:14px;">
+                <strong>Tip:</strong> The Schema Map reads <code>schema.json</code> directly — it always reflects your latest saved configuration. Re-open the tab after saving schema changes to see an updated diagram.
+            </p>
 
             <h3 id="doc-10" style="color: #2563eb; margin-top: 30px;">10. Files Module</h3>
             <p>The <strong>Files</strong> tab is a central repository for documents and media, backed by the <code>spw_files</code> table.</p>
