@@ -128,6 +128,17 @@ export async function renderTbody(schema, isReadOnly, getPageRows, onTableReload
 
         if (firstDataTd) attachRowTooltip(firstDataTd, row, schema);
 
+        // M2M columns — one TD per configured relationship, populated async by loader.js
+        const m2mList = schema.tables[state.currentTable]?.many_to_many || [];
+        for (let mi = 0; mi < m2mList.length; mi++) {
+            const tdM2m = document.createElement('td');
+            tdM2m.className = 'td-m2m';
+            tdM2m.dataset.m2mRowId = String(row['id']);
+            tdM2m.dataset.m2mIndex = String(mi);
+            tdM2m.dataset.m2mLabel = m2mList[mi].label || 'Related';
+            tr.appendChild(tdM2m);
+        }
+
         // Comments column
         const tdComments = document.createElement('td');
         tdComments.className = 'td-comments';

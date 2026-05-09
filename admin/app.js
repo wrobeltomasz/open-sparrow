@@ -16,6 +16,7 @@ import { renderAddTableEditor } from './add_table.js';
 import { renderMigrationsPage } from './migrations.js';
 import { renderPerformancePage } from './performance.js';
 import { renderCronPage } from './cron.js';
+import { renderM2mPage } from './m2m.js';
 
 let currentConfig = null;
 let currentFile = 'schema';
@@ -29,7 +30,7 @@ const btnSave = document.getElementById('btnSave');
 const tabs = document.querySelectorAll('.admin-tab');
 
 // Tabs that save immediately via API — no config file involved, never dirty.
-const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database', 'audit', 'add_table', 'performance', 'cron']);
+const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database', 'audit', 'add_table', 'performance', 'cron', 'm2m']);
 
 // Dirty-state guards: every edit marks the config dirty; navigation and reload
 // refuse to drop pending changes silently.
@@ -217,7 +218,7 @@ function getColumnOptionsForTable(tableName) {
 }
 
 async function loadConfigFile(fileName) {
-    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu' || fileName === 'audit' || fileName === 'add_table' || fileName === 'migrations' || fileName === 'performance' || fileName === 'cron') {
+    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu' || fileName === 'audit' || fileName === 'add_table' || fileName === 'migrations' || fileName === 'performance' || fileName === 'cron' || fileName === 'm2m') {
         currentConfig = null;
         renderSidebar();
         renderEditor(fileName.toUpperCase(), null, false);
@@ -299,7 +300,7 @@ function clearConfig() {
 function renderSidebar() {
     itemListEl.innerHTML = '';
     
-    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu' || currentFile === 'audit' || currentFile === 'add_table' || currentFile === 'migrations' || currentFile === 'performance' || currentFile === 'cron') {
+    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu' || currentFile === 'audit' || currentFile === 'add_table' || currentFile === 'migrations' || currentFile === 'performance' || currentFile === 'cron' || currentFile === 'm2m') {
         document.getElementById('sidebarTitle').textContent = currentFile.charAt(0).toUpperCase() + currentFile.slice(1);
         const actionDiv = document.getElementById('sidebarActions');
         if (actionDiv) actionDiv.innerHTML = ''; 
@@ -367,6 +368,7 @@ function renderSidebar() {
             });
             return;
         }
+        if (currentFile === 'm2m') title = "M2M Builder";
         if (currentFile === 'cron') {
             const cronSections = [
                 'Manual Run',
@@ -535,7 +537,7 @@ function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    if (['health', 'docs', 'users', 'backup', 'menu', 'audit', 'add_table', 'performance', 'cron'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
+    if (['health', 'docs', 'users', 'backup', 'menu', 'audit', 'add_table', 'performance', 'cron', 'm2m'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -552,6 +554,7 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'migrations') return renderMigrationsPage(ctx);
     if (currentFile === 'performance') return renderPerformancePage(ctx);
     if (currentFile === 'cron') return renderCronPage(ctx);
+    if (currentFile === 'm2m')  return renderM2mPage(ctx);
     if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
 
     if (currentFile === 'menu') {

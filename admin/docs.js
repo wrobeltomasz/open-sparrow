@@ -392,6 +392,117 @@ export function renderDocumentation(ctx) {
                 <li><strong>Valid values:</strong> 10, 25, 50, 100. Values outside this set are ignored (both from <code>localStorage</code> and from the admin config) and the fallback applies.</li>
             </ul>
 
+            <h3 id="doc-9j" style="color: #2563eb; margin-top: 30px;">9j. Many-to-Many Relationships</h3>
+            <p>
+                Many-to-many (M2M) relationships allow a record in one table to be linked to multiple records in another table — and vice versa.
+                The links are stored in a <strong>junction table</strong> (also called a pivot or bridge table) that holds pairs of foreign keys.
+                OpenSparrow renders these as a <strong>checkbox panel</strong> at the bottom of the edit and create forms — no custom code required.
+            </p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">How it works end-to-end</h4>
+            <ol style="padding-left: 20px;">
+                <li><strong>Create the junction table in PostgreSQL</strong> (once, manually or via DB migration):
+                    <pre style="background:#f1f5f9; padding:12px 16px; border-radius:6px; font-size:13px; overflow-x:auto; margin-top:8px;">CREATE TABLE app.employee_company (
+    id          SERIAL PRIMARY KEY,
+    employee_id INT NOT NULL REFERENCES app.employee(id) ON DELETE CASCADE,
+    company_id  INT NOT NULL REFERENCES app.company(id)  ON DELETE CASCADE,
+    UNIQUE (employee_id, company_id)
+);</pre>
+                    The <code>ON DELETE CASCADE</code> clauses ensure orphan rows are cleaned up automatically when either side is deleted.
+                    The <code>UNIQUE</code> constraint prevents duplicate links.
+                </li>
+                <li><strong>Configure the relationship</strong> in the admin panel: Schema → select the parent table → scroll to <em>Many-to-Many Relationships</em> → click <strong>+ Add Many-to-Many</strong>.</li>
+                <li><strong>Save File</strong> — the checkbox panel appears automatically in <code>edit.php</code> and <code>create.php</code>.</li>
+            </ol>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">Admin configuration fields</h4>
+            <p>Each M2M entry has six fields. All are required:</p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Display Label</strong> — heading shown above the checkbox group in the form (e.g. <em>Companies</em>).</li>
+                <li><strong>Junction Table</strong> — the pivot table that stores the links (<code>employee_company</code>). Select from all tables known to the schema.</li>
+                <li><strong>Self FK</strong> — the column in the junction table that references <em>this</em> table's primary key (e.g. <code>employee_id</code>).</li>
+                <li><strong>Other FK</strong> — the column in the junction table that references the <em>related</em> table (e.g. <code>company_id</code>).</li>
+                <li><strong>Other Table</strong> — the related entity table whose records appear as checkboxes (e.g. <code>company</code>). Select from all tables known to the schema.</li>
+                <li><strong>Display Column</strong> — the column from Other Table used as the checkbox label (e.g. <code>name</code>). Defaults to <code>name</code>.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">Resulting JSON in schema.json</h4>
+            <pre style="background:#f1f5f9; padding:12px 16px; border-radius:6px; font-size:13px; overflow-x:auto;">"employee": {
+    "display_name": "Employee",
+    "columns": { ... },
+    "foreign_keys": { ... },
+    "many_to_many": [
+        {
+            "label":          "Companies",
+            "junction_table": "employee_company",
+            "self_fk":        "employee_id",
+            "other_fk":       "company_id",
+            "other_table":    "company",
+            "display_column": "name"
+        }
+    ]
+}</pre>
+            <p>Multiple M2M blocks are supported — add one entry per relationship.</p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">Runtime behaviour — edit form</h4>
+            <ul style="padding-left: 20px;">
+                <li>All records from Other Table are loaded as checkboxes, sorted by Display Column.</li>
+                <li>Currently linked records are pre-checked based on the existing rows in the junction table.</li>
+                <li>On <strong>Save</strong> or <strong>Save &amp; Exit</strong>: all existing junction rows for this record are deleted and new rows are inserted for each checked option — atomically in a single PostgreSQL transaction. If the transaction fails, no partial state is written.</li>
+                <li>Unchecking all boxes and saving removes all links (full unlink).</li>
+                <li>Read-only users (<em>viewer</em> role) see checkboxes in disabled state — they can view links but cannot change them.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">Runtime behaviour — create form</h4>
+            <ul style="padding-left: 20px;">
+                <li>Checkboxes appear at the bottom of the create form with nothing pre-checked.</li>
+                <li>Links are saved immediately after the main record is inserted — in the same PHP request. The new record's ID is used as the Self FK value.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">Junction table — must it be in schema.json?</h4>
+            <p>
+                The junction table does <strong>not</strong> need its own schema.json entry for the M2M panel to work — the helper queries it directly using the column names you configured.
+                However, if you want to control the PostgreSQL schema name (e.g. <code>app</code> instead of <code>public</code>), add a minimal hidden entry:
+            </p>
+            <pre style="background:#f1f5f9; padding:12px 16px; border-radius:6px; font-size:13px; overflow-x:auto;">"employee_company": {
+    "hidden": true,
+    "schema": "app",
+    "columns": {}
+}</pre>
+            <p>Without this entry the junction table is accessed in the <code>public</code> schema by default.</p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">M2M column in the data grid</h4>
+            <p>
+                Every table that has at least one M2M relationship configured automatically gets one extra column in the data grid for each relationship — no additional setup required.
+            </p>
+            <ul style="padding-left: 20px;">
+                <li><strong>Column header:</strong> The <em>Display Label</em> value from the M2M config (e.g. <em>Companies</em>).</li>
+                <li><strong>Cell content:</strong> Up to 3 linked items are shown as indigo chips. If there are more, a grey <em>+N</em> overflow chip is added.</li>
+                <li><strong>Hover tooltip:</strong> Hovering over any chip cell opens a popup listing all linked items with a title — identical in style to the comments tooltip.</li>
+                <li><strong>Batch loading:</strong> A single <code>GET api.php?api=m2m_rows&amp;table=…&amp;m2m_index=…&amp;ids=…</code> request fetches all M2M data for the visible page rows at once — no per-row requests.</li>
+                <li><strong>Frontend modules:</strong> <code>assets/js/grid/m2m/loader.js</code> (fetch, cache, render chips) and <code>assets/js/grid/m2m/popup.js</code> (hover tooltip).</li>
+                <li><strong>Junction table schema:</strong> For the batch query to resolve the correct PostgreSQL schema, the junction table should have a minimal entry in <code>schema.json</code> with a <code>"schema"</code> key. Without it, <code>public</code> is assumed.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">M2M Builder (admin tab)</h4>
+            <p>
+                <strong>Data Management → M2M Builder</strong> is a dedicated admin tab for creating new many-to-many relationship entries. It provides a guided form-based wizard as an alternative to editing <code>schema.json</code> directly.
+            </p>
+            <ul style="padding-left: 20px;">
+                <li>Select the parent table, fill in the six M2M fields (label, junction table, self FK, other FK, other table, display column), and click <em>Create Relationship</em>.</li>
+                <li>The action writes the new entry to <code>schema.json</code> via <code>admin/api.php?action=create_m2m</code>.</li>
+                <li>Each saved relationship is listed as a card (↔ badge) in the sidebar. Clicking a card opens an edit/delete view.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #8b5cf6; padding-left: 15px;">Backend implementation</h4>
+            <ul style="padding-left: 20px;">
+                <li><code>includes/m2m.php</code> — three helper functions: <code>m2m_options()</code> (fetch checkable items), <code>m2m_selected()</code> (fetch current links), <code>m2m_sync()</code> (atomic DELETE + INSERT).</li>
+                <li>All SQL identifiers pass through <code>pg_ident()</code> — injection-safe even for user-supplied column names.</li>
+                <li>Checkbox values are validated as integers server-side (<code>ctype_digit</code>) before any INSERT.</li>
+                <li>No new API endpoint for form sync — runs entirely server-side within the existing PHP request lifecycle.</li>
+                <li>Grid batch fetch: <code>api.php?api=m2m_rows</code> — GET endpoint returning <code>{"data": {"rowId": ["Label A", …]}}</code>. The <code>many_to_many</code> array is included in the public schema served by <code>api_schema.php</code>.</li>
+            </ul>
+
             <h3 id="doc-10" style="color: #2563eb; margin-top: 30px;">10. Files Module</h3>
             <p>The <strong>Files</strong> tab is a central repository for documents and media, backed by the <code>spw_files</code> table.</p>
             <ul style="padding-left: 20px;">

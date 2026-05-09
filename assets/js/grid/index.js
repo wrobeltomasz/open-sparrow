@@ -6,6 +6,8 @@ import { renderThead } from './header/render.js';
 import { renderTbody } from './body/render.js';
 import { loadCommentCounts } from './comments/counts.js';
 import { initPreviewPopup, clearPreviewCache } from './comments/preview-popup.js';
+import { loadM2mColumns, clearM2mStore } from './m2m/loader.js';
+import { initM2mPopup } from './m2m/popup.js';
 import { computeVirtual } from './cells/virtual-cell.js';
 
 export { getState, setFilteredData };
@@ -24,6 +26,7 @@ export async function loadTable(schema, table, gridTitleEl, addRowBtn) {
         state.currentTable = table;
         state.fkCache = new Map();
         clearPreviewCache();
+        clearM2mStore();
         state.fullData = data.rows || [];
         if (data.truncated) {
             showToast(`Showing first ${state.fullData.length} records (limit set in Schema settings).`, 'info');
@@ -123,6 +126,7 @@ export async function renderGrid(schema) {
     _setupPagination(schema);
     debugLog('Grid rendered', { rows: pageRows.length });
     loadCommentCounts(pageRows);
+    loadM2mColumns(pageRows, schema);
 }
 
 export async function resetFilters(schema) {
@@ -132,4 +136,5 @@ export async function resetFilters(schema) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initPreviewPopup();
+    initM2mPopup();
 });

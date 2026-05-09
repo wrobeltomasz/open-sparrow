@@ -224,6 +224,10 @@ if (empty($_SESSION['csrf_token'])) {
                         <img class="nav-item-icon" src="../assets/icons/manage_history.png" alt="">
                         Cron Notifications
                     </button>
+                    <button class="admin-tab" data-file="m2m">
+                        <img class="nav-item-icon" src="../assets/icons/account_tree.png" alt="">
+                        M2M Builder
+                    </button>
                 </div>
             </div>
 
@@ -270,7 +274,6 @@ if (empty($_SESSION['csrf_token'])) {
         <div class="admin-content">
 
             <section class="admin-workspace" id="workspace">
-                <h2 style="margin-top: 0;">Select an item to edit</h2>
                 <div id="editorForm"></div>
             </section>
 

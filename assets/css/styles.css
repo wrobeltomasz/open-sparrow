@@ -601,6 +601,76 @@ thead th {
 thead th:first-child { padding-left: 0.6rem; }
 thead th:last-child  { padding-right: 0.6rem; }
 
+.th-m2m,
+.td-m2m {
+  min-width: 80px;
+  max-width: 200px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.m2m-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.m2m-chip {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: #e0e7ff;
+  color: #3730a3;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m2m-chip-more {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.m2m-popup {
+  position: fixed;
+  z-index: 10001;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #333;
+  min-width: 160px;
+  max-width: 280px;
+  max-height: 320px;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+.m2m-popup-title {
+  font-weight: 600;
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.m2m-popup-item {
+  padding: 3px 0;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111;
+}
+
+.m2m-popup-item:last-child {
+  border-bottom: none;
+}
+
 .th-comments,
 .td-comments {
   width: 40px !important;

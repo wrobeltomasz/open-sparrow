@@ -972,4 +972,106 @@ export function renderSchemaEditor(tableName, tableData, ctx) {
     };
 
     renderSubtables();
+
+    // ── Many-to-Many Relationships ────────────────────────────────────────────
+    if (!Array.isArray(tableData.many_to_many)) tableData.many_to_many = [];
+
+    const m2mTitle = document.createElement('h3');
+    m2mTitle.textContent = 'Many-to-Many Relationships';
+    m2mTitle.style.marginTop = '40px';
+    workspaceEl.appendChild(m2mTitle);
+
+    const m2mHint = document.createElement('p');
+    m2mHint.style.cssText = 'color:var(--muted); font-size:13px; margin:-8px 0 14px;';
+    m2mHint.textContent = 'Checkbox panels shown in edit/create forms. Each entry links this table to another via a junction table.';
+    workspaceEl.appendChild(m2mHint);
+
+    const m2mContainer = document.createElement('div');
+    workspaceEl.appendChild(m2mContainer);
+
+    const renderM2m = () => {
+        m2mContainer.replaceChildren();
+
+        tableData.many_to_many.forEach((cfg, index) => {
+            const block = document.createElement('div');
+            block.className = 'column-block collapsed';
+            block.style.borderLeft = '4px solid #8b5cf6';
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'block-header';
+            headerDiv.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:15px;';
+            headerDiv.addEventListener('click', (e) => {
+                if (e.target.closest('button')) return;
+                block.classList.toggle('collapsed');
+            });
+
+            const chevron = document.createElement('span');
+            chevron.className = 'block-chevron';
+            chevron.textContent = '▶';
+
+            const h4 = document.createElement('h4');
+            h4.style.cssText = 'margin:0; flex:1;';
+            h4.textContent = cfg.label || `M2M #${index + 1}`;
+
+            const btnDel = document.createElement('button');
+            btnDel.type = 'button';
+            btnDel.textContent = 'Delete';
+            btnDel.style.cssText = 'background:none; border:none; color:red; cursor:pointer; font-weight:bold; text-decoration:underline;';
+            btnDel.onclick = () => { tableData.many_to_many.splice(index, 1); markDirty(); renderM2m(); };
+
+            headerDiv.append(chevron, h4, btnDel);
+            block.appendChild(headerDiv);
+
+            block.appendChild(createTextInput(
+                `m2m_label_${index}`, 'Display Label',
+                cfg.label || '',
+                (val) => { cfg.label = val; h4.textContent = val || `M2M #${index + 1}`; markDirty(); }
+            ));
+            block.appendChild(createSelectInput(
+                `m2m_jt_${index}`, 'Junction Table',
+                getTableOptions(), cfg.junction_table || '',
+                (val) => { cfg.junction_table = val; markDirty(); }
+            ));
+            block.appendChild(createTextInput(
+                `m2m_sfk_${index}`, 'Self FK — this table\'s ID column in junction',
+                cfg.self_fk || '',
+                (val) => { cfg.self_fk = val; markDirty(); }
+            ));
+            block.appendChild(createTextInput(
+                `m2m_ofk_${index}`, 'Other FK — related table\'s ID column in junction',
+                cfg.other_fk || '',
+                (val) => { cfg.other_fk = val; markDirty(); }
+            ));
+            block.appendChild(createSelectInput(
+                `m2m_ot_${index}`, 'Other Table (the related entity)',
+                getTableOptions(), cfg.other_table || '',
+                (val) => { cfg.other_table = val; markDirty(); }
+            ));
+            block.appendChild(createTextInput(
+                `m2m_dc_${index}`, 'Display Column (from Other Table)',
+                cfg.display_column || '',
+                (val) => { cfg.display_column = val; markDirty(); }
+            ));
+
+            makeCollapsible(block);
+            m2mContainer.appendChild(block);
+        });
+
+        const btnAdd = document.createElement('button');
+        btnAdd.type = 'button';
+        btnAdd.className = 'btn-add';
+        btnAdd.style.background = '#8b5cf6';
+        btnAdd.textContent = '+ Add Many-to-Many';
+        btnAdd.onclick = () => {
+            tableData.many_to_many.push({
+                label: '', junction_table: '', self_fk: '',
+                other_fk: '', other_table: '', display_column: 'name'
+            });
+            markDirty();
+            renderM2m();
+        };
+        m2mContainer.appendChild(btnAdd);
+    };
+
+    renderM2m();
 }

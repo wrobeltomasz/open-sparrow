@@ -443,6 +443,71 @@ try {
         exit;
     }
 
+    // GET: BATCH M2M RELATED LABELS FOR GRID COLUMN
+    if ($method === 'GET' && ($_GET['api'] ?? '') === 'm2m_rows') {
+        $table   = $_GET['table']     ?? '';
+        $m2mIdx  = (int)($_GET['m2m_index'] ?? 0);
+        $idsRaw  = $_GET['ids']       ?? '';
+
+        if (!isset($schema['tables'][$table])) {
+            exit(json_encode(['data' => (object)[]]));
+        }
+
+        $ids = array_values(array_filter(explode(',', $idsRaw), 'ctype_digit'));
+        if (empty($ids)) {
+            exit(json_encode(['data' => (object)[]]));
+        }
+
+        $m2mList = $schema['tables'][$table]['many_to_many'] ?? [];
+        if (!isset($m2mList[$m2mIdx])) {
+            exit(json_encode(['data' => (object)[]]));
+        }
+
+        $cfg        = $m2mList[$m2mIdx];
+        $jt         = $cfg['junction_table'] ?? '';
+        $selfFk     = $cfg['self_fk']        ?? '';
+        $otherFk    = $cfg['other_fk']       ?? '';
+        $otherTable = $cfg['other_table']    ?? '';
+        $displayCol = $cfg['display_column'] ?? 'id';
+
+        if (!$jt || !$selfFk || !$otherFk || !$otherTable
+            || !isset($schema['tables'][$jt], $schema['tables'][$otherTable])) {
+            exit(json_encode(['data' => (object)[]]));
+        }
+
+        $jtSchema = $schema['tables'][$jt]['schema']         ?? 'public';
+        $otSchema = $schema['tables'][$otherTable]['schema'] ?? 'public';
+
+        $placeholders = implode(',', array_map(fn($i) => '$' . ($i + 1), array_keys($ids)));
+
+        $sql = sprintf(
+            'SELECT j.%s AS sid, o.%s AS label
+               FROM "%s"."%s" j
+               JOIN "%s"."%s" o ON o."id" = j.%s
+              WHERE j.%s IN (%s)
+              ORDER BY j.%s, o.%s',
+            pg_ident($selfFk), pg_ident($displayCol),
+            $jtSchema, $jt,
+            $otSchema, $otherTable,
+            pg_ident($otherFk),
+            pg_ident($selfFk), $placeholders,
+            pg_ident($selfFk), pg_ident($displayCol)
+        );
+
+        $res = @pg_query_params($conn, $sql, $ids);
+        if (!$res) {
+            exit(json_encode(['data' => (object)[]]));
+        }
+
+        $data = [];
+        while ($row = pg_fetch_assoc($res)) {
+            $sid = (string)$row['sid'];
+            $data[$sid][] = (string)$row['label'];
+        }
+
+        exit(json_encode(['data' => $data ?: (object)[]]));
+    }
+
     // GET: LIST TABLE ROWS
     if ($method === 'GET' && ($_GET['api'] ?? '') === 'list') {
         $table = $_GET['table'] ?? '';

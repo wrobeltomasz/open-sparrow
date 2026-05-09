@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require __DIR__ . '/includes/bootstrap.php';
+require __DIR__ . '/includes/m2m.php';
 
 use App\Form\RenderContext;
 use App\Support\ByteFormatter;
@@ -26,8 +27,10 @@ if (!$schemas->hasTable($table)) {
     die('Invalid table.');
 }
 
-$tableCfg = $schemas->table($table);
-$error    = '';
+$tableCfg   = $schemas->table($table);
+$rawSchema  = $schemas->raw();
+$m2mConfigs = $rawSchema['tables'][$table]['many_to_many'] ?? [];
+$error      = '';
 
 if ($request->isPost()) {
     if (!$csrf->isValid($request->post('csrf_token'))) {
@@ -40,6 +43,10 @@ if ($request->isPost()) {
         $logId = $audit->log($session->userId(), 'UPDATE', $tableCfg->name, (int)$id);
         if (RECORD_SNAPSHOTS_ENABLED && $logId !== null) {
             snapshot_record($GLOBALS['conn'], $tableCfg->schema, $tableCfg->name, (int)$id, $logId);
+        }
+        foreach ($m2mConfigs as $mi => $m2mCfg) {
+            $selected = array_values(array_filter((array)($_POST['m2m_' . $mi] ?? []), 'ctype_digit'));
+            m2m_sync($GLOBALS['conn'], $m2mCfg, (int)$id, $selected, $rawSchema);
         }
         if (($request->post('_save_action') ?? 'exit') === 'stay') {
             header('Location: edit.php?table=' . urlencode($table) . '&id=' . urlencode((string)$id) . '&saved=1');
@@ -62,8 +69,7 @@ $subtablesData = $records->subtables($tableCfg, $id);
 $relatedFiles  = $files->forRecord($tableCfg->name, $id);
 
 // Pre-load FK options for all FK columns — eliminates N+1 queries in the template.
-$fkOptions = [];
-$rawSchema  = $schemas->raw();
+$fkOptions  = [];
 foreach ($tableCfg->foreignKeys as $colName => $fkCfg) {
     $fkOptions[$colName] = $fkLoader->load($fkCfg, $rawSchema);
 }
@@ -163,6 +169,38 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
                 </div>
             <?php endforeach; ?>
             </div>
+
+            <?php if (!empty($m2mConfigs)) : ?>
+            <div style="border-top:1px solid var(--border-light); margin:20px 0 4px; padding-top:18px;">
+                <?php foreach ($m2mConfigs as $mi => $m2mCfg) : ?>
+                <?php
+                $m2mOpts = m2m_options($GLOBALS['conn'], $m2mCfg, $rawSchema);
+                $m2mSel  = m2m_selected($GLOBALS['conn'], $m2mCfg, (int)$id, $rawSchema);
+                ?>
+                <div style="margin-bottom:18px;">
+                    <div style="font-weight:600; font-size:13px; color:var(--text); margin-bottom:10px;">
+                        <?php echo htmlspecialchars($m2mCfg['label'] ?? 'Related'); ?>
+                    </div>
+                    <?php if (empty($m2mOpts)) : ?>
+                        <p style="color:var(--muted); font-size:13px; margin:0;">No options available.</p>
+                    <?php else : ?>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px 24px;">
+                        <?php foreach ($m2mOpts as $opt) : ?>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:14px; color:var(--text); cursor:pointer;">
+                            <input type="checkbox"
+                                name="m2m_<?php echo (int)$mi; ?>[]"
+                                value="<?php echo htmlspecialchars($opt['id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                <?php if (in_array($opt['id'], $m2mSel, true)) echo 'checked'; ?>
+                                <?php if ($isReadOnly) echo 'disabled'; ?>>
+                            <?php echo htmlspecialchars($opt['label']); ?>
+                        </label>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
 
             <input type="hidden" name="_save_action" id="saveAction" value="exit">
             <div class="form-actions">

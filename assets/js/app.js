@@ -75,10 +75,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const gridContainerEl = document.getElementById('grid');
-            if (gridContainerEl) { initWorkflows(navList, gridContainerEl, gridTitleEl); }
-
-            loadTable(window.schema, initialTableName, gridTitleEl, addRowBtn);
+            let workflowsHandled = false;
+            if (gridContainerEl) {
+                workflowsHandled = await initWorkflows(navList, gridContainerEl, gridTitleEl);
+            }
             setupPagination(window.schema);
+            if (!workflowsHandled) {
+                loadTable(window.schema, initialTableName, gridTitleEl, addRowBtn);
+            }
         }
     } catch (error) {
         console.error("Initialization error:", error);
