@@ -18,6 +18,7 @@ import { renderPerformancePage } from './performance.js';
 import { renderCronPage } from './cron.js';
 import { renderM2mPage } from './m2m.js';
 import { renderErdPage } from './erd.js';
+import { renderViewsEditor } from './views_editor.js';
 
 let currentConfig = null;
 let currentFile = 'schema';
@@ -244,6 +245,10 @@ async function loadConfigFile(fileName) {
             if (!currentConfig.menu_name) currentConfig.menu_name = 'Workflows';
         } else if (fileName === 'files') {
             if (!currentConfig.menu_name) currentConfig.menu_name = 'Files';
+        } else if (fileName === 'views') {
+            if (!currentConfig.views || typeof currentConfig.views !== 'object' || Array.isArray(currentConfig.views)) {
+                currentConfig.views = {};
+            }
         } else if (fileName === 'database') {
             if (!currentConfig.host) currentConfig = { host: 'localhost', port: '5432', dbname: '', user: 'postgres', password: '' };
         } else if (fileName === 'security') {
@@ -253,7 +258,7 @@ async function loadConfigFile(fileName) {
         renderSidebar();
         workspaceEl.innerHTML = `<h2>Select an item from the left menu to edit</h2>`;
         
-        if (fileName === 'database' || fileName === 'security') {
+        if (fileName === 'database' || fileName === 'security' || fileName === 'views') {
             renderEditor('SETTINGS', currentConfig, false);
         }
         // Freshly loaded config is clean; any subsequent edit flips the flag.
@@ -403,6 +408,18 @@ function renderSidebar() {
         li.style.borderBottom = '2px solid var(--accent)';
         li.classList.add('active');
         itemListEl.appendChild(li);
+        return;
+    }
+
+    if (currentFile === 'views') {
+        document.getElementById('sidebarTitle').textContent = 'Views';
+        const vActionDiv = document.getElementById('sidebarActions');
+        if (vActionDiv) vActionDiv.innerHTML = '';
+        const vLi = document.createElement('li');
+        vLi.textContent = 'Views Configuration';
+        vLi.style.cssText = 'font-weight:bold; border-bottom:2px solid var(--accent);';
+        vLi.classList.add('active');
+        itemListEl.appendChild(vLi);
         return;
     }
 
@@ -558,6 +575,7 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'cron') return renderCronPage(ctx);
     if (currentFile === 'm2m')  return renderM2mPage(ctx);
     if (currentFile === 'erd')  return renderErdPage(ctx);
+    if (currentFile === 'views') return renderViewsEditor(ctx);
     if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
 
     if (currentFile === 'menu') {

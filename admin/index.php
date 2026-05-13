@@ -170,6 +170,10 @@ if (empty($_SESSION['csrf_token'])) {
                         <img class="nav-item-icon" src="../assets/icons/account_tree.png" alt="">
                         Schema Map
                     </button>
+                    <button class="admin-tab" data-file="views">
+                        <img class="nav-item-icon" src="../assets/icons/table_chart_view.png" alt="">
+                        Views
+                    </button>
                 </div>
             </div>
 
@@ -336,7 +340,8 @@ if (empty($_SESSION['csrf_token'])) {
         database: 'Database', users: 'Users', health: 'Health Check',
         backup: 'Backup Tables', audit: 'Audit & Snapshots', docs: 'Documentation',
         performance: 'Performance',
-        cron: 'Cron Notifications'
+        cron: 'Cron Notifications',
+        views: 'Views'
     };
     var breadcrumbCurrent = document.getElementById('breadcrumbCurrent');
     document.querySelectorAll('.admin-tab[data-file]').forEach(function(tab) {

@@ -1170,7 +1170,7 @@ if ($action === 'menu_config' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Allowed config files for read and write operations
 // Dodałem 'files' do autoryzowanych konfiguracji
-$allowedFiles = ['schema', 'dashboard', 'calendar', 'database', 'security', 'workflows', 'files'];
+$allowedFiles = ['schema', 'dashboard', 'calendar', 'database', 'security', 'workflows', 'files', 'views'];
 
 // Get content of a JSON config file
 if ($action === 'get' && in_array($file, $allowedFiles, true)) {
