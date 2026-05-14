@@ -758,6 +758,10 @@ thead th:last-child  { padding-right: 0.6rem; }
   pointer-events: none;
 }
 
+tbody tr {
+  height: 36px;
+}
+
 tbody td {
   padding: 0.4rem 0.85rem;
   border-bottom: 1px solid var(--border-light);
