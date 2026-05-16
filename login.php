@@ -3,7 +3,7 @@
 require __DIR__ . '/includes/config.php';
 
 // First-run check: if database.json doesn't exist, redirect to setup wizard
-if (!file_exists(__DIR__ . '/includes/database.json')) {
+if (!file_exists(__DIR__ . '/config/database.json')) {
     header('Location: setup.php');
     exit;
 }
@@ -28,7 +28,7 @@ session_start();
 // then the first table in the schema.
 function resolve_landing_page(): string {
     $isHidden = static function (string $configFile): bool {
-        $path = __DIR__ . '/includes/' . $configFile;
+        $path = __DIR__ . '/config/' . $configFile;
         if (!is_file($path)) {
             return false;
         }

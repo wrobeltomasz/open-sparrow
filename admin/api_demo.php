@@ -10,7 +10,7 @@ if (!defined('DEMO_MODE')) {
 /* ── Demo: status ────────────────────────────────────────────────── */
 if ($action === 'demo_status') {
     header('Content-Type: application/json');
-    $metaPath = realpath(__DIR__ . '/../includes') . '/demo_meta.json';
+    $metaPath = realpath(__DIR__ . '/../config') . '/demo_meta.json';
     if (file_exists($metaPath)) {
         $meta = json_decode(file_get_contents($metaPath), true);
         echo json_encode(['status' => 'success', 'installed' => true, 'meta' => $meta]);
@@ -62,10 +62,10 @@ if ($action === 'demo_install') {
             }
         }
 
-        $includes = realpath(__DIR__ . '/../includes');
+        $configDir = realpath(__DIR__ . '/../config');
 
         // schema.json
-        $schemaPath = $includes . '/schema.json';
+        $schemaPath = $configDir . '/schema.json';
         $schemaCfg  = file_exists($schemaPath) ? (json_decode(file_get_contents($schemaPath), true) ?? []) : [];
         if (!isset($schemaCfg['tables']) || !is_array($schemaCfg['tables'])) {
             $schemaCfg['tables'] = [];
@@ -76,7 +76,7 @@ if ($action === 'demo_install') {
         file_put_contents($schemaPath, json_encode($schemaCfg, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         // dashboard.json
-        $dashPath = $includes . '/dashboard.json';
+        $dashPath = $configDir . '/dashboard.json';
         $dashCfg  = file_exists($dashPath) ? (json_decode(file_get_contents($dashPath), true) ?? []) : [];
         if (!isset($dashCfg['widgets']) || !is_array($dashCfg['widgets'])) {
             $dashCfg['widgets'] = [];
@@ -102,7 +102,7 @@ if ($action === 'demo_install') {
         file_put_contents($dashPath, json_encode($dashCfgOrdered, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         // calendar.json
-        $calPath  = $includes . '/calendar.json';
+        $calPath  = $configDir . '/calendar.json';
         $calCfg   = file_exists($calPath) ? (json_decode(file_get_contents($calPath), true) ?? []) : [];
         if (!isset($calCfg['sources']) || !is_array($calCfg['sources'])) {
             $calCfg['sources'] = [];
@@ -117,7 +117,7 @@ if ($action === 'demo_install') {
         file_put_contents($calPath, json_encode($calCfg, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
         // workflows.json
-        $wfPath = $includes . '/workflows.json';
+        $wfPath = $configDir . '/workflows.json';
         $wfCfg  = file_exists($wfPath) ? (json_decode(file_get_contents($wfPath), true) ?? []) : [];
         if (!isset($wfCfg['workflows']) || !is_array($wfCfg['workflows'])) {
             $wfCfg['workflows'] = [];
@@ -137,7 +137,7 @@ if ($action === 'demo_install') {
         file_put_contents($wfPath, json_encode($wfCfgOrdered, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         // views.json
-        $viewsPath = $includes . '/views.json';
+        $viewsPath = $configDir . '/views.json';
         $viewsCfg  = file_exists($viewsPath) ? (json_decode(file_get_contents($viewsPath), true) ?? []) : [];
         if (!isset($viewsCfg['views']) || !is_array($viewsCfg['views'])) {
             $viewsCfg['views'] = [];
@@ -159,7 +159,7 @@ if ($action === 'demo_install') {
             'view_names'   => $demoData['view_names'],
         ];
         file_put_contents(
-            $includes . '/demo_meta.json',
+            $configDir . '/demo_meta.json',
             json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
         );
 
@@ -186,8 +186,8 @@ if ($action === 'demo_uninstall') {
         exit;
     }
 
-    $includes = realpath(__DIR__ . '/../includes');
-    $metaPath = $includes . '/demo_meta.json';
+    $configDir = realpath(__DIR__ . '/../config');
+    $metaPath = $configDir . '/demo_meta.json';
     if (!file_exists($metaPath)) {
         echo json_encode(['status' => 'error', 'error' => 'No demo installed.']);
         exit;
@@ -214,7 +214,7 @@ if ($action === 'demo_uninstall') {
         }
 
         // Clean schema.json (delete if empty)
-        $schemaPath = $includes . '/schema.json';
+        $schemaPath = $configDir . '/schema.json';
         if (file_exists($schemaPath)) {
             $cfg = json_decode(file_get_contents($schemaPath), true) ?? [];
             foreach ($meta['tables'] ?? [] as $t) {
@@ -228,7 +228,7 @@ if ($action === 'demo_uninstall') {
         }
 
         // Clean dashboard.json (delete if empty)
-        $dashPath = $includes . '/dashboard.json';
+        $dashPath = $configDir . '/dashboard.json';
         if (file_exists($dashPath)) {
             $cfg = json_decode(file_get_contents($dashPath), true) ?? [];
             $ids = $meta['widget_ids'] ?? [];
@@ -243,7 +243,7 @@ if ($action === 'demo_uninstall') {
         }
 
         // Clean calendar.json (delete if empty)
-        $calPath = $includes . '/calendar.json';
+        $calPath = $configDir . '/calendar.json';
         if (file_exists($calPath)) {
             $cfg  = json_decode(file_get_contents($calPath), true) ?? [];
             $tbls = $meta['tables'] ?? [];
@@ -258,7 +258,7 @@ if ($action === 'demo_uninstall') {
         }
 
         // Clean workflows.json (delete if empty)
-        $wfPath = $includes . '/workflows.json';
+        $wfPath = $configDir . '/workflows.json';
         if (file_exists($wfPath)) {
             $cfg = json_decode(file_get_contents($wfPath), true) ?? [];
             $ids = $meta['workflow_ids'] ?? [];
@@ -273,7 +273,7 @@ if ($action === 'demo_uninstall') {
         }
 
         // Clean views.json (delete if empty)
-        $viewsPath = $includes . '/views.json';
+        $viewsPath = $configDir . '/views.json';
         if (file_exists($viewsPath)) {
             $cfg = json_decode(file_get_contents($viewsPath), true) ?? [];
             foreach ($meta['view_keys'] ?? [] as $k) {

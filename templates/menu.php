@@ -48,7 +48,7 @@ if (!function_exists('renderMenuIcon')) {
     }
 }
 
-$includeDir   = __DIR__ . '/../includes';
+$includeDir   = __DIR__ . '/../config';
 $schemaPath   = $includeDir . '/schema.json';
 $tables       = safeReadJson($schemaPath)['tables'] ?? [];
 

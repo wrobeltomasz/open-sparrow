@@ -48,7 +48,7 @@ export function renderDocumentation(ctx) {
                 <li><strong>Foreign keys (relationships):</strong> Use standard PostgreSQL foreign keys to link tables. The UI detects them automatically. Recommended naming convention: <code>table_name_id</code> (e.g. <code>company_id</code>).</li>
                 <li><strong>ENUM types:</strong> Custom PostgreSQL ENUM types are fully supported and rendered as <code>&lt;select&gt;</code> menus in the frontend.</li>
                 <li><strong>Boolean types:</strong> Boolean columns render as switch toggles in edit forms and as dropdown filters in data grids.</li>
-                <li><strong>System schema:</strong> OpenSparrow stores its internal tables (<code>spw_*</code>) in a dedicated PostgreSQL schema (default: <code>app</code>). The schema is resolved in this order: <code>schema</code> key in <code>includes/database.json</code>, then the <code>PGSCHEMA</code> environment variable, then the <code>app</code> fallback.</li>
+                <li><strong>System schema:</strong> OpenSparrow stores its internal tables (<code>spw_*</code>) in a dedicated PostgreSQL schema (default: <code>app</code>). The schema is resolved in this order: <code>schema</code> key in <code>config/database.json</code>, then the <code>PGSCHEMA</code> environment variable, then the <code>app</code> fallback.</li>
             </ul>
 
             <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">System tables (<code>spw_*</code> prefix)</h4>
@@ -88,7 +88,7 @@ export function renderDocumentation(ctx) {
                         <li><strong>Foreign Key:</strong> Adds an <code>FK</code> constraint referencing any table and column already registered in <code>schema.json</code>.</li>
                     </ul>
                 </li>
-                <li><strong>Register in schema.json</strong> (checked by default): After the table and all columns are created in the database, the table entry — including display name, column types, NOT NULL flags, and FK references — is written to <code>includes/schema.json</code> automatically. The table appears in the admin panel and frontend navigation on the next page load without any manual sync.</li>
+                <li><strong>Register in schema.json</strong> (checked by default): After the table and all columns are created in the database, the table entry — including display name, column types, NOT NULL flags, and FK references — is written to <code>config/schema.json</code> automatically. The table appears in the admin panel and frontend navigation on the next page load without any manual sync.</li>
             </ul>
 
             <ul style="padding-left: 20px;">
@@ -233,7 +233,7 @@ export function renderDocumentation(ctx) {
             <h3 id="doc-7" style="color: #2563eb; margin-top: 30px;">7. Database Configuration</h3>
             <p>Manage the core PostgreSQL connection from <strong>System → Database</strong>.</p>
             <ul style="padding-left: 20px;">
-                <li><strong>Database configuration:</strong> Update host, port, database name, username and password. Settings are written to <code>includes/database.json</code> and take effect immediately.</li>
+                <li><strong>Database configuration:</strong> Update host, port, database name, username and password. Settings are written to <code>config/database.json</code> and take effect immediately.</li>
                 <li><strong>System Schema:</strong> The <em>System Schema</em> field sets the PostgreSQL schema used for all <code>spw_*</code> tables. Defaults to <code>app</code>. This value is read by <code>sys_schema()</code> in <code>includes/db.php</code> and used to qualify every system-table query (<code>sys_table('users')</code>, <code>sys_table('files')</code>, …).</li>
                 <li><strong>Test Saved Connection:</strong> Always click <em>Save config</em> first — the button reads the persisted <code>database.json</code>, not the in-form values.</li>
                 <li><strong>Login protection:</strong> <code>login.php</code> applies a DB-backed rate limiter (IP-hash: 20 attempts / 15 min, username: 5 attempts / 15 min, configurable via env) plus CSRF tokens, session fingerprinting (User-Agent hash), an 8-hour absolute session lifetime, and <code>SameSite=Lax</code> / <code>HttpOnly</code> cookies. All thresholds are tunable via environment variables — see <em>Deployment Notes</em> below.</li>
@@ -268,7 +268,7 @@ export function renderDocumentation(ctx) {
             </p>
             <ul style="padding-left: 20px;">
                 <li><strong>How it works:</strong> When enabled, every INSERT (via <code>create.php</code> or the grid) and every UPDATE (via <code>edit.php</code> or the inline grid PATCH) saves a JSONB copy of the record's current state to <code>spw_record_snapshots</code>. Each snapshot is linked to the corresponding row in <code>spw_users_log</code> via <code>log_id</code>. DELETE operations are logged to <code>spw_users_log</code> but do not produce a snapshot.</li>
-                <li><strong>Toggle:</strong> The on/off switch writes to <code>includes/settings.json</code>. The setting takes effect on the next request — no server restart required. If the <code>RECORD_SNAPSHOTS_ENABLED</code> environment variable is set, the toggle is read-only (the env var wins).</li>
+                <li><strong>Toggle:</strong> The on/off switch writes to <code>config/settings.json</code>. The setting takes effect on the next request — no server restart required. If the <code>RECORD_SNAPSHOTS_ENABLED</code> environment variable is set, the toggle is read-only (the env var wins).</li>
                 <li><strong>Prerequisite:</strong> Run <em>Initialize System Tables</em> (System → System Health) at least once after upgrading to create the <code>spw_record_snapshots</code> table. The panel shows the table status and current snapshot count.</li>
                 <li><strong>Schema of <code>spw_record_snapshots</code>:</strong>
                     <ul style="padding-left: 20px; margin-top: 5px;">
@@ -324,7 +324,7 @@ export function renderDocumentation(ctx) {
                 <li><strong>Default Sort Order:</strong> Add one or more sort rules (column + ASC/DESC). The column dropdown lists all columns defined in the schema. Rules are applied left-to-right as a multi-column <code>ORDER BY</code>. If no rules are configured, the fallback is <code>id DESC</code>. The first rule also pre-selects the column header highlight in the grid.</li>
                 <li><strong>Initial Load Limit:</strong> Enter the maximum number of rows to fetch on first load (e.g. <code>500</code>). <code>0</code> means unlimited. When the result is truncated an info toast appears: <em>"Showing first N records (limit set in Schema settings)"</em>. Useful for large tables where the full fetch causes slow page loads.</li>
                 <li><strong>Where to configure:</strong> Admin → Schema → select table → <em>Table Properties</em> section → <em>Default Sort Order</em> and <em>Initial Load Limit</em> fields → Save File.</li>
-                <li><strong>Stored in:</strong> <code>includes/schema.json</code> under the table object as <code>"default_sort": [{"column": "name", "dir": "asc"}]</code> and <code>"initial_limit": 500</code>.</li>
+                <li><strong>Stored in:</strong> <code>config/schema.json</code> under the table object as <code>"default_sort": [{"column": "name", "dir": "asc"}]</code> and <code>"initial_limit": 500</code>.</li>
             </ul>
 
             <h3 id="doc-9f" style="color: #2563eb; margin-top: 30px;">9f. Grid Drilldown — Quick Add</h3>
@@ -397,7 +397,7 @@ export function renderDocumentation(ctx) {
                 Each data grid shows a configurable number of records per page. A global default is set in the admin panel; individual users can override it from the grid itself — their choice persists across browser sessions.
             </p>
             <ul style="padding-left: 20px;">
-                <li><strong>Admin default:</strong> Schema tab → <em>Global Grid Settings</em> (first item in the sidebar) → <em>Default Page Size</em> select (10 / 25 / 50 / 100) → <em>Save File</em>. Stored as <code>default_page_size</code> at the top level of <code>includes/schema.json</code>. Included in config export/import ZIP.</li>
+                <li><strong>Admin default:</strong> Schema tab → <em>Global Grid Settings</em> (first item in the sidebar) → <em>Default Page Size</em> select (10 / 25 / 50 / 100) → <em>Save File</em>. Stored as <code>default_page_size</code> at the top level of <code>config/schema.json</code>. Included in config export/import ZIP.</li>
                 <li><strong>User override:</strong> The <em>Rows per page</em> selector in the left side of every pagination bar. Selecting a value saves it to <code>localStorage</code> (<code>sparrow_page_size</code>) immediately and re-renders the grid. The override survives page refreshes and table switches for that browser.</li>
                 <li><strong>Priority chain:</strong> <code>localStorage</code> value → <code>schema.default_page_size</code> → built-in fallback of 25.</li>
                 <li><strong>Pagination bar layout:</strong> <em>Rows per page: [select]</em> on the left — spacer — <em>Showing X–Y of Z records</em> — <em>Prev</em> / <em>Page N of M</em> / <em>Next</em> on the right.</li>
@@ -559,7 +559,7 @@ export function renderDocumentation(ctx) {
 
             <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">How the menu is stored</h4>
             <p>
-                Menu order and nesting are stored in <code>includes/menu.json</code>, separately from the individual
+                Menu order and nesting are stored in <code>config/menu.json</code>, separately from the individual
                 config files (<code>dashboard.json</code>, <code>calendar.json</code>, <code>schema.json</code>, etc.).
                 Display data — name, icon, hidden flag — always comes from those files. <code>menu.json</code> stores
                 only the <em>structure</em>:
@@ -599,7 +599,7 @@ export function renderDocumentation(ctx) {
                     to change their relative order.
                 </li>
                 <li>
-                    <strong>Auto-save:</strong> Every drop triggers a save to <code>includes/menu.json</code> after a
+                    <strong>Auto-save:</strong> Every drop triggers a save to <code>config/menu.json</code> after a
                     short debounce (350 ms). The frontend reflects changes on the next page load.
                 </li>
             </ul>
@@ -635,9 +635,9 @@ export function renderDocumentation(ctx) {
                     <ul style="padding-left: 20px; margin-top: 5px;">
                         <li>New PostgreSQL schema (e.g. <code>spw_crm</code>) with demo tables.</li>
                         <li>Realistic seed data (15+ records per table, dates relative to installation time).</li>
-                        <li>Schema configuration entries in <code>includes/schema.json</code> with foreign keys, subtables, and column descriptions.</li>
-                        <li>Dashboard widgets in <code>includes/dashboard.json</code> (stat cards, charts, lists).</li>
-                        <li>Calendar sources and workflows in <code>includes/workflows.json</code>.</li>
+                        <li>Schema configuration entries in <code>config/schema.json</code> with foreign keys, subtables, and column descriptions.</li>
+                        <li>Dashboard widgets in <code>config/dashboard.json</code> (stat cards, charts, lists).</li>
+                        <li>Calendar sources and workflows in <code>config/workflows.json</code>.</li>
                         <li>Optional SQL views for derived data (e.g. low-stock products).</li>
                     </ul>
                 </li>
@@ -696,8 +696,8 @@ export function renderDocumentation(ctx) {
 
             <h3 id="doc-12" style="color: #2563eb; margin-top: 30px;">12. Deployment Notes</h3>
             <ul style="padding-left: 20px;">
-                <li><strong>Deny public access to <code>includes/</code>:</strong> Configure your web server so <code>database.json</code>, <code>schema.json</code> and other JSON config files cannot be fetched directly. An <code>.htaccess</code> rule blocking <code>*.json</code> is included by default.</li>
-                <li><strong>Storage permissions:</strong> Under Docker, <code>includes/</code> and <code>storage/</code> must be writable by the web-server user (UID/GID <code>82:82</code> for musl-based slim PHP images).</li>
+                <li><strong>Deny public access to <code>config/</code>:</strong> Configure your web server so <code>database.json</code>, <code>schema.json</code> and other JSON config files cannot be fetched directly. An <code>.htaccess</code> rule blocking all access is included by default.</li>
+                <li><strong>Storage permissions:</strong> Under Docker, <code>config/</code> and <code>storage/</code> must be writable by the web-server user (UID/GID <code>82:82</code> for musl-based slim PHP images).</li>
                 <li><strong>Backups:</strong> Export the config ZIP before every upgrade and keep regular <code>pg_dump</code> snapshots of both application and <code>spw_*</code> tables.</li>
                 <li><strong>Demo mode:</strong> Set <code>DEMO_MODE=true</code> to block all write operations in the admin API — safe for public demonstrations.</li>
             </ul>
@@ -728,7 +728,7 @@ export function renderDocumentation(ctx) {
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>THUMBNAIL_MAX_WIDTH</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>300</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Max thumbnail width in pixels.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>NOTIFICATIONS_DROPDOWN_LIMIT</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>10</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Max items shown in the bell notification dropdown.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>HSTS_MAX_AGE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>31536000</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">HSTS max-age in seconds (1 year). Set <code>0</code> to disable on plain HTTP.</td></tr>
-                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>RECORD_SNAPSHOTS_ENABLED</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>false</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Enable record snapshots system-wide. When set, overrides the admin panel toggle in <code>includes/settings.json</code>.</td></tr>
+                    <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>RECORD_SNAPSHOTS_ENABLED</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>false</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">Enable record snapshots system-wide. When set, overrides the admin panel toggle in <code>config/settings.json</code>.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGDATABASE</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL database name.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGUSER</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL user.</td></tr>
                     <tr><td style="padding:5px 10px;border:1px solid #e2e8f0;"><code>PGPASSWORD</code></td><td style="padding:5px 10px;border:1px solid #e2e8f0;">—</td><td style="padding:5px 10px;border:1px solid #e2e8f0;">PostgreSQL password.</td></tr>

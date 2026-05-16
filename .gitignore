@@ -30,7 +30,7 @@ Thumbs.db
 .env.*.local
 
 # Config json
-includes/*.json
+config/*.json
 includes/php.ini
 
 # Auto-generated IP hash salt — host-specific secret, must not be committed

@@ -68,7 +68,7 @@ function validatedTable(string $table): string
         jsonError('table is required.', 400);
     }
     $schema = json_decode(
-        (string)file_get_contents(__DIR__ . '/includes/schema.json'),
+        (string)file_get_contents(__DIR__ . '/config/schema.json'),
         true
     );
     if (!isset($schema['tables'][$table])) {

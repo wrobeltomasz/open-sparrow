@@ -8,7 +8,7 @@ ini_set('display_errors', '0');
 header('Content-Type: application/json');
 
 // Check if already configured - reject setup if database.json exists
-if (file_exists(__DIR__ . '/includes/database.json')) {
+if (file_exists(__DIR__ . '/config/database.json')) {
     http_response_code(403);
     echo json_encode([
         'success' => false,
@@ -273,7 +273,12 @@ if ($action === 'init_database') {
         ];
 
         $configJson = json_encode($configData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        $configPath = __DIR__ . '/includes/database.json';
+        $configDir  = __DIR__ . '/config';
+        $configPath = $configDir . '/database.json';
+
+        if (!is_dir($configDir) && !@mkdir($configDir, 0755, true)) {
+            throw new Exception('Failed to create config directory.');
+        }
 
         if (!@file_put_contents($configPath, $configJson)) {
             throw new Exception('Failed to write database.json configuration file.');

@@ -35,7 +35,7 @@ $pgConn          = db_connect();
 $db              = new PgConnection($pgConn);
 $GLOBALS['conn'] = $pgConn; // backward-compat: raw PgSql\Connection for legacy api_helpers functions
 
-$schemas  = new JsonSchemaRepository(__DIR__ . '/schema.json');
+$schemas  = new JsonSchemaRepository(__DIR__ . '/../config/schema.json');
 $fkLoader = new FkOptionsLoader($db);
 
 $fieldRegistry = new FieldTypeRegistry([

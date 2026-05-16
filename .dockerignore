@@ -25,7 +25,7 @@ tests/
 
 # Sensitive data and local settings
 # Ignore local database configs if they exist to prevent overwriting container settings
-includes/database.json
+config/database.json
 .env
 
 # Logs and temporary files

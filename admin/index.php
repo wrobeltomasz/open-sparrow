@@ -4,7 +4,7 @@
 require __DIR__ . '/../includes/config.php';
 
 // First-run check: if database.json doesn't exist, redirect to setup wizard
-if (!file_exists(__DIR__ . '/../includes/database.json')) {
+if (!file_exists(__DIR__ . '/../config/database.json')) {
     header('Location: ../setup.php');
     exit;
 }

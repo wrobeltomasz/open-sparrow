@@ -171,7 +171,7 @@ define('DEMO_MODE', get_env('DEMO_MODE', 'false') === 'true');
 // -------------------------------------------------------------------------
 
 // Default maximum upload size in megabytes, used when the value is not
-// specified in the files module configuration (includes/files.json).
+// specified in the files module configuration (config/files.json).
 define('FILES_MAX_SIZE_MB', (int) get_env('FILES_MAX_SIZE_MB', '20'));
 
 // Default number of file records returned per page in the file listing API.
@@ -239,7 +239,7 @@ define('RECORD_SNAPSHOTS_ENABLED', (function (): bool {
     if ($env !== '') {
         return $env === 'true';
     }
-    $f = __DIR__ . '/settings.json';
+    $f = __DIR__ . '/../config/settings.json';
     if (is_file($f)) {
         $s = @json_decode((string) file_get_contents($f), true);
         if (is_array($s) && array_key_exists('record_snapshots_enabled', $s)) {

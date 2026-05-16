@@ -3,7 +3,7 @@ require __DIR__ . '/includes/config.php';
 
 // First-run setup check: if database.json doesn't exist and user is not authenticated,
 // redirect to the setup wizard
-$databaseConfigExists = file_exists(__DIR__ . '/includes/database.json');
+$databaseConfigExists = file_exists(__DIR__ . '/config/database.json');
 if (!$databaseConfigExists && !isset($_SESSION['user_id'])) {
     header('Location: setup.php');
     exit;

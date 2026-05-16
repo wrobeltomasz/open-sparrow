@@ -646,7 +646,7 @@ if ($action === 'schema_add_table') {
         $colsObj[$cName] = $entry;
     }
 
-    $schemaFile = __DIR__ . '/../includes/schema.json';
+    $schemaFile = __DIR__ . '/../config/schema.json';
     $schemaData = [];
     if (file_exists($schemaFile)) {
         $schemaData = json_decode(file_get_contents($schemaFile), true) ?? [];
@@ -738,21 +738,21 @@ if ($action === 'health') {
         'pg_version'   => $pg_version,
 
         // Filesystem
-        'dir_writable'          => is_writable(__DIR__ . '/../includes'),
+        'dir_writable'          => is_writable(__DIR__ . '/../config'),
         'storage_writable'      => is_dir(__DIR__ . '/../storage') && is_writable(__DIR__ . '/../storage'),
         'storage_files_writable'=> is_dir(__DIR__ . '/../storage/files') && is_writable(__DIR__ . '/../storage/files'),
 
         // Config files
         'database_json_ok' => (static function () {
-            $f = __DIR__ . '/../includes/database.json';
+            $f = __DIR__ . '/../config/database.json';
             return file_exists($f) && is_array(@json_decode(@file_get_contents($f), true));
         })(),
         'schema_json_ok' => (static function () {
-            $f = __DIR__ . '/../includes/schema.json';
+            $f = __DIR__ . '/../config/schema.json';
             return file_exists($f) && is_array(@json_decode(@file_get_contents($f), true));
         })(),
         'security_json_ok' => (static function () {
-            $f = __DIR__ . '/../includes/security.json';
+            $f = __DIR__ . '/../config/security.json';
             return file_exists($f) && is_array(@json_decode(@file_get_contents($f), true));
         })(),
     ];
@@ -774,12 +774,12 @@ if ($action === 'export') {
     // Random suffix prevents temp file enumeration attacks
     $zipFile = sys_get_temp_dir() . '/sparrow_config_' . bin2hex(random_bytes(8)) . '.zip';
     if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
-        $includesDir = __DIR__ . '/../includes/';
+        $configDir = __DIR__ . '/../config/';
         // database.json excluded — contains plaintext DB credentials
         $filesToBackup = ['schema.json', 'dashboard.json', 'calendar.json', 'security.json', 'workflows.json', 'files.json'];
         foreach ($filesToBackup as $f) {
-            if (file_exists($includesDir . $f)) {
-                $zip->addFile($includesDir . $f, $f);
+            if (file_exists($configDir . $f)) {
+                $zip->addFile($configDir . $f, $f);
             }
         }
         $zip->close();
@@ -808,7 +808,7 @@ if ($action === 'import' && isset($_FILES['backup_file'])) {
 
     $zip = new ZipArchive();
     if ($zip->open($_FILES['backup_file']['tmp_name']) === true) {
-        $extractPath = __DIR__ . '/../includes/';
+        $extractPath = __DIR__ . '/../config/';
         $importAllowed = ['schema', 'dashboard', 'calendar', 'database', 'security', 'workflows', 'files'];
         $validFiles = [];
 
@@ -906,7 +906,7 @@ if ($action === 'get_snapshot_setting') {
     if ($lockedByEnv) {
         $enabled = ($envVal === 'true');
     } else {
-        $settingsFile = __DIR__ . '/../includes/settings.json';
+        $settingsFile = __DIR__ . '/../config/settings.json';
         if (is_file($settingsFile)) {
             $raw = @file_get_contents($settingsFile);
             if ($raw !== false) {
@@ -937,7 +937,7 @@ if ($action === 'get_snapshot_setting') {
     exit;
 }
 
-// POST: toggle record-snapshot setting in includes/settings.json
+// POST: toggle record-snapshot setting in config/settings.json
 if ($action === 'set_snapshot_setting') {
     header('Content-Type: application/json');
     if ($isDemoMode) {
@@ -951,7 +951,7 @@ if ($action === 'set_snapshot_setting') {
     }
     $body = json_decode(file_get_contents('php://input'), true) ?? [];
     $enabled = (bool) ($body['enabled'] ?? false);
-    $settingsFile = __DIR__ . '/../includes/settings.json';
+    $settingsFile = __DIR__ . '/../config/settings.json';
     $settings = [];
     if (is_file($settingsFile)) {
         $raw = @file_get_contents($settingsFile);
@@ -962,7 +962,7 @@ if ($action === 'set_snapshot_setting') {
     $settings['record_snapshots_enabled'] = $enabled;
     $written = @file_put_contents($settingsFile, json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
     if ($written === false) {
-        echo json_encode(['status' => 'error', 'error' => 'Could not write includes/settings.json. Check directory permissions.']);
+        echo json_encode(['status' => 'error', 'error' => 'Could not write config/settings.json. Check directory permissions.']);
         exit;
     }
     echo json_encode(['status' => 'success', 'enabled' => $enabled]);
@@ -1120,7 +1120,7 @@ if ($action === 'menu_config' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// POST: save menu structure (order + nesting) to includes/menu.json
+// POST: save menu structure (order + nesting) to config/menu.json
 if ($action === 'menu_config' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
 
@@ -1131,7 +1131,7 @@ if ($action === 'menu_config' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $inc       = __DIR__ . '/../includes';
+    $inc       = __DIR__ . '/../config';
     $schemaRaw = $menuSafeReadJson($inc . '/schema.json') ?? [];
     $validKeys  = array_merge(['dashboard', 'calendar', 'files'], array_keys($schemaRaw['tables'] ?? []));
     $validTypes = ['dashboard', 'calendar', 'files', 'table'];
@@ -1174,7 +1174,7 @@ $allowedFiles = ['schema', 'dashboard', 'calendar', 'database', 'security', 'wor
 
 // Get content of a JSON config file
 if ($action === 'get' && in_array($file, $allowedFiles, true)) {
-    $filePath = __DIR__ . '/../includes/' . $file . '.json';
+    $filePath = __DIR__ . '/../config/' . $file . '.json';
     header('Content-Type: application/json');
     if (file_exists($filePath)) {
         $fileContent = file_get_contents($filePath);
@@ -1205,12 +1205,12 @@ if ($action === 'save' && in_array($file, $allowedFiles, true)) {
     }
 
     $data = file_get_contents('php://input');
-    $filePath = __DIR__ . '/../includes/' . $file . '.json';
+    $filePath = __DIR__ . '/../config/' . $file . '.json';
     header('Content-Type: application/json');
     $parsedData = json_decode($data, true);
     if ($parsedData !== null) {
-        if (!is_dir(__DIR__ . '/../includes/')) {
-            mkdir(__DIR__ . '/../includes/', 0777, true);
+        if (!is_dir(__DIR__ . '/../config/')) {
+            mkdir(__DIR__ . '/../config/', 0755, true);
         }
         file_put_contents($filePath, json_encode($parsedData, JSON_PRETTY_PRINT));
         echo json_encode(['status' => 'success']);
@@ -1334,8 +1334,8 @@ if ($action === 'performance_check') {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
 
-        $schemaJson   = @file_get_contents(__DIR__ . '/../includes/schema.json');
-        $dashJson     = @file_get_contents(__DIR__ . '/../includes/dashboard.json');
+        $schemaJson   = @file_get_contents(__DIR__ . '/../config/schema.json');
+        $dashJson     = @file_get_contents(__DIR__ . '/../config/dashboard.json');
         $schemaCfg    = $schemaJson  ? (json_decode($schemaJson,  true) ?? []) : [];
         $dashCfg      = $dashJson    ? (json_decode($dashJson,    true) ?? []) : [];
         $tables       = $schemaCfg['tables'] ?? [];
@@ -1499,7 +1499,7 @@ if ($action === 'performance_table_stats') {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
 
-        $schemaJson = @file_get_contents(__DIR__ . '/../includes/schema.json');
+        $schemaJson = @file_get_contents(__DIR__ . '/../config/schema.json');
         $schemaCfg  = $schemaJson ? (json_decode($schemaJson, true) ?? []) : [];
         $tables     = $schemaCfg['tables'] ?? [];
 
@@ -1659,8 +1659,8 @@ if ($action === 'performance_schema_warnings') {
         require_once __DIR__ . '/../includes/db.php';
         $conn = db_connect();
 
-        $schemaJson  = @file_get_contents(__DIR__ . '/../includes/schema.json');
-        $dashJson    = @file_get_contents(__DIR__ . '/../includes/dashboard.json');
+        $schemaJson  = @file_get_contents(__DIR__ . '/../config/schema.json');
+        $dashJson    = @file_get_contents(__DIR__ . '/../config/dashboard.json');
         $schemaCfg   = $schemaJson ? (json_decode($schemaJson, true) ?? []) : [];
         $dashCfg     = $dashJson   ? (json_decode($dashJson,   true) ?? []) : [];
         $tables      = $schemaCfg['tables'] ?? [];
@@ -1843,7 +1843,7 @@ if ($action === 'cron_stats') {
 
 if ($action === 'list_m2m') {
     header('Content-Type: application/json');
-    $schemaPath = realpath(__DIR__ . '/../includes/schema.json');
+    $schemaPath = realpath(__DIR__ . '/../config/schema.json');
     if (!$schemaPath) { echo json_encode(['tables' => [], 'relationships' => []]); exit; }
     $schema = json_decode(file_get_contents($schemaPath), true);
     if (!is_array($schema['tables'] ?? null)) { echo json_encode(['tables' => [], 'relationships' => []]); exit; }
@@ -1897,7 +1897,7 @@ if ($action === 'create_m2m') {
     }
     if ($tableA === $tableB) { echo json_encode(['status' => 'error', 'error' => 'Tables must be different.']); exit; }
 
-    $schemaPath = realpath(__DIR__ . '/../includes/schema.json');
+    $schemaPath = realpath(__DIR__ . '/../config/schema.json');
     $schema     = json_decode(file_get_contents($schemaPath), true);
     if (!isset($schema['tables'][$tableA]) || !isset($schema['tables'][$tableB])) {
         echo json_encode(['status' => 'error', 'error' => 'One or both tables not found in schema.']); exit;
@@ -1991,7 +1991,7 @@ if ($action === 'delete_m2m') {
 
     if (!preg_match('/^[a-z][a-z0-9_]*$/', $tableA)) { echo json_encode(['status' => 'error', 'error' => 'Invalid table_a.']); exit; }
 
-    $schemaPath = realpath(__DIR__ . '/../includes/schema.json');
+    $schemaPath = realpath(__DIR__ . '/../config/schema.json');
     $schema     = json_decode(file_get_contents($schemaPath), true);
 
     if (!isset($schema['tables'][$tableA]['many_to_many'][$m2mIndex])) {

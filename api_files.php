@@ -71,7 +71,7 @@ function requireCsrfToken(array $body = []): void {
 
 // Load config from JSON with size guard and corruption check
 function loadConfig(): array {
-    $path = __DIR__ . '/includes/files.json';
+    $path = __DIR__ . '/config/files.json';
     if (!file_exists($path)) {
         jsonError('files.json not found', 500);
     }
@@ -89,7 +89,7 @@ function loadConfig(): array {
 
 // Save config atomically via temp file + rename to prevent race conditions and partial writes
 function saveConfig(array $config): void {
-    $path    = __DIR__ . '/includes/files.json';
+    $path    = __DIR__ . '/config/files.json';
     $tmpPath = $path . '.tmp.' . bin2hex(random_bytes(4));
     $json    = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     file_put_contents($tmpPath, $json, LOCK_EX);

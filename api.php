@@ -146,7 +146,7 @@ if ($role === 'viewer' && in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], 
 }
 
 // Load schema
-$schemaPath = __DIR__ . '/includes/schema.json';
+$schemaPath = __DIR__ . '/config/schema.json';
 $schemaJson = file_get_contents($schemaPath);
 if ($schemaJson === false) {
     http_response_code(500);
@@ -172,7 +172,7 @@ try {
 
     // GET: WORKFLOWS DATA
     if ($method === 'GET' && ($_GET['api'] ?? '') === 'workflows') {
-        $wfPath = __DIR__ . '/includes/workflows.json';
+        $wfPath = __DIR__ . '/config/workflows.json';
         if (!file_exists($wfPath)) {
             echo json_encode(['menu_name' => 'Workflows', 'workflows' => []]);
             exit;
@@ -187,7 +187,7 @@ try {
 
     // GET: DASHBOARD DATA
     if ($method === 'GET' && ($_GET['api'] ?? '') === 'dashboard') {
-        $dashPath = __DIR__ . '/includes/dashboard.json';
+        $dashPath = __DIR__ . '/config/dashboard.json';
         if (!file_exists($dashPath)) {
             echo json_encode(['layout' => [], 'widgets' => []]);
             exit;
@@ -382,7 +382,7 @@ try {
 
     // GET: CALENDAR DATA
     if ($method === 'GET' && ($_GET['api'] ?? '') === 'calendar') {
-        $calPath = __DIR__ . '/includes/calendar.json';
+        $calPath = __DIR__ . '/config/calendar.json';
         if (!file_exists($calPath)) {
             echo json_encode(['events' => []]);
             exit;
@@ -615,7 +615,7 @@ try {
             }
 
             // Load calendar configuration to validate source tables
-            $calPath = __DIR__ . '/includes/calendar.json';
+            $calPath = __DIR__ . '/config/calendar.json';
             $calConfig = file_exists($calPath) ? json_decode(file_get_contents($calPath), true) : ['sources' => []];
             $sources = $calConfig['sources'] ?? [];
 

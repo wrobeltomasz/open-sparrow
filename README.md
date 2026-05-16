@@ -65,6 +65,7 @@ Demo: https://demo.opensparrow.org
 - **`admin/`** — management panel (schema editor, dashboards, calendar, workflows, users, files, system health).
 - **`assets/`** — static frontend resources (`css/`, `js/`, `icons/`, `img/`).
 - **`includes/`** — backend helpers. `config.php` centralizes env-driven configuration; `db.php` centralizes PostgreSQL access; `api_helpers.php` holds request/response helpers; `autoload.php` registers the PSR-4 class loader; `bootstrap.php` wires all OOP dependencies.
+- **`config/`** — runtime JSON configuration files (`database.json`, `schema.json`, `menu.json`, `settings.json`, `dashboard.json`, `calendar.json`, `workflows.json`, `files.json`, `security.json`, `views.json`). All JSON in this folder is gitignored and web-denied via `.htaccess`.
 - **`cron/`** — scheduled workers (e.g. `cron_notifications.php`).
 - **`templates/`** — layout wrappers (`template.php`).
 - **`storage/files/`** — user-uploaded files.
@@ -72,7 +73,7 @@ Demo: https://demo.opensparrow.org
 > The active Selenium E2E suite lives outside this repository (sibling folder, not distributed with releases).
 
 ### Key files
-- **`setup.php` / `setup_api.php`** — first-run setup wizard and its API backend. Active only when `includes/database.json` is absent.
+- **`setup.php` / `setup_api.php`** — first-run setup wizard and its API backend. Active only when `config/database.json` is absent.
 - **`api.php`** — main API gateway (GET / POST / PATCH / DELETE).
 - **`index.php`** — default landing / data entry page.
 - **`dashboard.php` / `calendar.php`** — user-facing visualization and scheduling modules.
@@ -108,14 +109,14 @@ If you are deploying to shared hosting or any server without Docker, download th
 Each release ZIP is built automatically by GitHub Actions and includes:
 - All PHP, JS, and CSS files ready to serve
 - `includes/VERSION` stamped with the release tag (e.g. `2.0.0`) — used by the admin System Health panel to display the current version
-- `includes/database.json.example` — template for PostgreSQL connection configuration (see step 3 below)
+- `config/database.json.example` — template for PostgreSQL connection configuration (see step 3 below)
 - An empty `storage/files/` directory placeholder
 
 **Steps:**
 
 1. Download `opensparrow-X.Y.Z.zip` from the Releases page.
 2. Extract and upload the contents to your server root (e.g. `public_html/`) via FTP.
-3. Make the `includes/` and `storage/files/` directories writable by the web server (typically `chmod 755` or `775`, depending on your host).
+3. Make the `config/` and `storage/files/` directories writable by the web server (typically `chmod 755` or `775`, depending on your host).
 4. Open your site root in a browser — you will be automatically redirected to `/setup.php`. The **setup wizard** guides you through:
    - Testing your PostgreSQL connection
    - Choosing a schema name (default: `app`)
@@ -123,17 +124,17 @@ Each release ZIP is built automatically by GitHub Actions and includes:
 5. Go to `/login`, sign in as `admin` / `admin`. You are redirected to `/admin` automatically.
 6. Go to **System → Users → Change pwd** and set a strong password immediately.
 
-> **Note:** The ZIP contains no pre-configured JSON files except `database.json.example`. Your `includes/*.json` configuration files are created on first setup and are never overwritten during updates — existing configuration is always preserved.
+> **Note:** The ZIP contains no pre-configured JSON files except `database.json.example`. Your `config/*.json` configuration files are created on first setup and are never overwritten during updates — existing configuration is always preserved.
 
 ### 3. Run with Docker (quick start)
 
 ```bash
 # Create required directories
-mkdir -p includes storage/files
+mkdir -p config storage/files
 
 # Set permissions (82:82 is www-data in Alpine)
-sudo chown -R 82:82 includes/ storage/
-sudo chmod -R 775 includes/ storage/
+sudo chown -R 82:82 config/ storage/
+sudo chmod -R 775 config/ storage/
 
 # Start the stack (PHP + Nginx + PostgreSQL)
 docker compose up -d --build
@@ -187,7 +188,7 @@ All variables are read by `includes/config.php` on every request — the single 
 |---|---|---|
 | `APP_ENV` | `production` | Runtime environment. |
 | `DEMO_MODE` | `false` | Set `true` to block all write operations in the admin API (safe for public demos). |
-| `RECORD_SNAPSHOTS_ENABLED` | `false` | Enable record snapshot capture after every INSERT/UPDATE. Overrides the admin panel toggle in `includes/settings.json`. |
+| `RECORD_SNAPSHOTS_ENABLED` | `false` | Enable record snapshot capture after every INSERT/UPDATE. Overrides the admin panel toggle in `config/settings.json`. |
 | `FILES_MAX_SIZE_MB` | `20` | Default upload size limit when not set in `files.json`. |
 | `THUMBNAIL_MAX_WIDTH` | `300` | Max thumbnail width in pixels. |
 | `NOTIFICATIONS_DROPDOWN_LIMIT` | `10` | Max items in the bell notification dropdown. |
@@ -195,18 +196,18 @@ All variables are read by `includes/config.php` on every request — the single 
 
 ### 6. First-run setup (Docker or bare server)
 
-On a fresh installation — when `includes/database.json` does not exist — any request to the application is automatically redirected to the **setup wizard** at `/setup.php`.
+On a fresh installation — when `config/database.json` does not exist — any request to the application is automatically redirected to the **setup wizard** at `/setup.php`.
 
 The wizard walks you through four steps:
 
 1. **Welcome** — intro and requirements overview.
 2. **Database Connection** — enter host, port, database name, username, and password. Click **Test Connection** to verify before proceeding.
 3. **Schema** — choose the PostgreSQL schema name (default: `app`). Optionally tick *Create schema if not exists*. The default admin account (`admin` / `admin`) is shown here for reference.
-4. **Review & Initialize** — confirm settings and click **Initialize System Tables**. The wizard creates all `spw_*` tables, seeds the admin account, and writes `includes/database.json`.
+4. **Review & Initialize** — confirm settings and click **Initialize System Tables**. The wizard creates all `spw_*` tables, seeds the admin account, and writes `config/database.json`.
 
 After initialization you are redirected to `/login`. Sign in as `admin` / `admin`, then immediately go to **System → Users → Change pwd** and set a strong password.
 
-> Once `includes/database.json` exists, the setup wizard is permanently inaccessible — all entry points redirect to `/login` instead.
+> Once `config/database.json` exists, the setup wizard is permanently inaccessible — all entry points redirect to `/login` instead.
 
 ### 7. User roles
 
@@ -243,7 +244,7 @@ Open **http://localhost:8000/admin**.
 1. Go to the [Releases page](https://github.com/wrobeltomasz/open-sparrow/releases/latest) and download the latest `opensparrow-X.Y.Z.zip`.
 2. **Before uploading** — export your configuration from the admin panel: **Configuration → Export config files**. Keep this backup safe.
 3. Extract the ZIP and upload all files to your server via FTP, overwriting existing files.
-4. Your `includes/*.json` files are **not included** in the ZIP, so your database connection, schema, dashboards, and all other settings are preserved automatically.
+4. Your `config/*.json` files are **not included** in the ZIP, so your database connection, schema, dashboards, and all other settings are preserved automatically.
 5. Log in to `/admin` → **System Health** → **Initialize System Tables** to apply any new system table migrations.
 6. Check **System Health** — the version shown should match the release tag you just uploaded.
 
@@ -251,9 +252,9 @@ Open **http://localhost:8000/admin**.
 
 ## Security & Configuration
 
-Configuration lives in `includes/database.json`, protected by `.htaccess`. Environment variables (see section 5) take precedence and are the recommended approach for containerized deployments.
+Configuration lives in `config/database.json`, protected by `.htaccess`. Environment variables (see section 5) take precedence and are the recommended approach for containerized deployments.
 
-- **Production:** deny public web access to `includes/` at the web-server level.
+- **Production:** deny public web access to `config/` at the web-server level (a `Deny from all` `.htaccess` is shipped by default; nginx users must add an equivalent block).
 - **Cookies:** `SECURE_COOKIES=true` (default) enforces the `Secure` flag. Set to `false` only on plain HTTP environments.
 - **Authentication:** all roles share a single login page (`/login`). The admin panel (`/admin`) requires role `admin`. Frontend pages require role `editor` or `viewer`. There is no separate admin password file — all accounts live in `spw_users`.
 - **Session security:** sessions include a User-Agent fingerprint and an 8-hour absolute lifetime to guard against hijacking and stale sessions.

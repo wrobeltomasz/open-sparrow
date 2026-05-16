@@ -31,7 +31,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SERVER['HTTP_X_REQUESTED_WITH']) ||
 $table = $_GET['table'] ?? '';
 $col = $_GET['col'] ?? '';
 
-$schemaPath = __DIR__ . '/includes/schema.json';
+$schemaPath = __DIR__ . '/config/schema.json';
 
 // Check if schema file exists
 if (!file_exists($schemaPath)) {

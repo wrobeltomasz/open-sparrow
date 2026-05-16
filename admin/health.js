@@ -83,11 +83,11 @@ export async function renderHealthDashboard(ctx) {
 
         // --- Config files ---
         html += section('Config Files');
-        html += card('includes/database.json', data.database_json_ok,
+        html += card('config/database.json', data.database_json_ok,
             data.database_json_ok ? 'Present and valid JSON.' : 'Missing or invalid — create via FTP after first deploy.');
-        html += card('includes/schema.json', data.schema_json_ok,
+        html += card('config/schema.json', data.schema_json_ok,
             data.schema_json_ok ? 'Present and valid JSON.' : 'Missing — define tables in the Schema tab.');
-        html += card('includes/security.json', data.security_json_ok,
+        html += card('config/security.json', data.security_json_ok,
             data.security_json_ok ? 'Present and valid JSON.' : 'Missing — create via admin Security tab.');
 
         html += `</div>`;

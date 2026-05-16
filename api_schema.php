@@ -44,7 +44,7 @@ if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) || strtolower($_SERVER['HTTP_X_REQ
 }
 
 $userRole = $_SESSION['role'] ?? 'viewer';
-$schemaPath = __DIR__ . '/includes/schema.json';
+$schemaPath = __DIR__ . '/config/schema.json';
 
 if (!file_exists($schemaPath)) {
     http_response_code(500);

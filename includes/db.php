@@ -6,7 +6,7 @@ require_once __DIR__ . '/config.php';
 
 function db_connect(): \PgSql\Connection
 {
-    $configFile = __DIR__ . '/database.json';
+    $configFile = __DIR__ . '/../config/database.json';
 
     // Default values fallback
     $host = DB_HOST;
@@ -53,7 +53,7 @@ function db_connect(): \PgSql\Connection
 }
 
 // Returns the schema name for OpenSparrow system tables.
-// Configurable via "schema" key in includes/database.json; defaults to "app".
+// Configurable via "schema" key in config/database.json; defaults to "app".
 function sys_schema(): string
 {
     static $schema = null;
@@ -61,7 +61,7 @@ function sys_schema(): string
         return $schema;
     }
     $schema = getenv('PGSCHEMA') ?: 'app';
-    $configFile = __DIR__ . '/database.json';
+    $configFile = __DIR__ . '/../config/database.json';
     if (file_exists($configFile)) {
         $json = @file_get_contents($configFile);
         $config = @json_decode($json, true);

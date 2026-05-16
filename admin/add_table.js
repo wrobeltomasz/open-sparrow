@@ -372,7 +372,7 @@ export function renderAddTableEditor(ctx) {
     registerStrong.textContent = 'Register in schema.json';
     const registerDesc = document.createElement('span');
     registerDesc.style.cssText = 'display:block;font-size:12px;color:var(--muted);margin-top:2px;';
-    registerDesc.textContent = 'Adds the table to includes/schema.json so it appears in the admin panel immediately.';
+    registerDesc.textContent = 'Adds the table to config/schema.json so it appears in the admin panel immediately.';
     registerTextWrap.appendChild(registerStrong);
     registerTextWrap.appendChild(registerDesc);
     registerLabel.appendChild(registerCb);

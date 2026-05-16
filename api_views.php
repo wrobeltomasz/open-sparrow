@@ -40,7 +40,7 @@ if ($method === 'POST') {
     }
 }
 
-$viewsPath   = __DIR__ . '/includes/views.json';
+$viewsPath   = __DIR__ . '/config/views.json';
 $viewsConfig = [];
 if (file_exists($viewsPath)) {
     $raw     = file_get_contents($viewsPath);

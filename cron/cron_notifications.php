@@ -32,7 +32,7 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
 $triggeredBy = (isset($argv[1]) && $argv[1] === 'admin') ? 'admin' : 'cron';
 print_log("<h3>Start CRON - Diagnostics</h3>");
-$configFile = __DIR__ . '/../includes/calendar.json';
+$configFile = __DIR__ . '/../config/calendar.json';
 if (!file_exists($configFile)) {
     print_log("<span style='color:red;'>Missing calendar.json file</span>");
     exit;

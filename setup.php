@@ -4,7 +4,7 @@
 // to avoid errors when database.json doesn't exist yet.
 
 // Check if already configured
-if (file_exists(__DIR__ . '/includes/database.json')) {
+if (file_exists(__DIR__ . '/config/database.json')) {
     header('Location: login.php');
     exit;
 }
