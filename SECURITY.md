@@ -2,11 +2,12 @@
 
 ## Supported Versions
 
-We currently provide security updates only for the latest version of the project.
+We provide security updates only for the latest minor release on the current major branch.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| main    | :white_check_mark: |
+| Version       | Supported          |
+| ------------- | ------------------ |
+| 2.x (latest)  | :white_check_mark: |
+| 1.x and older | :x:                |
 
 ## Reporting a Vulnerability
 

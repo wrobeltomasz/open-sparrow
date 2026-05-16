@@ -46,7 +46,7 @@ jobs:
             --exclude='.claude'           \
             --exclude='tests'             \
             --exclude='dist'              \
-            --exclude='tmp'               \
+            --exclude='tmp/sess_*'        \
             --exclude='temp'              \
             --exclude='cache'             \
             --exclude='node_modules'      \

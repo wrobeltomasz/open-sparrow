@@ -19,7 +19,7 @@ docker compose up -d
 
 # 5. Initialize database (first run only)
 # Open http://localhost/admin
-# Login: admin
+# Default credentials: admin / admin (change immediately after first login)
 # System Health → Initialize System Tables
 
 # 6. Verify
@@ -48,13 +48,27 @@ docker compose up -d
 | `PGSCHEMA` | app | |
 | `DOCKER_IMAGE` | wrobeltom/open-sparrow:latest | |
 | `APP_ENV` | production | |
-| `SECURE_COOKIES` | true | |
+| `SECURE_COOKIES` | true | Set `false` only on plain HTTP. |
+| `SESSION_MAX_LIFETIME` | 28800 | Hard session expiry (seconds). |
+| `SESSION_SAMESITE` | Lax | Do not set to `Strict` — breaks login redirect. |
+| `IP_HASH_SALT` | *(auto)* | Auto-generated to `includes/.secret_salt` on first request. Set explicitly across all nodes in multi-server deployments so rate-limit hashes match. |
+| `LOGIN_MAX_ATTEMPTS_PER_IP` | 20 | Failed login threshold per IP before lockout. |
+| `LOGIN_MAX_ATTEMPTS_PER_USERNAME` | 5 | Failed login threshold per user before lockout. |
+| `LOGIN_LOCKOUT_MINUTES` | 15 | Lockout window. |
 | `HTTP_PORT` | 80 | |
 
-Generate strong password:
+Generate strong password / salt:
 ```bash
-openssl rand -base64 32
+openssl rand -base64 32       # POSTGRES_PASSWORD
+openssl rand -hex 32          # IP_HASH_SALT (for multi-node)
 ```
+
+### Reverse proxy (CloudFlare, Nginx, load balancer)
+
+OpenSparrow auto-detects HTTPS through `X-Forwarded-Proto`, `CF-Visitor`, and
+`X-Forwarded-SSL` headers, and resolves the real client IP via
+`CF-Connecting-IP` / `X-Real-IP`. **No configuration required** behind a
+properly configured reverse proxy.
 
 ---
 
@@ -95,8 +109,8 @@ tar -xzf storage_backup.tar.gz
 ## Upgrade
 
 ```bash
-# 1. Update image version in .env
-DOCKER_IMAGE=wrobeltom/open-sparrow:v1.2.3
+# 1. Update image version in .env (release tags follow X.Y.Z format, no "v" prefix)
+DOCKER_IMAGE=wrobeltom/open-sparrow:2.1.0
 
 # 2. Pull & restart
 docker compose pull
