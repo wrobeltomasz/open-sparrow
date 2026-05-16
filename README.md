@@ -13,7 +13,8 @@
     <a href="#"><img src="https://img.shields.io/badge/dependencies-none-brightgreen" alt="No dependencies" /></a>
   </p>
 
-  ![E2E Tests](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/e2e-tests.yml/badge.svg)
+  ![PHP Lint](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/php-lint.yml/badge.svg)
+  ![Vanilla Check](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/vanilla-check.yml/badge.svg)
   ![CodeQL Analysis](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/codeql.yml/badge.svg)
   ![Docker Lint](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/docker-lint.yml/badge.svg)
   [![Release ZIP](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/release-zip.yml/badge.svg)](https://github.com/wrobeltomasz/open-sparrow/actions/workflows/release-zip.yml)
@@ -61,13 +62,14 @@ Demo: https://demo.opensparrow.org
 
 ### Core directories
 - **`src/`** — OOP application layer (PSR-4, no Composer). Namespaced under `App\`. Sub-directories: `Audit/`, `Csrf/`, `Domain/`, `Form/`, `Http/`, `Persistence/`, `Repository/`, `Support/`. Loaded via `includes/autoload.php`; wired in `includes/bootstrap.php`.
-- **`admin/`** — management panel (schema editor, users, security settings).
+- **`admin/`** — management panel (schema editor, dashboards, calendar, workflows, users, files, system health).
 - **`assets/`** — static frontend resources (`css/`, `js/`, `icons/`, `img/`).
 - **`includes/`** — backend helpers. `config.php` centralizes env-driven configuration; `db.php` centralizes PostgreSQL access; `api_helpers.php` holds request/response helpers; `autoload.php` registers the PSR-4 class loader; `bootstrap.php` wires all OOP dependencies.
 - **`cron/`** — scheduled workers (e.g. `cron_notifications.php`).
 - **`templates/`** — layout wrappers (`template.php`).
-- **`tests/`** — E2E Selenium suite.
 - **`storage/files/`** — user-uploaded files.
+
+> The active Selenium E2E suite lives outside this repository (sibling folder, not distributed with releases).
 
 ### Key files
 - **`setup.php` / `setup_api.php`** — first-run setup wizard and its API backend. Active only when `includes/database.json` is absent.
@@ -105,13 +107,13 @@ If you are deploying to shared hosting or any server without Docker, download th
 
 Each release ZIP is built automatically by GitHub Actions and includes:
 - All PHP, JS, and CSS files ready to serve
-- `includes/VERSION` stamped with the release tag (e.g. `v1.2.3`) — used by the admin System Health panel to display the current version
+- `includes/VERSION` stamped with the release tag (e.g. `2.0.0`) — used by the admin System Health panel to display the current version
 - `includes/database.json.example` — template for PostgreSQL connection configuration (see step 3 below)
 - An empty `storage/files/` directory placeholder
 
 **Steps:**
 
-1. Download `opensparrow-vX.Y.Z.zip` from the Releases page.
+1. Download `opensparrow-X.Y.Z.zip` from the Releases page.
 2. Extract and upload the contents to your server root (e.g. `public_html/`) via FTP.
 3. Make the `includes/` and `storage/files/` directories writable by the web server (typically `chmod 755` or `775`, depending on your host).
 4. Open your site root in a browser — you will be automatically redirected to `/setup.php`. The **setup wizard** guides you through:
@@ -174,7 +176,7 @@ All variables are read by `includes/config.php` on every request — the single 
 
 | Variable | Default | Description |
 |---|---|---|
-| `IP_HASH_SALT` | *(none)* | **Required in production.** HMAC secret for IP pseudonymisation in login rate-limiting. |
+| `IP_HASH_SALT` | *(auto)* | HMAC secret for IP pseudonymisation in login rate-limiting. If unset, a 64-char random salt is generated on first request and persisted to `includes/.secret_salt` (chmod 0600, gitignored, web-denied). Set explicitly via env var for multi-server deployments where all nodes must share the same salt. |
 | `LOGIN_MAX_ATTEMPTS_PER_IP` | `20` | Failed login threshold per IP before lockout. |
 | `LOGIN_MAX_ATTEMPTS_PER_USERNAME` | `5` | Failed login threshold per username before lockout. |
 | `LOGIN_LOCKOUT_MINUTES` | `15` | Lockout window in minutes. |
@@ -238,7 +240,7 @@ Open **http://localhost:8000/admin**.
 
 ## Updating via FTP
 
-1. Go to the [Releases page](https://github.com/wrobeltomasz/open-sparrow/releases/latest) and download the latest `opensparrow-vX.Y.Z.zip`.
+1. Go to the [Releases page](https://github.com/wrobeltomasz/open-sparrow/releases/latest) and download the latest `opensparrow-X.Y.Z.zip`.
 2. **Before uploading** — export your configuration from the admin panel: **Configuration → Export config files**. Keep this backup safe.
 3. Extract the ZIP and upload all files to your server via FTP, overwriting existing files.
 4. Your `includes/*.json` files are **not included** in the ZIP, so your database connection, schema, dashboards, and all other settings are preserved automatically.
@@ -255,6 +257,8 @@ Configuration lives in `includes/database.json`, protected by `.htaccess`. Envir
 - **Cookies:** `SECURE_COOKIES=true` (default) enforces the `Secure` flag. Set to `false` only on plain HTTP environments.
 - **Authentication:** all roles share a single login page (`/login`). The admin panel (`/admin`) requires role `admin`. Frontend pages require role `editor` or `viewer`. There is no separate admin password file — all accounts live in `spw_users`.
 - **Session security:** sessions include a User-Agent fingerprint and an 8-hour absolute lifetime to guard against hijacking and stale sessions.
+- **Reverse-proxy aware:** `includes/config.php` auto-detects HTTPS through CloudFlare / Nginx / load-balancer headers (`X-Forwarded-Proto`, `CF-Visitor`, `X-Forwarded-SSL`), resolves the real client IP via `CF-Connecting-IP` / `X-Real-IP`, and forces an absolute `session.save_path` so PHP-FPM `chdir` behaviour does not split sessions across script directories.
+- **Session storage hardening:** the `tmp/` directory (default `session.save_path`) ships with a `.htaccess` denying all HTTP access, ensuring session files cannot be read directly over the web.
 
 ---
 
