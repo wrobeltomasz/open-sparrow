@@ -11,7 +11,7 @@ export async function loadCommentCounts(pageRows) {
         const counts = await fetchCommentCounts(state.currentTable, ids);
         for (const [rowId, cnt] of Object.entries(counts)) {
             if (cnt <= 0) continue;
-            const td = document.querySelector(`[data-comment-row-id="${CSS.escape(rowId)}"]`);
+            const td = document.querySelector(`[data-actions-row-id="${CSS.escape(rowId)}"]`);
             if (!td) continue;
             const badge = document.createElement('span');
             badge.className = 'c-count-badge';

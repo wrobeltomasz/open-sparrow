@@ -671,14 +671,6 @@ thead th:last-child  { padding-right: 0.6rem; }
   border-bottom: none;
 }
 
-.th-comments,
-.td-comments {
-  width: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
-  overflow: hidden;
-}
-
 .th-icon {
   width: 20px;
   height: 20px;

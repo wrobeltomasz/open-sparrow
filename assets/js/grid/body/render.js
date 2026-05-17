@@ -141,12 +141,6 @@ export async function renderTbody(schema, isReadOnly, getPageRows, onTableReload
             tr.appendChild(tdM2m);
         }
 
-        // Comments column
-        const tdComments = document.createElement('td');
-        tdComments.className = 'td-comments';
-        tdComments.dataset.commentRowId = String(row['id']);
-        tr.appendChild(tdComments);
-
         // Actions column
         if (!isReadOnly) {
             tr.appendChild(buildActionsCell(row, schema, isReadOnly, onTableReload));
@@ -161,6 +155,7 @@ export async function renderTbody(schema, isReadOnly, getPageRows, onTableReload
 function buildActionsCell(row, schema, isReadOnly, onTableReload) {
     const tdActions = document.createElement('td');
     tdActions.className = 'td-actions';
+    tdActions.dataset.actionsRowId = String(row['id']);
 
     const editBtn = document.createElement('button');
     editBtn.className = 'btn-icon';

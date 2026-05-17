@@ -65,16 +65,6 @@ export function renderThead(schema, isReadOnly, onRerender) {
         headRow.appendChild(thM2m);
     }
 
-    const thComments = document.createElement('th');
-    thComments.className = 'th-comments';
-    const commLabel = document.createElement('img');
-    commLabel.src = 'assets/icons/comment.png';
-    commLabel.alt = 'Comments';
-    commLabel.title = 'Comments';
-    commLabel.className = 'th-icon';
-    thComments.appendChild(commLabel);
-    headRow.appendChild(thComments);
-
     if (!isReadOnly) {
         const thActions = document.createElement('th');
         thActions.className = 'th-actions';
