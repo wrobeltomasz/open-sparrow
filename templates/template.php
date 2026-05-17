@@ -13,8 +13,8 @@
 
 <?php
 $headerControls = '
-    <input id="globalSearch" type="text" placeholder="Find..." />
-    <select id="columnFilter"><option value="">All columns</option></select>
+    <input id="globalSearch" data-cy="search" type="text" placeholder="Find..." />
+    <select id="columnFilter" data-cy="column-filter"><option value="">All columns</option></select>
     <div id="filterBar" style="display:flex;gap:10px;"></div>
     <button id="clearFilters" title="Clear all filters" style="display:none;">Clear Filters</button>
 ';
@@ -22,9 +22,9 @@ include __DIR__ . '/header.php';
 ?>
 <main>
     <section id="gridSection">
-        <h2 id="gridTitle">Table</h2>
+        <h2 id="gridTitle" data-cy="grid-title">Table</h2>
 
-        <div id="grid"></div>
+        <div id="grid" data-cy="grid"></div>
 
         <div id="actions" class="actions">
             <div class="left">
@@ -38,12 +38,12 @@ include __DIR__ . '/header.php';
                 </select>
 
                 <?php if (($userRole ?? '') === 'editor') : ?>
-                <button id="addRow" class="success">Add</button>
+                <button id="addRow" data-cy="add" class="success">Add</button>
                 <?php endif; ?>
-                <button id="exportCsv">Export CSV</button>
+                <button id="exportCsv" data-cy="export">Export CSV</button>
             </div>
 
-            <div id="pagination" class="pagination"></div>
+            <div id="pagination" data-cy="pagination" class="pagination"></div>
         </div>
     </section>
 </main>

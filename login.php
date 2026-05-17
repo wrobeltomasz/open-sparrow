@@ -277,17 +277,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-    <div class="login-box">
+    <div class="login-box" data-cy="login-box">
         <center><img src="assets/img/logo-brown.png" alt="Logo" class="footer-logo" height="48" /></center>
         <h2>OpenSparrow</h2>
         <?php if ($error) : ?>
-            <div class="error"><?php echo htmlspecialchars($error); ?></div>
+            <div class="error" data-cy="login-error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>" />
-            <input type="text" name="username" placeholder="Login" required autofocus autocomplete="username" />
+            <input type="text" name="username" data-cy="username" placeholder="Login" required autofocus autocomplete="username" />
             <div class="password-container">
-                <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password" />
+                <input type="password" id="password" name="password" data-cy="password" placeholder="Password" required autocomplete="current-password" />
                 <span id="togglePassword" class="toggle-password">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -295,7 +295,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </svg>
                 </span>
             </div>
-            <button type="submit">Submit</button>
+            <button type="submit" data-cy="loginBtn">Submit</button>
         </form>
     </div>
     <script nonce="<?php echo $cspNonce; ?>">

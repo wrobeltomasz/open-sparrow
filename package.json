@@ -1,0 +1,11 @@
+{
+  "name": "opensparrow-e2e",
+  "private": true,
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run"
+  },
+  "devDependencies": {
+    "cypress": "^13.0.0"
+  }
+}

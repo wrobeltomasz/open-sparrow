@@ -18,7 +18,7 @@ $nonceAttr = isset($cspNonce)
 $cacheBust = @filemtime(__DIR__ . '/../assets/js/user-menu.js');
 ?>
 <header>
-    <button id="sidebarToggle" aria-label="Toggle sidebar">&#9776;</button>
+    <button id="sidebarToggle" data-cy="sidebar-toggle" aria-label="Toggle sidebar">&#9776;</button>
     <button class="header-search-toggle" id="searchToggle" aria-label="Toggle search">&#128269;</button>
 
     <div class="header-controls">
@@ -26,7 +26,7 @@ $cacheBust = @filemtime(__DIR__ . '/../assets/js/user-menu.js');
     </div>
 
     <div class="header-user-menu">
-        <div class="notifications-wrapper" aria-label="Notifications">
+        <div class="notifications-wrapper" data-cy="notifications" aria-label="Notifications">
             <span><img class="notif-icon-img" title="User notifications" src="assets/img/notifications.png" alt="Notifications"></span>
             <span id="notif-badge" class="notif-badge">0</span>
             <div id="notif-dropdown" class="notif-dropdown">
@@ -36,14 +36,14 @@ $cacheBust = @filemtime(__DIR__ . '/../assets/js/user-menu.js');
         </div>
 
         <?php if ($userRole === 'admin') : ?>
-        <a href="/admin/index.php" class="header-admin-link" title="Admin panel">
+        <a href="/admin/index.php" class="header-admin-link" data-cy="admin-link" title="Admin panel">
             <img title="Admin panel" src="assets/img/settings.png" alt="Admin">
         </a>
         <?php endif; ?>
 
         <?php if ($uname !== '') : ?>
         <div class="user-avatar-wrap">
-            <button class="user-avatar-btn" id="userAvatarBtn"
+            <button class="user-avatar-btn" id="userAvatarBtn" data-cy="user-avatar"
                     aria-label="User menu" aria-expanded="false" aria-haspopup="true">
                 <?php if ($avatarId) : ?>
                     <img class="avatar avatar-border"
@@ -62,7 +62,7 @@ $cacheBust = @filemtime(__DIR__ . '/../assets/js/user-menu.js');
                 <button class="user-avatar-menu-item" id="changeAvatarBtn" role="menuitem">Change avatar</button>
                 <button class="user-avatar-menu-item" id="changePasswordBtn" role="menuitem">Change password</button>
                 <div class="user-avatar-menu-divider"></div>
-                <button class="user-avatar-menu-item danger" id="logoutBtn" role="menuitem">Logout</button>
+                <button class="user-avatar-menu-item danger" id="logoutBtn" data-cy="logout" role="menuitem">Logout</button>
             </div>
         </div>
         <?php endif; ?>

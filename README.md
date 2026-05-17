@@ -69,8 +69,7 @@ Demo: https://demo.opensparrow.org
 - **`cron/`** — scheduled workers (e.g. `cron_notifications.php`).
 - **`templates/`** — layout wrappers (`template.php`).
 - **`storage/files/`** — user-uploaded files.
-
-> The active Selenium E2E suite lives outside this repository (sibling folder, not distributed with releases).
+- **`cypress/`** — E2E test suite (Cypress 13.x). Tests live in `e2e/`, shared helpers in `support/`.
 
 ### Key files
 - **`setup.php` / `setup_api.php`** — first-run setup wizard and its API backend. Active only when `config/database.json` is absent.
@@ -83,6 +82,123 @@ Demo: https://demo.opensparrow.org
 - **`api_fk.php`** — proxy endpoint for foreign-key dropdowns (never exposes internal relations).
 - **`Dockerfile` / `docker-compose.yml`** — containerized deployment.
 - **`phpcs.xml`** — PSR-12 ruleset.
+- **`cypress.config.js`** — Cypress E2E test framework configuration.
+- **`cypress/e2e/`** — end-to-end test suites (login, admin, grid, CRUD).
+- **`cypress/support/e2e.js`** — shared test helpers and utilities.
+
+---
+
+## Testing
+
+### Overview
+
+OpenSparrow includes a **Cypress E2E test suite** covering authentication, admin panel, grid operations, and CRUD workflows. Tests use the `data-cy` attribute selector strategy with intelligent fallbacks for robustness. Session caching and polling patterns prevent flakiness.
+
+### Prerequisites
+
+- Node.js 16+ (for npm)
+- A running OpenSparrow instance (default: `http://localhost:8080`)
+
+### Installation
+
+```bash
+npm install
+```
+
+This installs Cypress and its dependencies (dev-only, not required for production).
+
+### Running tests
+
+#### Headless mode (CI/CD friendly)
+
+```bash
+npm run cy:run
+```
+
+Runs all tests against headless Electron and reports results to the terminal. Artifacts (screenshots, videos) are saved on failure.
+
+#### Interactive mode (development)
+
+```bash
+npm run cy:open
+```
+
+Opens the Cypress UI (Test Runner). Select a test file, watch it run, and inspect failures in real-time. Browser reloads on file changes (watch mode).
+
+#### Run specific test suite
+
+```bash
+npm run cy:run -- --spec "cypress/e2e/login.cy.js"
+npm run cy:run -- --spec "cypress/e2e/admin.cy.js"
+npm run cy:run -- --spec "cypress/e2e/grid.cy.js"
+npm run cy:run -- --spec "cypress/e2e/crud.cy.js"
+```
+
+#### Use a different browser
+
+```bash
+npm run cy:run -- --browser edge
+npm run cy:run -- --browser chrome
+```
+
+Available browsers: `electron` (default, headless), `edge`, `chrome`. If Chrome is not installed, Edge works well on Windows.
+
+### Test coverage
+
+| Suite | File | Tests | Coverage |
+|-------|------|-------|----------|
+| **Login & Auth** | `cypress/e2e/login.cy.js` | 16 | Dashboard display, sidebar, grid, search, Add button, logout, mobile |
+| **Admin Panel** | `cypress/e2e/admin.cy.js` | 35 | Schema/dashboard/calendar tabs, config export/import, user management, access control |
+| **Grid Operations** | `cypress/e2e/grid.cy.js` | 26 | Grid display, search/filter, export, pagination, row actions (edit, duplicate, delete), mobile |
+| **CRUD Forms** | `cypress/e2e/crud.cy.js` | 29 | Create form, edit form, delete, validation, required fields, enum/pattern fields, subtables |
+| **Total** | — | **106** | Full end-to-end application flow |
+
+### Shared test helpers
+
+All suites use helpers from `cypress/support/e2e.js`:
+
+- **`loginAsTestUser()`** — authenticates as test user (test/test), caches session via `cy.session()`.
+- **`waitForGridOrEmpty()`** — polls for grid table or empty state, returns `{type: 'grid'|'empty'}`.
+- **`waitForActions()`** — verifies action buttons exist (desktop or mobile).
+- **`clickAddIfPresent()`** — safely clicks Add button only if `onclick` is attached.
+- **`waitForPagination()`** — tolerant pagination check (returns true if present).
+- **`TIMEOUTS`** — constants for explicit waits: `short` (5s), `medium` (8s), `long` (15s).
+
+### Troubleshooting
+
+#### Browser not found
+
+If Chrome is not installed:
+```bash
+npm run cy:run -- --browser edge
+```
+
+Edge is available on Windows/Mac and works as well as Chrome for testing.
+
+#### Sandbox/IPC errors
+
+If you see `Terminating renderer for bad IPC message, reason 114`:
+- Already handled in `cypress.config.js` via `--no-sandbox`, `--disable-dev-shm-usage`, `--disable-gpu`.
+- Clear Cypress cache: `rm -rf .cypress-cache/` and retry.
+
+#### Tests are flaky
+
+Flakiness usually comes from hardcoded waits. Our helpers use **polling with explicit timeouts** instead. If a test fails intermittently:
+1. Check the helper is being used (e.g. `waitForGridOrEmpty()` not `cy.wait(2000)`).
+2. Increase `TIMEOUTS.medium` in `cypress/support/e2e.js` if network is slow.
+3. Verify the server is running and responsive at `http://localhost:8080`.
+
+### Best practices
+
+See [TESTING_GUIDELINES.md](TESTING_GUIDELINES.md) for comprehensive guidance:
+
+- **Selector strategy:** prefer `data-cy` attributes, fallback to semantic HTML and role.
+- **Helper patterns:** use shared helpers instead of inline Cypress chains.
+- **Assertions:** use explicit, readable assertions (`should('be.visible')` not `should('exist')`).
+- **Mobile testing:** `cy.viewport()` for responsive checks.
+- **Conditional tests:** gracefully skip unavailable features (e.g. enum fields if not present).
+- **Code review checklist:** before opening a PR with test changes.
+- **Common pitfalls:** hardcoded waits, flaky selectors, visibility vs. existence confusion.
 
 ---
 
