@@ -724,6 +724,32 @@ thead th:last-child  { padding-right: 0.6rem; }
   background: #fee2e2;
 }
 
+.btn-icon-comment-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.btn-icon-comment-add:hover {
+  opacity: 1;
+  background: #dbeafe;
+}
+
+.btn-icon-comment-add img {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
 .th-virtual-badge {
   display: inline-block;
   font-size: 12px;
