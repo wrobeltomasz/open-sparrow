@@ -62,32 +62,47 @@ final class I18n
     // ── Locale detection (priority chain) ────────────────────────────────────
 
     /**
-     * 1. explicit $override  2. GET ?lang=  3. session  4. user pref from session
-     * 5. Accept-Language     6. settings.json default    7. 'en'
+     * 1. explicit $override  2. GET ?lang=  3. session (version-validated)
+     * 4. user pref from session  5. settings.json default  6. Accept-Language  7. 'en'
+     *
+     * Session locale is invalidated when admin changes default_language (locale_version bump).
+     * This ensures a global default change takes effect for all active sessions immediately.
      */
     public static function detectLocale(?string $override = null): string
     {
-        $available = self::availableLocales();
+        $available       = self::availableLocales();
+        $currentVersion  = self::localeVersion();
+
+        // Session locale is only valid when locale_version matches (or no versioning yet).
+        $sessionLocale = null;
+        if (isset($_SESSION['locale'])) {
+            $versionOk = $currentVersion === ''
+                || (isset($_SESSION['locale_version']) && $_SESSION['locale_version'] === $currentVersion);
+            if ($versionOk) {
+                $sessionLocale = (string)$_SESSION['locale'];
+            }
+        }
 
         $candidates = array_filter([
             $override,
             isset($_GET['lang']) ? (string)$_GET['lang'] : null,
-            isset($_SESSION['locale']) ? (string)$_SESSION['locale'] : null,
+            $sessionLocale,
             isset($_SESSION['user_locale']) ? (string)$_SESSION['user_locale'] : null,
-            self::fromAcceptLanguage(),
             self::defaultFromSettings(),
+            self::fromAcceptLanguage(),
         ]);
 
         foreach ($candidates as $candidate) {
             $safe = self::sanitize($candidate);
             if (in_array($safe, $available, true)) {
-                // Persist explicit switch to session
+                // Persist explicit switch to session with current version stamp
                 if (
                     isset($_GET['lang'])
                     && $safe === self::sanitize((string)$_GET['lang'])
                     && session_status() === PHP_SESSION_ACTIVE
                 ) {
-                    $_SESSION['locale'] = $safe;
+                    $_SESSION['locale']         = $safe;
+                    $_SESSION['locale_version'] = $currentVersion;
                 }
                 return $safe;
             }
@@ -254,16 +269,37 @@ final class I18n
         return $default = self::FALLBACK;
     }
 
+    private static function localeVersion(): string
+    {
+        static $version = null;
+        if ($version !== null) {
+            return $version;
+        }
+        $path = __DIR__ . '/../config/settings.json';
+        if (is_file($path)) {
+            $s = json_decode((string)file_get_contents($path), true);
+            if (is_string($s['locale_version'] ?? null)) {
+                return $version = $s['locale_version'];
+            }
+        }
+        return $version = '';
+    }
+
     // ── CLDR plural rules ─────────────────────────────────────────────────────
 
     private static function pluralForm(string $locale, int $n): string
     {
         $abs = abs($n);
         return match (true) {
-            in_array($locale, ['pl'], true)       => self::pluralPl($abs),
-            in_array($locale, ['ru', 'uk'], true) => self::pluralRu($abs),
-            in_array($locale, ['cs', 'sk'], true) => self::pluralCs($abs),
-            default                               => $abs === 1 ? 'one' : 'other',
+            in_array($locale, ['pl'], true)           => self::pluralPl($abs),
+            in_array($locale, ['ru', 'uk'], true)     => self::pluralRu($abs),
+            in_array($locale, ['cs', 'sk'], true)     => self::pluralCs($abs),
+            in_array($locale, ['ro'], true)           => self::pluralRo($abs),
+            in_array($locale, ['hr'], true)           => self::pluralRu($abs),
+            in_array($locale, ['lt'], true)           => self::pluralLt($abs),
+            in_array($locale, ['sl'], true)           => self::pluralSl($abs),
+            in_array($locale, ['lv'], true)           => self::pluralLv($abs),
+            default                                   => $abs === 1 ? 'one' : 'other',
         };
     }
 
@@ -300,6 +336,56 @@ final class I18n
         }
         if ($n >= 2 && $n <= 4) {
             return 'few';
+        }
+        return 'other';
+    }
+
+    private static function pluralRo(int $n): string
+    {
+        if ($n === 1) {
+            return 'one';
+        }
+        $m100 = $n % 100;
+        if ($n === 0 || ($m100 >= 2 && $m100 <= 19)) {
+            return 'few';
+        }
+        return 'other';
+    }
+
+    private static function pluralLt(int $n): string
+    {
+        $m10  = $n % 10;
+        $m100 = $n % 100;
+        if ($m10 === 1 && ($m100 < 11 || $m100 > 19)) {
+            return 'one';
+        }
+        if ($m10 >= 2 && $m10 <= 9 && ($m100 < 11 || $m100 > 19)) {
+            return 'few';
+        }
+        return 'other';
+    }
+
+    private static function pluralSl(int $n): string
+    {
+        $m100 = $n % 100;
+        if ($m100 === 1) {
+            return 'one';
+        }
+        if ($m100 === 2) {
+            return 'two';
+        }
+        if ($m100 === 3 || $m100 === 4) {
+            return 'few';
+        }
+        return 'other';
+    }
+
+    private static function pluralLv(int $n): string
+    {
+        $m10  = $n % 10;
+        $m100 = $n % 100;
+        if ($m10 === 1 && $m100 !== 11) {
+            return 'one';
         }
         return 'other';
     }

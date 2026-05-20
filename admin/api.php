@@ -1045,6 +1045,12 @@ if ($action === 'set_language_setting') {
             $settings = @json_decode($raw, true) ?? [];
         }
     }
+    if (($settings['default_language'] ?? null) !== $defaultLang) {
+        $settings['locale_version'] = bin2hex(random_bytes(8));
+    }
+    if (!isset($settings['locale_version'])) {
+        $settings['locale_version'] = bin2hex(random_bytes(8));
+    }
     $settings['default_language']    = $defaultLang;
     $settings['available_languages'] = $available;
 
