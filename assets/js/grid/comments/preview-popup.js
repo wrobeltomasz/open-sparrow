@@ -1,6 +1,7 @@
 import { renderAvatar } from '../../avatar.js';
 import { fetchCommentPreview } from '../api.js';
 import { state } from '../state.js';
+import { I18n } from '../../i18n.js';
 
 const previewCache = new Map();
 let popup = null;
@@ -68,12 +69,12 @@ function renderContent(comments) {
     popup.replaceChildren();
     const title = document.createElement('div');
     title.className = 'c-preview-title';
-    title.textContent = 'Recent comments';
+    title.textContent = I18n.t('grid.recent_comments');
     popup.appendChild(title);
 
     const visible = comments.filter(c => !c.deleted_at);
     if (visible.length === 0) {
-        popup.appendChild(makeParagraph('c-preview-empty', 'No comments yet.'));
+        popup.appendChild(makeParagraph('c-preview-empty', I18n.t('grid.no_comments')));
         return;
     }
 

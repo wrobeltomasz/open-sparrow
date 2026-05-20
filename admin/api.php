@@ -972,6 +972,99 @@ if ($action === 'set_snapshot_setting') {
     exit;
 }
 
+// GET: return language settings and all available locales from languages/*.json
+if ($action === 'get_language_setting') {
+    header('Content-Type: application/json');
+    $settingsFile = __DIR__ . '/../config/settings.json';
+    $settings     = [];
+    if (is_file($settingsFile)) {
+        $raw = @file_get_contents($settingsFile);
+        if ($raw !== false) {
+            $settings = @json_decode($raw, true) ?? [];
+        }
+    }
+
+    $defaultLanguage    = is_string($settings['default_language'] ?? null) ? $settings['default_language'] : 'en';
+    $availableLanguages = is_array($settings['available_languages'] ?? null) ? $settings['available_languages'] : null;
+
+    $langDir    = __DIR__ . '/../languages/';
+    $allLocales = [];
+    foreach (glob($langDir . '*.json') ?: [] as $f) {
+        $code = basename($f, '.json');
+        $data = @json_decode((string)@file_get_contents($f), true) ?? [];
+        $allLocales[] = [
+            'code' => $code,
+            'name' => is_string($data['_meta']['name'] ?? null) ? $data['_meta']['name'] : $code,
+        ];
+    }
+
+    if ($availableLanguages === null) {
+        $availableLanguages = array_column($allLocales, 'code');
+    }
+
+    echo json_encode([
+        'default_language'    => $defaultLanguage,
+        'available_languages' => $availableLanguages,
+        'all_locales'         => $allLocales,
+    ]);
+    exit;
+}
+
+// POST: save language settings to config/settings.json
+if ($action === 'set_language_setting') {
+    header('Content-Type: application/json');
+    if ($isDemoMode) {
+        echo json_encode(['status' => 'error', 'error' => 'Action disabled in Demo Mode.']);
+        exit;
+    }
+
+    $body        = json_decode(file_get_contents('php://input'), true) ?? [];
+    $defaultLang = preg_match('/^[a-z]{2}(?:-[A-Z]{2})?$/', (string)($body['default_language'] ?? ''))
+        ? (string)$body['default_language']
+        : 'en';
+
+    $available = array_values(array_filter(
+        array_map('strval', (array)($body['available_languages'] ?? [])),
+        static fn(string $l): bool => (bool)preg_match('/^[a-z]{2}(?:-[A-Z]{2})?$/', $l)
+    ));
+
+    if (empty($available)) {
+        echo json_encode(['status' => 'error', 'error' => 'At least one language must be available.']);
+        exit;
+    }
+    if (!in_array($defaultLang, $available, true)) {
+        echo json_encode(['status' => 'error', 'error' => 'Default language must be in the available languages list.']);
+        exit;
+    }
+
+    $settingsFile = __DIR__ . '/../config/settings.json';
+    $settings     = [];
+    if (is_file($settingsFile)) {
+        $raw = @file_get_contents($settingsFile);
+        if ($raw !== false) {
+            $settings = @json_decode($raw, true) ?? [];
+        }
+    }
+    $settings['default_language']    = $defaultLang;
+    $settings['available_languages'] = $available;
+
+    $written = @file_put_contents(
+        $settingsFile,
+        json_encode($settings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+    );
+    if ($written === false) {
+        echo json_encode(['status' => 'error', 'error' => 'Could not write config/settings.json. Check directory permissions.']);
+        exit;
+    }
+
+    echo json_encode([
+        'status'             => 'success',
+        'default_language'   => $defaultLang,
+        'available_languages' => $available,
+    ]);
+    exit;
+}
+
 // Create a timestamped copy of selected tables (structure + data, no indexes/constraints)
 if ($action === 'backup_tables') {
     header('Content-Type: application/json');

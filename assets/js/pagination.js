@@ -1,6 +1,7 @@
 // pagination.js
 import { renderGrid, getState } from './grid.js';
 import { debugLog } from './debug.js';
+import { I18n } from './i18n.js';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 const LS_KEY = 'sparrow_page_size';
@@ -60,7 +61,7 @@ export function renderPagination(schema) {
     // Rows-per-page selector — leftmost, standard best practice position
     const sizeLabel = document.createElement('label');
     sizeLabel.style.cssText = 'display:flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); margin-right:8px;';
-    sizeLabel.textContent = 'Rows per page:';
+    sizeLabel.textContent = I18n.t('grid.rows_per_page') + ':';
 
     const sizeSelect = document.createElement('select');
     sizeSelect.style.cssText = 'padding:3px 6px; border:1px solid var(--border); border-radius:4px; font-size:13px; background:var(--panel);';
@@ -90,7 +91,7 @@ export function renderPagination(schema) {
 
     // Prev button
     const prevBtn = document.createElement('button');
-    prevBtn.textContent = 'Prev';
+    prevBtn.textContent = I18n.t('pagination.prev');
     prevBtn.disabled = currentPage <= 1;
     prevBtn.addEventListener('click', async () => {
         if (currentPage > 1) {
@@ -103,12 +104,12 @@ export function renderPagination(schema) {
     // Page info
     const info = document.createElement('span');
     info.style.cssText = 'font-size:13px; white-space:nowrap;';
-    info.textContent = `Page ${currentPage} of ${totalPages}`;
+    info.textContent = I18n.t('pagination.page_of', { page: currentPage, total: totalPages });
     paginationEl.appendChild(info);
 
     // Next button
     const nextBtn = document.createElement('button');
-    nextBtn.textContent = 'Next';
+    nextBtn.textContent = I18n.t('pagination.next');
     nextBtn.disabled = currentPage >= totalPages;
     nextBtn.addEventListener('click', async () => {
         if (currentPage < totalPages) {
@@ -167,5 +168,5 @@ function renderPaginationInfo(filteredData) {
         if (paginationEl) paginationEl.appendChild(infoEl);
     }
 
-    infoEl.textContent = `Showing ${start}–${end} of ${totalRecords} records`;
+    infoEl.textContent = I18n.t('grid.showing', { from: start, to: end, total: totalRecords });
 }

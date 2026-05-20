@@ -204,6 +204,10 @@ if (empty($_SESSION['csrf_token'])) {
                         <img class="nav-item-icon" src="../assets/icons/inventory.png" alt="">
                         Backup Tables
                     </button>
+                    <button class="admin-tab" data-file="settings">
+                        <img class="nav-item-icon" src="../assets/icons/manage_history.png" alt="">
+                        Settings
+                    </button>
                     <button class="admin-tab" data-file="audit">
                         <img class="nav-item-icon" src="../assets/icons/fact_check.png" alt="">
                         Audit &amp; Snapshots

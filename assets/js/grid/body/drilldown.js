@@ -1,4 +1,5 @@
 import { state } from '../state.js';
+import { I18n } from '../../i18n.js';
 
 export function buildExpandButton(row, schema, tr) {
     const tdExpand = document.createElement('td');
@@ -24,7 +25,7 @@ export function buildExpandButton(row, schema, tr) {
         ddTd.colSpan = state.displayedColumns.length + (isReadOnly ? 2 : 3);
 
         const loading = document.createElement('em');
-        loading.textContent = 'Loading...';
+        loading.textContent = I18n.t('common.loading');
         ddTd.appendChild(loading);
         ddTr.appendChild(ddTd);
         tr.after(ddTr);
@@ -59,7 +60,7 @@ async function buildSubtableBlock(sub, row) {
         addBtn.className = 'btn-action';
         addBtn.textContent = '+';
         addBtn.style.cssText = 'padding:1px 8px; font-size:16px; font-weight:bold; line-height:1.4; text-decoration:none;';
-        addBtn.title = `Add ${sub.label || sub.table}`;
+        addBtn.title = I18n.t('grid.drilldown_add', { label: sub.label || sub.table });
         header.appendChild(addBtn);
     }
 
@@ -79,7 +80,7 @@ async function buildSubtableBlock(sub, row) {
             data.rows.forEach(r => {
                 const li = document.createElement('li');
                 const textSpan = document.createElement('span');
-                textSpan.textContent = cols.map(c => r[c + '__display'] ?? r[c] ?? '').join(' - ') || 'No title';
+                textSpan.textContent = cols.map(c => r[c + '__display'] ?? r[c] ?? '').join(' - ') || I18n.t('grid.drilldown_no_title');
                 const badge = document.createElement('span');
                 badge.className = 'badge';
                 badge.textContent = `id: ${r.id}`;
@@ -92,7 +93,7 @@ async function buildSubtableBlock(sub, row) {
             });
         } else {
             const empty = document.createElement('li');
-            empty.textContent = 'No related records.';
+            empty.textContent = I18n.t('grid.drilldown_no_records');
             empty.style.cssText = 'justify-content:center; color:var(--muted);';
             ul.appendChild(empty);
         }
@@ -100,7 +101,7 @@ async function buildSubtableBlock(sub, row) {
     } catch {
         const err = document.createElement('p');
         err.style.cssText = 'color:var(--danger); font-size:13px;';
-        err.textContent = 'Error fetching data.';
+        err.textContent = I18n.t('grid.drilldown_error');
         wrapper.appendChild(err);
     }
 

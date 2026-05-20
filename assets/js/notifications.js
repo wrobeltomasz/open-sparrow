@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const empty = document.createElement('li');
                 empty.style.cssText = 'padding:15px;text-align:center;color:#777;';
-                empty.textContent = 'No new notifications';
+                empty.textContent = window.I18n ? window.I18n.t('notifications.none') : 'No new notifications';
                 list.appendChild(empty);
             }
         })

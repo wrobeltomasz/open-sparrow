@@ -18,26 +18,26 @@ $nonceAttr = isset($cspNonce)
 $cacheBust = @filemtime(__DIR__ . '/../assets/js/user-menu.js');
 ?>
 <header>
-    <button id="sidebarToggle" data-cy="sidebar-toggle" aria-label="Toggle sidebar">&#9776;</button>
-    <button class="header-search-toggle" id="searchToggle" aria-label="Toggle search">&#128269;</button>
+    <button id="sidebarToggle" data-cy="sidebar-toggle" aria-label="<?= htmlspecialchars(t('header.toggle_sidebar'), ENT_QUOTES, 'UTF-8') ?>">&#9776;</button>
+    <button class="header-search-toggle" id="searchToggle" aria-label="<?= htmlspecialchars(t('header.toggle_search'), ENT_QUOTES, 'UTF-8') ?>">&#128269;</button>
 
     <div class="header-controls">
         <?php if (!empty($headerControls)) echo $headerControls; ?>
     </div>
 
     <div class="header-user-menu">
-        <div class="notifications-wrapper" data-cy="notifications" aria-label="Notifications">
-            <span><img class="notif-icon-img" title="User notifications" src="assets/img/notifications.png" alt="Notifications"></span>
+        <div class="notifications-wrapper" data-cy="notifications" aria-label="<?= htmlspecialchars(t('header.notifications'), ENT_QUOTES, 'UTF-8') ?>">
+            <span><img class="notif-icon-img" title="<?= htmlspecialchars(t('header.notifications'), ENT_QUOTES, 'UTF-8') ?>" src="assets/img/notifications.png" alt="<?= htmlspecialchars(t('header.notifications'), ENT_QUOTES, 'UTF-8') ?>"></span>
             <span id="notif-badge" class="notif-badge">0</span>
             <div id="notif-dropdown" class="notif-dropdown">
-                <div class="notif-dropdown-header">Notifications</div>
+                <div class="notif-dropdown-header"><?= htmlspecialchars(t('header.notifications'), ENT_QUOTES, 'UTF-8') ?></div>
                 <ul id="notif-list" class="notif-list"></ul>
             </div>
         </div>
 
         <?php if ($userRole === 'admin') : ?>
-        <a href="/admin/index.php" class="header-admin-link" data-cy="admin-link" title="Admin panel">
-            <img title="Admin panel" src="assets/img/settings.png" alt="Admin">
+        <a href="/admin/index.php" class="header-admin-link" data-cy="admin-link" title="<?= htmlspecialchars(t('header.admin_panel'), ENT_QUOTES, 'UTF-8') ?>">
+            <img title="<?= htmlspecialchars(t('header.admin_panel'), ENT_QUOTES, 'UTF-8') ?>" src="assets/img/settings.png" alt="<?= htmlspecialchars(t('admin.title'), ENT_QUOTES, 'UTF-8') ?>">
         </a>
         <?php endif; ?>
 
@@ -59,10 +59,10 @@ $cacheBust = @filemtime(__DIR__ . '/../assets/js/user-menu.js');
                 <span class="user-avatar-tooltip"><?= $unameEsc ?></span>
             </button>
             <div class="user-avatar-menu" id="userAvatarMenu" role="menu">
-                <button class="user-avatar-menu-item" id="changeAvatarBtn" role="menuitem">Change avatar</button>
-                <button class="user-avatar-menu-item" id="changePasswordBtn" role="menuitem">Change password</button>
+                <button class="user-avatar-menu-item" id="changeAvatarBtn" role="menuitem"><?= htmlspecialchars(t('header.change_avatar'), ENT_QUOTES, 'UTF-8') ?></button>
+                <button class="user-avatar-menu-item" id="changePasswordBtn" role="menuitem"><?= htmlspecialchars(t('auth.change_password'), ENT_QUOTES, 'UTF-8') ?></button>
                 <div class="user-avatar-menu-divider"></div>
-                <button class="user-avatar-menu-item danger" id="logoutBtn" data-cy="logout" role="menuitem">Logout</button>
+                <button class="user-avatar-menu-item danger" id="logoutBtn" data-cy="logout" role="menuitem"><?= htmlspecialchars(t('auth.logout'), ENT_QUOTES, 'UTF-8') ?></button>
             </div>
         </div>
         <?php endif; ?>

@@ -1,3 +1,5 @@
+import { I18n } from '../i18n.js';
+
 /**
  * Returns first condition with op '=' from conditions array, or null.
  * Used by stat/kpi cards to navigate to pre-filtered table view.
@@ -9,7 +11,7 @@ export function firstEqCondition(conditions) {
 
 export function applyDrillDown(element, table, filterCol = null, filterVal = null) {
     element.style.cursor = 'pointer';
-    element.title = 'Click to view details';
+    element.title = I18n.t('dashboard.click_details');
     element.addEventListener('click', () => {
         let url = `index.php?table=${encodeURIComponent(table)}`;
         if (filterCol) {

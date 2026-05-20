@@ -382,6 +382,50 @@ function getContentEn() {
             <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Demo 3: Task Management</h4>
             <p>Projects, team members, milestones, tasks, time logs. Sprint planning, workload view, time budget variance (logged vs estimated hours), drill-down summary view.</p>
 
+            <h3 id="doc-13" style="color: #2563eb; margin-top: 30px;">13. Multilingual / i18n Module</h3>
+            <p>OpenSparrow supports multiple UI languages via flat JSON translation files. The active language is resolved per session; both PHP templates and all JS modules share the same bundle.</p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Configuration — settings.json</h4>
+            <ul style="padding-left: 20px;">
+                <li><code>"default_language": "pl"</code> — locale used when no session preference is stored.</li>
+                <li><code>"available_languages": ["en", "pl"]</code> — enables the language switcher; lists accepted locale codes.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Translation files</h4>
+            <p>Each locale has one file: <code>languages/{locale}.json</code> (e.g. <code>languages/pl.json</code>). Structure:</p>
+            <ul style="padding-left: 20px;">
+                <li>Top-level keys are namespaces: <code>common</code>, <code>grid</code>, <code>form</code>, <code>auth</code>, <code>header</code>, <code>admin</code>, <code>pagination</code>, <code>filter</code>, <code>files</code>, <code>notifications</code>, <code>dashboard</code>, <code>workflow</code>, <code>comments</code>, <code>owners</code>, <code>views</code>, <code>calendar</code>.</li>
+                <li>Plural values are objects: <code>{"one": "...", "few": "...", "many": "..."}</code> for Polish; <code>{"one": "...", "other": "..."}</code> for English.</li>
+                <li>Variable placeholders use <code>{name}</code> syntax: e.g. <code>"showing": "Showing {from}–{to} of {total} records"</code>.</li>
+                <li><strong>Critical:</strong> All double-quote characters inside JSON string values must be escaped as <code>\"</code>. An unescaped <code>"</code> silently breaks <code>json_decode</code>, causing the entire locale to fall back to English with no error shown.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">PHP API</h4>
+            <ul style="padding-left: 20px;">
+                <li><code>includes/i18n.php</code> — loaded via <code>includes/session.php</code>, available everywhere.</li>
+                <li><code>I18n::locale()</code> — returns active locale string (e.g. <code>'pl'</code>). Use in <code>&lt;html lang="..."&gt;</code>.</li>
+                <li><code>t($key, $vars = [], $count = null)</code> — translates a dot-notation key; replaces <code>{name}</code> placeholders; selects plural form when <code>$count</code> is provided.</li>
+                <li>Bundle served to JS via <code>api.php?action=i18n_bundle</code> as a flat key→value JSON object.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">JavaScript API</h4>
+            <ul style="padding-left: 20px;">
+                <li><code>assets/js/i18n.js</code> — ES module singleton. Import: <code>import { I18n } from './i18n.js';</code></li>
+                <li>Always call <code>await I18n.load()</code> before rendering any translated text — widgets that render before <code>load()</code> resolves will show raw key strings.</li>
+                <li><code>I18n.t('common.save')</code> — basic lookup.</li>
+                <li><code>I18n.t('grid.showing', { from: 1, to: 10, total: 42 })</code> — with variable substitution.</li>
+                <li><code>I18n.t('files.count', { count: 3 }, 3)</code> — with plural selection.</li>
+                <li>Build DOM nodes with <code>el.textContent = I18n.t(...)</code> — never inject translations via <code>innerHTML</code>.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Adding a new language</h4>
+            <ol style="padding-left: 20px;">
+                <li>Copy <code>languages/en.json</code> → <code>languages/{locale}.json</code>.</li>
+                <li>Translate all values; update plural forms to match the target language rules.</li>
+                <li>Add the locale code to <code>"available_languages"</code> in <code>config/settings.json</code>.</li>
+                <li>Validate JSON before deploying: <code>node -e "JSON.parse(require('fs').readFileSync('languages/{locale}.json','utf8'))"</code>.</li>
+            </ol>
+
             <h3 id="doc-12" style="color: #2563eb; margin-top: 30px;">12. Deployment Notes</h3>
             <ul style="padding-left: 20px;">
                 <li><strong>Deny public access to <code>config/</code>:</strong> An <code>.htaccess</code> rule is included by default.</li>
@@ -737,6 +781,50 @@ function getContentPl() {
 
             <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Demo 3: Zarządzanie zadaniami</h4>
             <p>Projekty, członkowie zespołu, kamienie milowe, zadania, dzienniki czasu. Planowanie sprintów, widok obciążenia, odchylenie budżetu czasu (zalogowany vs szacowany), drill-down widoku podsumowania.</p>
+
+            <h3 id="doc-13" style="color: #2563eb; margin-top: 30px;">13. Moduł wielojęzyczny (i18n)</h3>
+            <p>OpenSparrow obsługuje wiele języków interfejsu poprzez płaskie pliki JSON z tłumaczeniami. Aktywny język jest rozwiązywany per sesja; szablony PHP i wszystkie moduły JS korzystają z tego samego pakietu.</p>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Konfiguracja — settings.json</h4>
+            <ul style="padding-left: 20px;">
+                <li><code>"default_language": "pl"</code> — język używany gdy brak preferencji w sesji.</li>
+                <li><code>"available_languages": ["en", "pl"]</code> — włącza przełącznik języka; lista akceptowanych kodów locale.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Pliki tłumaczeń</h4>
+            <p>Każde locale ma jeden plik: <code>languages/{locale}.json</code> (np. <code>languages/pl.json</code>). Struktura:</p>
+            <ul style="padding-left: 20px;">
+                <li>Klucze najwyższego poziomu to przestrzenie nazw: <code>common</code>, <code>grid</code>, <code>form</code>, <code>auth</code>, <code>header</code>, <code>admin</code>, <code>pagination</code>, <code>filter</code>, <code>files</code>, <code>notifications</code>, <code>dashboard</code>, <code>workflow</code>, <code>comments</code>, <code>owners</code>, <code>views</code>, <code>calendar</code>.</li>
+                <li>Wartości liczby mnogiej to obiekty: <code>{"one": "...", "few": "...", "many": "..."}</code> dla polskiego; <code>{"one": "...", "other": "..."}</code> dla angielskiego.</li>
+                <li>Zmienne używają składni <code>{name}</code>: np. <code>"showing": "Wyniki {from}–{to} z {total} rekordów"</code>.</li>
+                <li><strong>Krytyczne:</strong> Cudzysłów wewnątrz wartości JSON musi być poprzedzony ukośnikiem: <code>\"</code>. Nieescapowany <code>"</code> powoduje ciche niepowodzenie <code>json_decode</code> i powrót do języka angielskiego bez żadnego komunikatu błędu.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">API PHP</h4>
+            <ul style="padding-left: 20px;">
+                <li><code>includes/i18n.php</code> — ładowany przez <code>includes/session.php</code>, dostępny wszędzie.</li>
+                <li><code>I18n::locale()</code> — zwraca aktywne locale (np. <code>'pl'</code>). Używaj w <code>&lt;html lang="..."&gt;</code>.</li>
+                <li><code>t($key, $vars = [], $count = null)</code> — tłumaczy klucz w notacji kropkowej; zastępuje placeholdery <code>{name}</code>; wybiera formę liczby mnogiej gdy podany <code>$count</code>.</li>
+                <li>Pakiet tłumaczeń serwowany do JS przez <code>api.php?action=i18n_bundle</code> jako płaski JSON klucz→wartość.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">API JavaScript</h4>
+            <ul style="padding-left: 20px;">
+                <li><code>assets/js/i18n.js</code> — singleton ES module. Import: <code>import { I18n } from './i18n.js';</code></li>
+                <li>Zawsze wywołuj <code>await I18n.load()</code> przed renderowaniem przetłumaczonego tekstu — komponenty renderowane przed rozwiązaniem <code>load()</code> pokażą surowe klucze.</li>
+                <li><code>I18n.t('common.save')</code> — podstawowe wyszukiwanie.</li>
+                <li><code>I18n.t('grid.showing', { from: 1, to: 10, total: 42 })</code> — z podstawianiem zmiennych.</li>
+                <li><code>I18n.t('files.count', { count: 3 }, 3)</code> — z wyborem formy liczby mnogiej.</li>
+                <li>Buduj węzły DOM przez <code>el.textContent = I18n.t(...)</code> — nigdy nie wstrzykuj tłumaczeń przez <code>innerHTML</code>.</li>
+            </ul>
+
+            <h4 style="color: #475569; margin-top: 20px; border-left: 3px solid #cbd5e1; padding-left: 15px;">Dodawanie nowego języka</h4>
+            <ol style="padding-left: 20px;">
+                <li>Skopiuj <code>languages/en.json</code> → <code>languages/{locale}.json</code>.</li>
+                <li>Przetłumacz wszystkie wartości; zaktualizuj formy liczby mnogiej zgodnie z zasadami docelowego języka.</li>
+                <li>Dodaj kod locale do <code>"available_languages"</code> w <code>config/settings.json</code>.</li>
+                <li>Zwaliduj JSON przed wdrożeniem: <code>node -e "JSON.parse(require('fs').readFileSync('languages/{locale}.json','utf8'))"</code>.</li>
+            </ol>
 
             <h3 id="doc-12" style="color: #2563eb; margin-top: 30px;">12. Uwagi dotyczące wdrożenia</h3>
             <ul style="padding-left: 20px;">

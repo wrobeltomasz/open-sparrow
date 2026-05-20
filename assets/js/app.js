@@ -1,3 +1,4 @@
+import { I18n } from './i18n.js';
 import { loadTable, renderGrid, getState, setFilteredData, resetFilters, injectPagination } from './grid.js';
 import { state as gridState } from './grid/state.js';
 import { exportCSV } from './export_csv.js';
@@ -26,6 +27,8 @@ let activeFilters = {
 // Initialize application on DOM load
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        await I18n.load();
+
         // Fetch secure schema dynamically via API instead of reading from HTML
         const schemaRes = await fetch('api_schema.php', {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -96,7 +99,7 @@ function populateColumnFilter() {
     columnFilterEl.innerHTML = '';
     const defaultOpt = document.createElement("option");
     defaultOpt.value = "";
-    defaultOpt.textContent = "Select column to filter...";
+    defaultOpt.textContent = I18n.t('grid.select_column');
     columnFilterEl.appendChild(defaultOpt);
     
     displayedColumns.forEach(col => {
