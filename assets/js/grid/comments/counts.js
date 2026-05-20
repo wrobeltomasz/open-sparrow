@@ -1,6 +1,7 @@
 import { debugLog } from '../../debug.js';
 import { fetchCommentCounts } from '../api.js';
 import { state } from '../state.js';
+import { I18n } from '../../i18n.js';
 
 export async function loadCommentCounts(pageRows) {
     if (!state.currentTable || pageRows.length === 0) return;
@@ -21,7 +22,7 @@ export async function loadCommentCounts(pageRows) {
                 badge.className = 'c-count-badge';
                 badge.textContent = String(cnt);
                 badge.dataset.rowId = rowId;
-                badge.title = 'Go to comments';
+                badge.title = I18n.t('grid.go_to_comments');
                 badge.addEventListener('click', e => {
                     e.stopPropagation();
                     window.location.href = `edit.php?table=${encodeURIComponent(state.currentTable)}&id=${encodeURIComponent(rowId)}#tab-comments`;
@@ -30,10 +31,10 @@ export async function loadCommentCounts(pageRows) {
             } else {
                 const addBtn = document.createElement('button');
                 addBtn.className = 'btn-icon-comment-add';
-                addBtn.title = 'Add comment';
+                addBtn.title = I18n.t('grid.add_comment');
                 const img = document.createElement('img');
                 img.src = 'assets/icons/add_comment.png';
-                img.alt = 'Add comment';
+                img.alt = I18n.t('grid.add_comment');
                 addBtn.appendChild(img);
                 addBtn.addEventListener('click', e => {
                     e.stopPropagation();

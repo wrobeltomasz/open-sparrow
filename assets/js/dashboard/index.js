@@ -1,4 +1,5 @@
 import { WidgetRegistry } from './registry.js';
+import { I18n } from '../i18n.js';
 
 // Import widgets so they self-register
 import './widgets/kpi-card.js';
@@ -9,6 +10,8 @@ import './widgets/pie-chart.js';
 import './widgets/list.js';
 
 async function initDashboard() {
+    await I18n.load();
+
     const container = document.getElementById('dashboardSection');
     if (!container) {
         console.error('Error: Container #dashboardSection not found');

@@ -1,6 +1,7 @@
 /* assets/js/views.js — frontend views module */
 
 import { sortRows } from './grid/state.js';
+import { I18n } from './i18n.js';
 
 /* ── colour rule engine ── */
 function applyColorRules(rawValue, rules) {
@@ -25,6 +26,8 @@ let viewSortState  = { column: null, asc: true };
 let viewSearchTerm = '';
 let searchTimer    = null;
 let _searchHandler = null;
+
+const VIEW_FN_KEYS = { sum: 'views.fn_sum', avg: 'views.fn_avg', min: 'views.fn_min', max: 'views.fn_max', count: 'views.fn_count' };
 
 /* ── DOM refs ── */
 const breadcrumbEl = document.getElementById('viewBreadcrumb');
@@ -114,7 +117,10 @@ async function loadView(viewName, level, filterCol, filterVal) {
     clearTimeout(searchTimer);
     viewSortState = { column: null, asc: true };
 
-    containerEl.innerHTML = '<div class="vw-loading">Loading…</div>';
+    const loadEl = document.createElement('div');
+    loadEl.className = 'vw-loading';
+    loadEl.textContent = I18n.t('common.loading');
+    containerEl.replaceChildren(loadEl);
     renderBreadcrumb();
 
     let url = `api_views.php?action=data&view=${encodeURIComponent(viewName)}&level=${level}`;
@@ -149,13 +155,13 @@ function renderView(data) {
 
     const meta = document.createElement('span');
     meta.className   = 'vw-meta';
-    meta.textContent = `${rows.length} row${rows.length !== 1 ? 's' : ''}`;
+    meta.textContent = I18n.t('views.rows', { count: rows.length }, rows.length);
     hdr.appendChild(meta);
 
     const backBtn = document.createElement('button');
     backBtn.className        = 'vw-drill-up';
     backBtn.style.marginLeft = 'auto';
-    backBtn.textContent      = '◀ Back';
+    backBtn.textContent      = I18n.t('views.back');
     backBtn.addEventListener('click', drillUp);
     hdr.appendChild(backBtn);
 
@@ -259,7 +265,7 @@ function renderView(data) {
                     : '—';
                 const badge = document.createElement('span');
                 badge.className   = 'vw-summary-fn';
-                badge.textContent = fn.toUpperCase();
+                badge.textContent = VIEW_FN_KEYS[fn] ? I18n.t(VIEW_FN_KEYS[fn]) : fn.toUpperCase();
                 td.appendChild(strong);
                 td.appendChild(badge);
             };
@@ -281,7 +287,7 @@ function renderView(data) {
     exportBtn = document.createElement('button');
     exportBtn.id        = 'exportCsv';
     exportBtn.className = 'vw-export-btn';
-    exportBtn.textContent = 'Export CSV';
+    exportBtn.textContent = I18n.t('grid.export_csv');
     containerEl.appendChild(exportBtn);
 
     /* ── filter + sort + populate tbody ── */
@@ -330,8 +336,8 @@ function renderView(data) {
             tbody.appendChild(tr);
         });
 
-        const filteredCount = viewSearchTerm ? ` (filtered from ${rows.length})` : '';
-        meta.textContent = `${result.length} row${result.length !== 1 ? 's' : ''}${filteredCount}`;
+        const filteredCount = viewSearchTerm ? ' ' + I18n.t('views.rows_filtered', { total: rows.length }) : '';
+        meta.textContent = I18n.t('views.rows', { count: result.length }, result.length) + filteredCount;
     }
 
     /* ── wire #globalSearch ── */
@@ -370,7 +376,10 @@ function renderView(data) {
 
 /* ── load list of all views and show selector ── */
 async function loadViewSelector() {
-    containerEl.innerHTML = '<div class="vw-loading">Loading views…</div>';
+    const loadEl = document.createElement('div');
+    loadEl.className = 'vw-loading';
+    loadEl.textContent = I18n.t('views.loading');
+    containerEl.replaceChildren(loadEl);
     renderBreadcrumb();
     try {
         const data = await apiFetch('api_views.php?action=list');
@@ -425,7 +434,7 @@ function renderSelector(views) {
         footer.style.cssText = 'display:flex; align-items:center; justify-content:flex-end; margin-top:auto; padding-top:16px; border-top:1px solid var(--border-light);';
         const openLink = document.createElement('span');
         openLink.style.cssText = 'font-size:13.5px; color:var(--accent); font-weight:600;';
-        openLink.textContent = 'Open View →';
+        openLink.textContent = I18n.t('views.open');
         footer.appendChild(openLink);
 
         card.appendChild(header);
@@ -448,7 +457,8 @@ function initView(viewName) {
 }
 
 /* ── entry point ── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await I18n.load();
     const initial = window.VIEWS_INITIAL;
     if (initial) {
         initView(initial);

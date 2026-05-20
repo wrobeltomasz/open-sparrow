@@ -1,3 +1,5 @@
+import { I18n } from './i18n.js';
+
 const table    = window.EDIT_TABLE;
 const recordId = window.EDIT_ID;
 const userRole = window.USER_ROLE;
@@ -17,26 +19,26 @@ async function loadOwner() {
     try {
         const res  = await fetch(`api_owners.php?action=get&table=${encodeURIComponent(table)}&id=${encodeURIComponent(recordId)}`);
         const data = await res.json();
-        if (!data.success) { current.textContent = 'Error loading owner.'; return; }
+        if (!data.success) { current.textContent = I18n.t('owners.error_load'); return; }
 
         if (!data.owner || data.owner.id === null) {
-            current.textContent = 'No owner assigned.';
+            current.textContent = I18n.t('owners.no_owner');
             hasOwner = false;
         } else {
             hasOwner = true;
             let label = data.owner.username;
             if (data.owner.changed_at) {
                 const d = new Date(data.owner.changed_at);
-                label += ' (last changed: ' + d.toLocaleDateString() + ')';
+                label += ' ' + I18n.t('owners.last_changed', { date: d.toLocaleDateString() });
             }
             current.textContent = label;
         }
 
         if (saveBtn) {
-            saveBtn.textContent = hasOwner ? 'Change Owner' : 'Assign Owner';
+            saveBtn.textContent = hasOwner ? I18n.t('owners.change_owner') : I18n.t('owners.assign_owner');
         }
     } catch {
-        current.textContent = 'Error loading owner.';
+        current.textContent = I18n.t('owners.error_load');
     }
 }
 
@@ -45,10 +47,10 @@ async function loadHistory() {
     try {
         const res  = await fetch(`api_owners.php?action=history&table=${encodeURIComponent(table)}&id=${encodeURIComponent(recordId)}`);
         const data = await res.json();
-        if (!data.success) { historyEl.textContent = 'Error loading history.'; return; }
+        if (!data.success) { historyEl.textContent = I18n.t('owners.error_history'); return; }
 
         if (!data.history.length) {
-            historyEl.textContent = 'No assignment history.';
+            historyEl.textContent = I18n.t('owners.no_history');
             return;
         }
 
@@ -57,7 +59,7 @@ async function loadHistory() {
 
         const thead = table_.createTHead();
         const hrow  = thead.insertRow();
-        ['Owner', 'Changed by', 'Date'].forEach(h => {
+        [I18n.t('owners.col_owner'), I18n.t('owners.col_changed_by'), I18n.t('owners.col_date')].forEach(h => {
             const th = document.createElement('th');
             th.textContent = h;
             th.style.cssText = 'text-align:left;padding:8px 10px;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600;';
@@ -95,7 +97,7 @@ async function loadEditors() {
 
     const placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = '— select user —';
+    placeholder.textContent = I18n.t('owners.select_user');
     placeholder.disabled = true;
     placeholder.selected = true;
     select.appendChild(placeholder);
@@ -111,7 +113,7 @@ async function loadEditors() {
 async function saveOwner() {
     const ownerId = parseInt(select.value, 10);
     if (!ownerId) {
-        status.textContent = 'Select a user first.';
+        status.textContent = I18n.t('owners.select_first');
         status.style.color = '#ef4444';
         return;
     }
@@ -127,16 +129,16 @@ async function saveOwner() {
         });
         const data = await res.json();
         if (data.success) {
-            status.textContent = 'Owner saved.';
+            status.textContent = I18n.t('owners.saved');
             status.style.color = '#10b981';
             await loadOwner();
             await loadHistory();
         } else {
-            status.textContent = data.error || 'Error saving owner.';
+            status.textContent = data.error || I18n.t('owners.error_save');
             status.style.color = '#ef4444';
         }
     } catch {
-        status.textContent = 'Network error.';
+        status.textContent = I18n.t('owners.network_error');
         status.style.color = '#ef4444';
     } finally {
         saveBtn.disabled = false;
@@ -146,6 +148,7 @@ async function saveOwner() {
 async function init() {
     if (!panel) return;
 
+    await I18n.load();
     await loadOwner();
     await loadHistory();
 

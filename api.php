@@ -113,6 +113,14 @@ if (in_array($profileAction, ['update_avatar', 'change_password'], true)) {
     exit(json_encode(['error' => 'Method not allowed']));
 }
 
+// Translation bundle — all authenticated users, no DB required
+if ($profileAction === 'i18n_bundle' && $method === 'GET') {
+    header('Content-Type: application/json; charset=UTF-8');
+    header('Cache-Control: public, max-age=3600');
+    echo json_encode(I18n::flatBundle(), JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // Admin role is restricted to the admin panel; block from frontend data API
 if ($role === 'admin') {
     http_response_code(403);
@@ -871,8 +879,8 @@ try {
                         $col = $m[1] ?: $m[2];
                     }
                     $msg = $col
-                        ? "Duplicate failed: column \"$col\" must be unique. Edit it in the new record."
-                        : 'Duplicate failed: a unique column conflict occurred. Edit the value in the new record.';
+                        ? t('grid.duplicate_unique', ['col' => $col])
+                        : t('grid.duplicate_conflict');
                     echo json_encode(['error' => $msg]);
                 } else {
                     echo json_encode(['error' => 'Database error']);

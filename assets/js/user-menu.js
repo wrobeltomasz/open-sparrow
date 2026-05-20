@@ -2,6 +2,7 @@
 // Licensed under LGPL v3. See LICENCE file for details.
 
 import { showToast } from './toast.js';
+import { I18n } from './i18n.js';
 
 const AVATAR_COUNT = 24;
 
@@ -34,11 +35,11 @@ function buildAvatarModal(currentId) {
     box.className = 'um-box';
     box.innerHTML = `
         <button class="um-close" aria-label="Close">&times;</button>
-        <h3>Choose avatar</h3>
+        <h3>${I18n.t('header.choose_avatar')}</h3>
         <div class="um-picker" role="group" aria-label="Avatar options"></div>
         <div class="um-actions">
-            <button class="um-btn um-btn-secondary" id="umAvatarClear">Use initial</button>
-            <button class="um-btn um-btn-primary" id="umAvatarSave" disabled>Save</button>
+            <button class="um-btn um-btn-secondary" id="umAvatarClear">${I18n.t('header.use_initial')}</button>
+            <button class="um-btn um-btn-primary" id="umAvatarSave" disabled>${I18n.t('common.save')}</button>
         </div>`;
 
     const picker = box.querySelector('.um-picker');
@@ -93,7 +94,7 @@ async function saveAvatar(overlay, avatarId) {
         const res = await apiFetch('update_avatar', { avatar_id: avatarId });
         const data = await res.json();
         if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error saving avatar.');
-        showToast('Avatar updated.', 'success');
+        showToast(I18n.t('header.avatar_updated'), 'success');
         closeModal(overlay);
         updateHeaderAvatar(avatarId);
     } catch (err) {
@@ -159,18 +160,18 @@ function buildPasswordModal() {
     box.className = 'um-box';
     box.innerHTML = `
         <button class="um-close" aria-label="Close">&times;</button>
-        <h3>Change password</h3>
+        <h3>${I18n.t('auth.change_password')}</h3>
         <p class="um-error" id="umPwdError"></p>
         <form class="um-form" id="umPwdForm" autocomplete="off">
-            <label for="umPwdCurrent">Current password</label>
+            <label for="umPwdCurrent">${I18n.t('auth.current_password')}</label>
             <input type="password" id="umPwdCurrent" autocomplete="current-password" required />
-            <label for="umPwdNew">New password</label>
+            <label for="umPwdNew">${I18n.t('auth.new_password')}</label>
             <input type="password" id="umPwdNew" autocomplete="new-password" required minlength="8" />
-            <label for="umPwdConfirm">Confirm new password</label>
+            <label for="umPwdConfirm">${I18n.t('auth.confirm_password')}</label>
             <input type="password" id="umPwdConfirm" autocomplete="new-password" required minlength="8" />
             <div class="um-actions">
-                <button type="button" class="um-btn um-btn-secondary" id="umPwdCancel">Cancel</button>
-                <button type="submit" class="um-btn um-btn-primary">Save</button>
+                <button type="button" class="um-btn um-btn-secondary" id="umPwdCancel">${I18n.t('common.cancel')}</button>
+                <button type="submit" class="um-btn um-btn-primary">${I18n.t('common.save')}</button>
             </div>
         </form>`;
 
@@ -192,12 +193,12 @@ function buildPasswordModal() {
         const confirm = form.querySelector('#umPwdConfirm').value;
 
         if (newPwd !== confirm) {
-            errEl.textContent = 'Passwords do not match.';
+            errEl.textContent = I18n.t('auth.passwords_no_match');
             errEl.classList.add('visible');
             return;
         }
         if (newPwd.length < 8) {
-            errEl.textContent = 'Password must be at least 8 characters.';
+            errEl.textContent = I18n.t('auth.password_too_short');
             errEl.classList.add('visible');
             return;
         }
@@ -207,7 +208,7 @@ function buildPasswordModal() {
             const res  = await apiFetch('change_password', { current_password: current, new_password: newPwd });
             const data = await res.json();
             if (!res.ok || !data.ok) throw new Error(data.error ?? 'Error changing password.');
-            showToast('Password changed.', 'success');
+            showToast(I18n.t('auth.password_changed'), 'success');
             closeModal(overlay);
         } catch (err) {
             errEl.textContent = err.message;
@@ -288,4 +289,7 @@ function initUserMenu() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', initUserMenu);
+document.addEventListener('DOMContentLoaded', async () => {
+    await I18n.load();
+    initUserMenu();
+});
