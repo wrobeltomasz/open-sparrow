@@ -20,6 +20,7 @@ import { renderM2mPage } from './m2m.js';
 import { renderErdPage } from './erd.js';
 import { renderViewsEditor } from './views_editor.js';
 import { renderDemoPage } from './demo.js';
+import { renderSettingsPage } from './settings.js';
 
 let currentConfig = null;
 let currentFile = 'schema';
@@ -33,7 +34,7 @@ const btnSave = document.getElementById('btnSave');
 const tabs = document.querySelectorAll('.admin-tab');
 
 // Tabs that save immediately via API — no config file involved, never dirty.
-const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database', 'audit', 'add_table', 'performance', 'cron', 'm2m', 'erd', 'demo']);
+const NON_CONFIG_TABS = new Set(['users', 'security', 'health', 'backup', 'database', 'audit', 'add_table', 'performance', 'cron', 'm2m', 'erd', 'demo', 'settings']);
 
 // Dirty-state guards: every edit marks the config dirty; navigation and reload
 // refuse to drop pending changes silently.
@@ -221,7 +222,7 @@ function getColumnOptionsForTable(tableName) {
 }
 
 async function loadConfigFile(fileName) {
-    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu' || fileName === 'audit' || fileName === 'add_table' || fileName === 'migrations' || fileName === 'performance' || fileName === 'cron' || fileName === 'm2m' || fileName === 'erd' || fileName === 'demo') {
+    if (fileName === 'health' || fileName === 'docs' || fileName === 'users' || fileName === 'backup' || fileName === 'menu' || fileName === 'audit' || fileName === 'add_table' || fileName === 'migrations' || fileName === 'performance' || fileName === 'cron' || fileName === 'm2m' || fileName === 'erd' || fileName === 'demo' || fileName === 'settings') {
         currentConfig = null;
         renderSidebar();
         renderEditor(fileName.toUpperCase(), null, false);
@@ -307,7 +308,7 @@ function clearConfig() {
 function renderSidebar() {
     itemListEl.innerHTML = '';
     
-    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu' || currentFile === 'audit' || currentFile === 'add_table' || currentFile === 'migrations' || currentFile === 'performance' || currentFile === 'cron' || currentFile === 'm2m' || currentFile === 'erd' || currentFile === 'demo') {
+    if (currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu' || currentFile === 'audit' || currentFile === 'add_table' || currentFile === 'migrations' || currentFile === 'performance' || currentFile === 'cron' || currentFile === 'm2m' || currentFile === 'erd' || currentFile === 'demo' || currentFile === 'settings') {
         document.getElementById('sidebarTitle').textContent = currentFile.charAt(0).toUpperCase() + currentFile.slice(1);
         const actionDiv = document.getElementById('sidebarActions');
         if (actionDiv) actionDiv.innerHTML = ''; 
@@ -346,6 +347,7 @@ function renderSidebar() {
         if (currentFile === 'backup') title = "Backup Tables";
         if (currentFile === 'menu') title = "View Preview";
         if (currentFile === 'audit') title = "Audit & Snapshots";
+        if (currentFile === 'settings') title = "Application Settings";
         if (currentFile === 'add_table') title = "Add New Table";
         if (currentFile === 'migrations') title = "Migration History";
         if (currentFile === 'performance') {
@@ -558,7 +560,7 @@ function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    if (['health', 'docs', 'users', 'backup', 'menu', 'audit', 'add_table', 'performance', 'cron', 'm2m', 'erd', 'demo'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
+    if (['health', 'docs', 'users', 'backup', 'menu', 'audit', 'add_table', 'performance', 'cron', 'm2m', 'erd', 'demo', 'settings'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -578,6 +580,7 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'm2m')  return renderM2mPage(ctx);
     if (currentFile === 'erd')  return renderErdPage(ctx);
     if (currentFile === 'demo') return renderDemoPage(ctx);
+    if (currentFile === 'settings') return renderSettingsPage(ctx);
     if (currentFile === 'views') return renderViewsEditor(ctx);
     if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
 

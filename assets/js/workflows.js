@@ -1,4 +1,5 @@
 import { showToast } from './toast.js';
+import { I18n } from './i18n.js';
 
 // Fetch workflows configuration from backend
 async function fetchWorkflowsConfig() {
@@ -189,13 +190,13 @@ function renderWorkflowsList(workflows, containerEl, titleEl, menuName, appSchem
         stepCount.style.fontWeight = '600';
         stepCount.style.textTransform = 'uppercase';
         stepCount.style.letterSpacing = '0.5px';
-        stepCount.textContent = `${wf.steps.length} steps`;
+        stepCount.textContent = I18n.t('workflow.steps', { count: wf.steps.length }, wf.steps.length);
         
         const startBtn = document.createElement('span');
         startBtn.style.fontSize = '13.5px';
         startBtn.style.color = 'var(--accent)';
         startBtn.style.fontWeight = '600';
-        startBtn.textContent = 'Start Workflow \u2192';
+        startBtn.textContent = I18n.t('workflow.start');
 
         footer.appendChild(stepCount);
         footer.appendChild(startBtn);
@@ -272,7 +273,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
         renderStepBar();
 
         // Set main title to show progress
-        titleEl.textContent = `${workflow.title} - Step ${currentStepIndex + 1} of ${workflow.steps.length}`;
+        titleEl.textContent = I18n.t('workflow.step_of', { title: workflow.title, current: currentStepIndex + 1, total: workflow.steps.length });
         containerEl.textContent = ''; // Safely clear container
 
         // Safely resolve schema with API fallback
@@ -403,7 +404,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
             selectEl.textContent = '';
             const blank = document.createElement('option');
             blank.value = '';
-            blank.textContent = '-- Select --';
+            blank.textContent = I18n.t('workflow.select_blank');
             selectEl.appendChild(blank);
             options.forEach(({ value, label }) => {
                 const opt = document.createElement('option');
@@ -515,7 +516,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
                 input = document.createElement('select');
                 const blankOpt = document.createElement('option');
                 blankOpt.value = '';
-                blankOpt.textContent = '-- Select --';
+                blankOpt.textContent = I18n.t('workflow.select_blank');
                 input.appendChild(blankOpt);
                 (fkOptionMap[colName] || []).forEach(({ value, label }) => {
                     const opt = document.createElement('option');
@@ -528,7 +529,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
                 input = document.createElement('select');
                 const defaultOpt = document.createElement('option');
                 defaultOpt.value = '';
-                defaultOpt.textContent = '-- Select --';
+                defaultOpt.textContent = I18n.t('workflow.select_blank');
                 input.appendChild(defaultOpt);
 
                 colDef.options.forEach(optVal => {
@@ -611,7 +612,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
             filterCb.type = 'checkbox';
             filterCb.style.cssText = 'cursor:pointer; margin:0;';
             const filterLbl = document.createElement('span');
-            filterLbl.textContent = 'Show related only';
+            filterLbl.textContent = I18n.t('workflow.show_related');
             filterRow.appendChild(filterCb);
             filterRow.appendChild(filterLbl);
             selectEl.parentElement.appendChild(filterRow);
@@ -644,7 +645,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
         const submitBtn = document.createElement('button');
         submitBtn.type = 'submit';
         submitBtn.dataset.action = step.allow_multiple ? 'add' : 'continue';
-        submitBtn.textContent = step.allow_multiple ? 'Save & Add Another' : 'Next Step';
+        submitBtn.textContent = step.allow_multiple ? I18n.t('form.save_add_another') : I18n.t('form.next_step');
         submitBtn.style.cssText = 'padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; box-shadow: var(--shadow-sm); transition: background var(--transition);';
         submitBtn.addEventListener('mouseenter', () => submitBtn.style.background = 'var(--accent-dark)');
         submitBtn.addEventListener('mouseleave', () => submitBtn.style.background = 'var(--accent)');
@@ -656,7 +657,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
             continueBtn = document.createElement('button');
             continueBtn.type = 'submit';
             continueBtn.dataset.action = 'continue';
-            continueBtn.textContent = 'Save & Exit';
+            continueBtn.textContent = I18n.t('form.save_exit');
             continueBtn.style.cssText = 'padding: 10px 20px; background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; font-weight: 600; transition: all var(--transition);';
             continueBtn.addEventListener('mouseenter', () => { continueBtn.style.color = 'var(--text)'; continueBtn.style.borderColor = 'var(--muted)'; continueBtn.style.background = '#f8fafc'; });
             continueBtn.addEventListener('mouseleave', () => { continueBtn.style.color = 'var(--muted)'; continueBtn.style.borderColor = 'var(--border)'; continueBtn.style.background = 'transparent'; });
@@ -678,7 +679,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
             const action = e.submitter?.dataset?.action || 'continue';
             submitBtn.disabled = true;
             if (continueBtn) continueBtn.disabled = true;
-            e.submitter.textContent = 'Saving...';
+            e.submitter.textContent = I18n.t('workflow.saving');
             msgBox.textContent = '';
 
             const payload = {};
@@ -751,11 +752,11 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
                         refreshVirtuals();
                         const successSpan = document.createElement('span');
                         successSpan.style.color = 'var(--ok)';
-                        successSpan.textContent = 'Record saved. Add another or click Save & Exit.';
+                        successSpan.textContent = I18n.t('workflow.record_saved_next');
                         msgBox.appendChild(successSpan);
                         submitBtn.disabled = false;
                         if (continueBtn) continueBtn.disabled = false;
-                        submitBtn.textContent = 'Save & Add Another';
+                        submitBtn.textContent = I18n.t('form.save_add_another');
                     } else {
                         currentStepIndex++;
                         renderCurrentStep();
@@ -768,8 +769,8 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
                 showToast(`Error saving data: ${err.message}`, 'error');
                 submitBtn.disabled = false;
                 if (continueBtn) continueBtn.disabled = false;
-                submitBtn.textContent = step.allow_multiple ? 'Save & Add Another' : 'Next Step';
-                if (e.submitter) e.submitter.textContent = e.submitter.dataset.action === 'add' ? 'Save & Add Another' : (step.allow_multiple ? 'Save & Exit' : 'Next Step');
+                submitBtn.textContent = step.allow_multiple ? I18n.t('form.save_add_another') : I18n.t('form.next_step');
+                if (e.submitter) e.submitter.textContent = e.submitter.dataset.action === 'add' ? I18n.t('form.save_add_another') : (step.allow_multiple ? I18n.t('form.save_exit') : I18n.t('form.next_step'));
             }
         });
 
@@ -778,7 +779,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
 
     // Render the final success screen centered using DOM methods
     function renderSuccessScreen() {
-        titleEl.textContent = 'Workflow Completed';
+        titleEl.textContent = I18n.t('workflow.completed_title');
         containerEl.textContent = ''; // Safely clear container
 
         const wrapper = document.createElement('div');
@@ -786,16 +787,16 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
 
         const heading = document.createElement('h2');
         heading.style.cssText = 'color: var(--ok); margin-top: 0; font-size: 28px;';
-        heading.textContent = 'Success!';
+        heading.textContent = I18n.t('workflow.success');
 
         const paragraph = document.createElement('p');
         paragraph.style.cssText = 'color: var(--text); font-size: 15px; line-height: 1.6;';
         
         // Safely build mixed text and HTML elements
-        const textStart = document.createTextNode('All steps of the ');
+        const textStart = document.createTextNode(I18n.t('workflow.success_before') + ' ');
         const boldTitle = document.createElement('b');
         boldTitle.textContent = workflow.title;
-        const textEnd = document.createTextNode(' workflow have been completed successfully.');
+        const textEnd = document.createTextNode(' ' + I18n.t('workflow.success_after'));
         
         paragraph.appendChild(textStart);
         paragraph.appendChild(boldTitle);
@@ -804,7 +805,7 @@ function startWorkflow(workflow, containerEl, titleEl, appSchema, allWorkflows, 
         const finishBtn = document.createElement('button');
         finishBtn.id = 'wf-finish-btn';
         finishBtn.style.cssText = 'margin-top: 24px; padding: 10px 24px; background: var(--accent); color: white; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; box-shadow: var(--shadow-sm); transition: background var(--transition);';
-        finishBtn.textContent = 'Finish & Return';
+        finishBtn.textContent = I18n.t('workflow.finish_return');
 
         finishBtn.addEventListener('mouseenter', () => finishBtn.style.background = 'var(--accent-dark)');
         finishBtn.addEventListener('mouseleave', () => finishBtn.style.background = 'var(--accent)');

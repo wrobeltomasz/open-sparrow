@@ -49,7 +49,7 @@ $userCaps = [
 ];
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(I18n::locale(), ENT_QUOTES, 'UTF-8') ?>">
 <head>
     <meta charset="utf-8" />
     <title>OpenSparrow | Calendar</title>
@@ -64,8 +64,8 @@ $userCaps = [
     <div class="calendar-header">
         <h2 id="calendarTitle">Month Year</h2>
         <div class="calendar-nav">
-            <button id="btnPrev">Prev</button>
-            <button id="btnNext">Next</button>
+            <button id="btnPrev"><?= t('calendar.prev') ?></button>
+            <button id="btnNext"><?= t('calendar.next') ?></button>
         </div>
     </div>
 

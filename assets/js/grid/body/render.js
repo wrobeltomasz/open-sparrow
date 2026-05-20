@@ -1,3 +1,4 @@
+import { I18n } from '../../i18n.js';
 import { deleteRow, duplicateRow } from '../../grid_actions.js';
 import { state } from '../state.js';
 import { CellRenderer } from '../cells/registry.js';
@@ -159,10 +160,10 @@ function buildActionsCell(row, schema, isReadOnly, onTableReload) {
 
     const editBtn = document.createElement('button');
     editBtn.className = 'btn-icon';
-    editBtn.title = 'Edit';
+    editBtn.title = I18n.t('common.edit');
     const editImg = document.createElement('img');
     editImg.src = 'assets/img/edit_square.png';
-    editImg.alt = 'Edit';
+    editImg.alt = I18n.t('common.edit');
     editBtn.appendChild(editImg);
     editBtn.addEventListener('click', () => {
         window.location.href = `edit.php?table=${state.currentTable}&id=${row['id']}`;
@@ -171,10 +172,10 @@ function buildActionsCell(row, schema, isReadOnly, onTableReload) {
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'btn-icon';
-    copyBtn.title = 'Duplicate';
+    copyBtn.title = I18n.t('grid.duplicate');
     const copyImg = document.createElement('img');
     copyImg.src = 'assets/img/content_copy.png';
-    copyImg.alt = 'Duplicate';
+    copyImg.alt = I18n.t('grid.duplicate');
     copyBtn.appendChild(copyImg);
     copyBtn.addEventListener('click', async () => {
         const result = await duplicateRow(row['id']);
@@ -184,13 +185,13 @@ function buildActionsCell(row, schema, isReadOnly, onTableReload) {
 
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-icon btn-icon-danger';
-    delBtn.title = 'Delete';
+    delBtn.title = I18n.t('common.delete');
     const delImg = document.createElement('img');
     delImg.src = 'assets/img/delete.png';
-    delImg.alt = 'Delete';
+    delImg.alt = I18n.t('common.delete');
     delBtn.appendChild(delImg);
     delBtn.addEventListener('click', async () => {
-        if (!confirm('Are you sure you want to delete this record? This operation cannot be undone.')) return;
+        if (!confirm(I18n.t('common.confirm_delete'))) return;
         const result = await deleteRow(row['id']);
         if (result?.ok) await onTableReload();
     });

@@ -2,6 +2,7 @@
 // Licensed under LGPL v3. See LICENCE file for details.
 
 import { renderAvatar } from './avatar.js';
+import { I18n } from './i18n.js';
 
 const POLL_INTERVAL_MS = 15000;
 
@@ -74,7 +75,10 @@ function buildMsg(c) {
     body.className = 'c-msg-body';
 
     if (deleted) {
-        body.innerHTML = '<em>Comment deleted.</em>';
+        body.textContent = '';
+        const delEm = document.createElement('em');
+        delEm.textContent = I18n.t('comments.deleted_text');
+        body.appendChild(delEm);
     } else {
         body.innerHTML = formatBody(c.body);
     }
@@ -86,7 +90,7 @@ function buildMsg(c) {
     if (!deleted && (isMine || isAdmin)) {
         const delBtn = document.createElement('button');
         delBtn.className = 'c-msg-del-btn';
-        delBtn.textContent = 'Delete';
+        delBtn.textContent = I18n.t('comments.delete');
         delBtn.addEventListener('click', () => deleteComment(parseInt(c.id, 10), wrap));
         bubble.appendChild(delBtn);
     }
@@ -99,7 +103,7 @@ function buildMsg(c) {
 function buildEmptyState() {
     const p = document.createElement('p');
     p.className = 'c-empty';
-    p.textContent = 'No comments yet. Be the first to add one.';
+    p.textContent = I18n.t('comments.none');
     return p;
 }
 
@@ -136,7 +140,7 @@ async function postComment(body) {
 }
 
 async function deleteComment(id, msgEl) {
-    if (!confirm('Delete this comment?')) return;
+    if (!confirm(I18n.t('comments.delete_confirm'))) return;
     const res = await fetch('api_comments.php', {
         method: 'POST',
         headers: {
@@ -157,7 +161,12 @@ async function deleteComment(id, msgEl) {
     // Mark as deleted in DOM without full reload
     msgEl.classList.add('c-msg-deleted');
     const bodyEl = msgEl.querySelector('.c-msg-body');
-    if (bodyEl) bodyEl.innerHTML = '<em>Comment deleted.</em>';
+    if (bodyEl) {
+        bodyEl.textContent = '';
+        const delEm = document.createElement('em');
+        delEm.textContent = I18n.t('comments.deleted_text');
+        bodyEl.appendChild(delEm);
+    }
     const delBtn = msgEl.querySelector('.c-msg-del-btn');
     if (delBtn) delBtn.remove();
 }
@@ -194,7 +203,8 @@ function renderComments(thread, comments) {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 
-function init() {
+async function init() {
+    await I18n.load();
     const panel = document.getElementById('c-panel');
     if (!panel || !table || !recordId) return;
 
@@ -230,14 +240,14 @@ function init() {
 
         const textarea = document.createElement('textarea');
         textarea.className = 'c-input';
-        textarea.placeholder = 'Write a comment... (**bold**, *italic*, URLs auto-linked)';
+        textarea.placeholder = I18n.t('comments.placeholder');
         textarea.rows = 2;
         textarea.maxLength = 4000;
 
         const sendBtn = document.createElement('button');
         sendBtn.className = 'c-send-btn';
         sendBtn.type = 'button';
-        sendBtn.textContent = 'Send';
+        sendBtn.textContent = I18n.t('comments.send');
 
         inputArea.appendChild(textarea);
         inputArea.appendChild(sendBtn);

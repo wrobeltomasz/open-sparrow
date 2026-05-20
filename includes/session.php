@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/i18n.php';
 
 function start_session(): void
 {
@@ -19,6 +20,7 @@ function start_session(): void
             'samesite' => SESSION_SAMESITE,
         ]);
         session_start();
+        I18n::init();
     }
 }
 

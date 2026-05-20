@@ -78,7 +78,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
 
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(I18n::locale(), ENT_QUOTES, 'UTF-8') ?>">
 <head>
     <meta charset="utf-8">
     <title>OpenSparrow | Edit Record - <?php echo htmlspecialchars($tableCfg->displayName); ?></title>
@@ -92,11 +92,11 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
 <?php include 'templates/header.php'; ?>
 
 <main style="padding: 20px; max-width: 1060px; margin: 0 auto;">
-    <h2>Edit record in <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
+    <h2><?= htmlspecialchars(t('form.edit_record', ['table' => $tableCfg->displayName])) ?></h2>
 
     <?php if ($request->query('saved') === '1') : ?>
         <div style="color: #166534; margin-bottom: 15px; padding: 10px 14px; border: 1px solid #86efac; background: #dcfce7; border-radius: 6px; font-weight: 500;">
-            Record saved successfully.
+            <?= t('form.saved_ok') ?>
         </div>
     <?php endif; ?>
 
@@ -127,10 +127,10 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
         <?php endforeach; ?>
         <button class="tab-btn" data-tab="tab-files" role="tab" aria-selected="false">
             <img class="tab-icon" src="assets/icons/folder_open.png" alt="">
-            Files
+            <?= t('form.tab_files') ?>
         </button>
-        <button class="tab-btn" data-tab="tab-comments" role="tab" aria-selected="false">Comments</button>
-        <button class="tab-btn" data-tab="tab-history" role="tab" aria-selected="false">Record History</button>
+        <button class="tab-btn" data-tab="tab-comments" role="tab" aria-selected="false"><?= t('form.tab_comments') ?></button>
+        <button class="tab-btn" data-tab="tab-history" role="tab" aria-selected="false"><?= t('form.tab_history') ?></button>
     </div>
 
     <div class="tab-panel active" id="tab-details" role="tabpanel">
@@ -203,14 +203,14 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
             <input type="hidden" name="_save_action" id="saveAction" value="exit">
             <div class="form-actions">
                 <?php if ($isReadOnly) : ?>
-                    <button type="button" class="btn-save" disabled>Update Record</button>
+                    <button type="button" class="btn-save" disabled><?= t('form.update_record') ?></button>
                 <?php else : ?>
                     <button type="submit" class="btn-save"
-                        onclick="document.getElementById('saveAction').value='stay'">Save</button>
+                        onclick="document.getElementById('saveAction').value='stay'"><?= t('form.save') ?></button>
                     <button type="submit" class="btn-cancel"
-                        onclick="document.getElementById('saveAction').value='exit'">Save &amp; Exit</button>
+                        onclick="document.getElementById('saveAction').value='exit'"><?= t('form.save_exit') ?></button>
                 <?php endif; ?>
-                <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'"><?= t('common.cancel') ?></button>
             </div>
         </form>
     </div>
@@ -229,7 +229,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
                 <h3><?php echo htmlspecialchars($siLabel); ?></h3>
                 <?php if (!$isReadOnly) : ?>
                     <a href="create.php?table=<?php echo urlencode($sTable); ?>&<?php echo urlencode($sFk); ?>=<?php echo urlencode((string)$id); ?>" class="btn-add">
-                        + Add <?php echo htmlspecialchars($siLabel); ?>
+                        <?= htmlspecialchars(t('form.add_subtable', ['label' => $siLabel])) ?>
                     </a>
                 <?php endif; ?>
             </div>
@@ -244,7 +244,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
                                 <?php foreach ($sCols as $c) : ?>
                                     <th><?php echo htmlspecialchars($sd['schema']->columns[$c]->displayName ?? $c); ?></th>
                                 <?php endforeach; ?>
-                                <th style="width: 80px;">Actions</th>
+                                <th style="width: 80px;"><?= t('common.actions') ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -256,9 +256,9 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
                                     <?php endforeach; ?>
                                     <td class="subtable-actions">
                                         <?php if ($isReadOnly) : ?>
-                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action" style="pointer-events: none; opacity: 0.5;">View</a>
+                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action" style="pointer-events: none; opacity: 0.5;"><?= t('common.view') ?></a>
                                         <?php else : ?>
-                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action">Edit</a>
+                                            <a href="edit.php?table=<?php echo urlencode($sTable); ?>&id=<?php echo urlencode($r['id']); ?>" class="btn-action"><?= t('common.edit') ?></a>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -274,7 +274,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
     <div class="tab-panel" id="tab-files" role="tabpanel">
     <div class="subtable-container" style="margin-top: 10px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h3 style="color: #0f172a; margin: 0;">Attached Files</h3>
+            <h3 style="color: #0f172a; margin: 0;"><?= t('form.attached_files') ?></h3>
         </div>
 
         <?php if (!$isReadOnly) : ?>
@@ -290,7 +290,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
                     <option value="Report">
                 </datalist>
 
-                <button type="button" id="btnInlineUpload" class="btn-action" style="background: #0ea5e9; padding: 7px 16px; border: none; border-radius: 4px; color: #fff; cursor: pointer; font-weight: bold;">Upload File</button>
+                <button type="button" id="btnInlineUpload" class="btn-action" style="background: #0ea5e9; padding: 7px 16px; border: none; border-radius: 4px; color: #fff; cursor: pointer; font-weight: bold;"><?= t('form.upload_file') ?></button>
                 <span id="inlineUploadStatus" style="font-size: 13px; font-weight: 500; margin-left: 10px;"></span>
             </div>
         <?php endif; ?>
@@ -358,7 +358,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
                 </table>
             </div>
         <?php else : ?>
-            <p style="color: #64748b; font-size: 14px; margin-top: 10px;">No files attached to this record.</p>
+            <p style="color: #64748b; font-size: 14px; margin-top: 10px;"><?= t('form.no_files') ?></p>
         <?php endif; ?>
     </div>
     </div><!-- /tab-panel#tab-files -->
@@ -369,7 +369,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
 
     <div class="tab-panel" id="tab-history" role="tabpanel">
         <div id="ow-panel" class="owner-panel" style="margin-top: 20px; padding: 16px 20px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
-            <h3 style="margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Record Owner</h3>
+            <h3 style="margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;"><?= t('owners.section_owner') ?></h3>
             <div id="ow-current" style="font-size: 14px; color: #0f172a; margin-bottom: 12px;">Loading…</div>
             <div id="ow-change" hidden style="align-items: center; gap: 10px; flex-wrap: wrap;">
                 <select id="ow-select" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; background: #fff;"></select>
@@ -378,7 +378,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions);
             </div>
         </div>
         <div id="ow-history" style="margin-top: 20px;">
-            <h3 style="margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">Assignment History</h3>
+            <h3 style="margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;"><?= t('owners.section_history') ?></h3>
             <div id="ow-history-body" style="font-size: 14px; color: #64748b;">Loading…</div>
         </div>
     </div><!-- /tab-panel#tab-history -->

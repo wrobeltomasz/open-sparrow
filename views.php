@@ -26,7 +26,7 @@ $userRole  = $_SESSION['role'] ?? 'viewer';
 send_security_headers($cspNonce, true, 'unsafe-style');
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(I18n::locale(), ENT_QUOTES, 'UTF-8') ?>">
 <head>
     <meta charset="utf-8">
     <title>OpenSparrow — Views</title>
@@ -38,16 +38,14 @@ send_security_headers($cspNonce, true, 'unsafe-style');
 </head>
 <body>
 <?php
-$headerControls = '
-    <input id="globalSearch" type="text" placeholder="Search…" />
-';
+$headerControls = '<input id="globalSearch" type="text" placeholder="' . htmlspecialchars(t('grid.search_placeholder'), ENT_QUOTES, 'UTF-8') . '" />';
 include __DIR__ . '/templates/header.php';
 ?>
 <main>
     <section id="viewSection">
         <div id="viewBreadcrumb" class="vw-breadcrumb"></div>
         <div id="viewContainer" class="vw-container">
-            <div class="vw-loading">Loading…</div>
+            <div class="vw-loading"><?= htmlspecialchars(t('common.loading'), ENT_QUOTES, 'UTF-8') ?></div>
         </div>
     </section>
 </main>

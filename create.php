@@ -76,7 +76,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
 
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(I18n::locale(), ENT_QUOTES, 'UTF-8') ?>">
 <head>
     <meta charset="utf-8">
     <title>OpenSparrow | Add Record - <?php echo htmlspecialchars($tableCfg->displayName); ?></title>
@@ -89,7 +89,7 @@ $ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
 <?php include 'templates/header.php'; ?>
 
 <main style="padding: 20px; max-width: 1060px; margin: 0 auto;">
-    <h2>Add new record: <?php echo htmlspecialchars($tableCfg->displayName); ?></h2>
+    <h2><?= htmlspecialchars(t('form.add_new_record', ['table' => $tableCfg->displayName])) ?></h2>
 
     <?php if ($error) : ?>
         <div style="color: red; margin-bottom: 15px; padding: 10px; border: 1px solid red; background: #fee; border-radius: 6px;">
@@ -151,11 +151,11 @@ $ctx = new RenderContext($isReadOnly, $fkOptions, $prefilled, $locked);
 
             <div class="form-actions">
                 <?php if ($isReadOnly) : ?>
-                    <button type="button" class="btn-save" disabled>Add Record</button>
+                    <button type="button" class="btn-save" disabled><?= t('form.add_record') ?></button>
                 <?php else : ?>
-                    <button type="submit" class="btn-save">Add Record</button>
+                    <button type="submit" class="btn-save"><?= t('form.add_record') ?></button>
                 <?php endif; ?>
-                <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'">Cancel</button>
+                <button type="button" class="btn-cancel" onclick="window.location.href='index.php?table=<?php echo urlencode($table); ?>'"><?= t('common.cancel') ?></button>
             </div>
         </form>
     </div>

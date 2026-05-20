@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(I18n::locale(), ENT_QUOTES, 'UTF-8') ?>">
 <head>
     <meta charset="utf-8" />
     <title>OpenSparrow | Open source | PHP + vanilla JS + Postgres</title>
@@ -12,12 +12,15 @@
 <body>
 
 <?php
-$headerControls = '
-    <input id="globalSearch" data-cy="search" type="text" placeholder="Find..." />
-    <select id="columnFilter" data-cy="column-filter"><option value="">All columns</option></select>
+$tSearchPlaceholder = htmlspecialchars(t('grid.search_placeholder'), ENT_QUOTES, 'UTF-8');
+$tAllColumns        = htmlspecialchars(t('grid.all_columns'), ENT_QUOTES, 'UTF-8');
+$tClearFilters      = htmlspecialchars(t('grid.clear_filters'), ENT_QUOTES, 'UTF-8');
+$headerControls = <<<HTML
+    <input id="globalSearch" data-cy="search" type="text" placeholder="{$tSearchPlaceholder}" />
+    <select id="columnFilter" data-cy="column-filter"><option value="">{$tAllColumns}</option></select>
     <div id="filterBar" style="display:flex;gap:10px;"></div>
-    <button id="clearFilters" title="Clear all filters" style="display:none;">Clear Filters</button>
-';
+    <button id="clearFilters" title="{$tClearFilters}" style="display:none;">{$tClearFilters}</button>
+HTML;
 include __DIR__ . '/header.php';
 ?>
 <main>
@@ -29,18 +32,18 @@ include __DIR__ . '/header.php';
         <div id="actions" class="actions">
             <div class="left">
                 <select id="mobileActions">
-                    <option value="">Choose action…</option>
+                    <option value=""><?= htmlspecialchars(t('grid.choose_action'), ENT_QUOTES, 'UTF-8') ?></option>
                     <?php if (($userRole ?? '') === 'editor') : ?>
-                    <option value="add">Add row</option>
+                    <option value="add"><?= htmlspecialchars(t('grid.add_row'), ENT_QUOTES, 'UTF-8') ?></option>
                     <?php endif; ?>
-                    <option value="export">Export CSV</option>
-                    <option value="refresh">Refresh table</option>
+                    <option value="export"><?= htmlspecialchars(t('grid.export_csv'), ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="refresh"><?= htmlspecialchars(t('grid.refresh_table'), ENT_QUOTES, 'UTF-8') ?></option>
                 </select>
 
                 <?php if (($userRole ?? '') === 'editor') : ?>
-                <button id="addRow" data-cy="add" class="success">Add</button>
+                <button id="addRow" data-cy="add" class="success"><?= htmlspecialchars(t('common.add'), ENT_QUOTES, 'UTF-8') ?></button>
                 <?php endif; ?>
-                <button id="exportCsv" data-cy="export">Export CSV</button>
+                <button id="exportCsv" data-cy="export"><?= htmlspecialchars(t('grid.export_csv'), ENT_QUOTES, 'UTF-8') ?></button>
             </div>
 
             <div id="pagination" data-cy="pagination" class="pagination"></div>

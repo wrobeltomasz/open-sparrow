@@ -49,7 +49,7 @@ $userCaps = [
 ];
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(I18n::locale(), ENT_QUOTES, 'UTF-8') ?>">
 <head>
     <meta charset="utf-8" />
     <title>OpenSparrow | Dashboard</title>
@@ -70,6 +70,6 @@ $userCaps = [
     // Expose binary capability flags only — never the raw role string
     window.USER_CAPS = <?php echo json_encode($userCaps, JSON_THROW_ON_ERROR); ?>;
 </script>
-<script type="module" src="assets/js/dashboard.js" nonce="<?php echo $cspNonce; ?>"></script>
+<script type="module" src="assets/js/dashboard.js?v=<?php echo @filemtime('assets/js/dashboard/drill-down.js'); ?>" nonce="<?php echo $cspNonce; ?>"></script>
 </body>
 </html>

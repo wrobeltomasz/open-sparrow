@@ -2,14 +2,31 @@ function getCsrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.content || '';
 }
 
+// ── i18n bridge (calendar is a non-module script) ────────────────────────────
+let _i18nBundle = {};
+async function fetchI18n() {
+    try {
+        const res = await fetch('/api.php?action=i18n_bundle', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        if (res.ok) _i18nBundle = await res.json();
+    } catch (_) {}
+}
+function t(key, vars = {}) {
+    const v = _i18nBundle[key];
+    if (!v) return key.split('.').pop();
+    return String(v).replace(/\{(\w+)\}/g, (_, k) => k in vars ? String(vars[k]) : `{${k}}`);
+}
+
 // Store current date state
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 let eventsData = [];
-let appSchema = null; 
+let appSchema = null;
 
 // Init calendar when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
+    await fetchI18n();
     await fetchSchema();
     await fetchEvents();
     renderCalendar();
@@ -83,12 +100,17 @@ function renderCalendar() {
     }
     
     const monthNames = [
-        "January", "February", "March", "April", "May", "June", 
-        "July", "August", "September", "October", "November", "December"
+        t('calendar.month_jan'), t('calendar.month_feb'), t('calendar.month_mar'),
+        t('calendar.month_apr'), t('calendar.month_may'), t('calendar.month_jun'),
+        t('calendar.month_jul'), t('calendar.month_aug'), t('calendar.month_sep'),
+        t('calendar.month_oct'), t('calendar.month_nov'), t('calendar.month_dec'),
     ];
     title.textContent = `${monthNames[currentMonth]} ${currentYear}`;
 
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const days = [
+        t('calendar.day_mon'), t('calendar.day_tue'), t('calendar.day_wed'),
+        t('calendar.day_thu'), t('calendar.day_fri'), t('calendar.day_sat'), t('calendar.day_sun'),
+    ];
     days.forEach(day => {
         const div = document.createElement('div');
         div.className = 'calendar-day-name';
