@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Eesti", "dir": "ltr" },
+    "_meta": {
+        "name": "Eesti",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Salvesta",
         "cancel": "Tühista",
@@ -13,7 +16,11 @@
         "loading": "Laadimine…",
         "error_generic": "Tekkis viga. Palun proovige uuesti.",
         "confirm_delete": "Kustutada see kirje? Seda toimingut ei saa tagasi võtta.",
-        "remove_filter": "Eemalda filter"
+        "remove_filter": "Eemalda filter",
+        "boolean": {
+            "true": "Jah",
+            "false": "Ei"
+        }
     },
     "grid": {
         "title": "Tabel",
@@ -120,21 +127,27 @@
         "min": "Min:",
         "max": "Maks:",
         "all": "Kõik",
-        "yes_true": "Jah \/ Tõene",
-        "no_false": "Ei \/ Väär"
+        "yes_true": "Jah / Tõene",
+        "no_false": "Ei / Väär"
     },
     "files": {
         "upload": "Laadi fail üles",
         "download": "Laadi alla",
         "delete_confirm": "Kustutada see fail?",
         "size_limit": "Fail ületab {max} MB piiri",
-        "count": { "one": "{count} fail", "other": "{count} faili" }
+        "count": {
+            "one": "{count} fail",
+            "other": "{count} faili"
+        }
     },
     "notifications": {
         "mark_read": "Märgi loetuks",
         "mark_all_read": "Märgi kõik loetuks",
         "none": "Uusi teavitusi pole",
-        "count": { "one": "{count} teavitus", "other": "{count} teavitust" }
+        "count": {
+            "one": "{count} teavitus",
+            "other": "{count} teavitust"
+        }
     },
     "dashboard": {
         "loading": "Andmete laadimine…",
@@ -144,7 +157,10 @@
         "click_details": "Klõpsake üksikasjade vaatamiseks"
     },
     "workflow": {
-        "steps": { "one": "{count} samm", "other": "{count} sammu" },
+        "steps": {
+            "one": "{count} samm",
+            "other": "{count} sammu"
+        },
         "step_of": "{title} — Samm {current} / {total}",
         "start": "Alusta töövoogu →",
         "finish_return": "Lõpeta ja naase",
@@ -191,7 +207,10 @@
         "error": "Viga: {message}",
         "open": "Ava vaade →",
         "back": "◀ Tagasi",
-        "rows": { "one": "{count} rida", "other": "{count} rida" },
+        "rows": {
+            "one": "{count} rida",
+            "other": "{count} rida"
+        },
         "rows_filtered": "(filtreeritud {total} hulgast)",
         "fn_sum": "SUMMA",
         "fn_avg": "KESKMINE",

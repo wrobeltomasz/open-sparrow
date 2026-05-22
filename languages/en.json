@@ -13,7 +13,11 @@
         "loading": "Loading…",
         "error_generic": "An error occurred. Please try again.",
         "confirm_delete": "Delete this record? This operation cannot be undone.",
-        "remove_filter": "Remove filter"
+        "remove_filter": "Remove filter",
+        "boolean": {
+            "true": "Yes",
+            "false": "No"
+        }
     },
     "grid": {
         "title": "Table",

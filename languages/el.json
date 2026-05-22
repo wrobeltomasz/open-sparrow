@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Ελληνικά", "dir": "ltr" },
+    "_meta": {
+        "name": "Ελληνικά",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Αποθήκευση",
         "cancel": "Ακύρωση",
@@ -13,7 +16,11 @@
         "loading": "Φόρτωση…",
         "error_generic": "Παρουσιάστηκε σφάλμα. Παρακαλώ δοκιμάστε ξανά.",
         "confirm_delete": "Διαγραφή αυτής της εγγραφής; Η ενέργεια δεν μπορεί να αναιρεθεί.",
-        "remove_filter": "Κατάργηση φίλτρου"
+        "remove_filter": "Κατάργηση φίλτρου",
+        "boolean": {
+            "true": "Ναι",
+            "false": "Όχι"
+        }
     },
     "grid": {
         "title": "Πίνακας",
@@ -120,21 +127,27 @@
         "min": "Ελάχ:",
         "max": "Μέγ:",
         "all": "Όλα",
-        "yes_true": "Ναι \/ Αληθές",
-        "no_false": "Όχι \/ Ψευδές"
+        "yes_true": "Ναι / Αληθές",
+        "no_false": "Όχι / Ψευδές"
     },
     "files": {
         "upload": "Μεταφόρτωση αρχείου",
         "download": "Λήψη",
         "delete_confirm": "Διαγραφή αυτού του αρχείου;",
         "size_limit": "Το αρχείο υπερβαίνει το όριο {max} MB",
-        "count": { "one": "{count} αρχείο", "other": "{count} αρχεία" }
+        "count": {
+            "one": "{count} αρχείο",
+            "other": "{count} αρχεία"
+        }
     },
     "notifications": {
         "mark_read": "Σήμανση ως αναγνωσμένο",
         "mark_all_read": "Σήμανση όλων ως αναγνωσμένα",
         "none": "Δεν υπάρχουν νέες ειδοποιήσεις",
-        "count": { "one": "{count} ειδοποίηση", "other": "{count} ειδοποιήσεις" }
+        "count": {
+            "one": "{count} ειδοποίηση",
+            "other": "{count} ειδοποιήσεις"
+        }
     },
     "dashboard": {
         "loading": "Φόρτωση δεδομένων…",
@@ -144,7 +157,10 @@
         "click_details": "Κλικ για λεπτομέρειες"
     },
     "workflow": {
-        "steps": { "one": "{count} βήμα", "other": "{count} βήματα" },
+        "steps": {
+            "one": "{count} βήμα",
+            "other": "{count} βήματα"
+        },
         "step_of": "{title} — Βήμα {current} από {total}",
         "start": "Έναρξη ροής εργασίας →",
         "finish_return": "Ολοκλήρωση και επιστροφή",
@@ -191,7 +207,10 @@
         "error": "Σφάλμα: {message}",
         "open": "Άνοιγμα προβολής →",
         "back": "◀ Πίσω",
-        "rows": { "one": "{count} γραμμή", "other": "{count} γραμμές" },
+        "rows": {
+            "one": "{count} γραμμή",
+            "other": "{count} γραμμές"
+        },
         "rows_filtered": "(φιλτραρισμένο από {total})",
         "fn_sum": "ΑΘΡΟΙΣΜΑ",
         "fn_avg": "ΜΕΣΟΣ",

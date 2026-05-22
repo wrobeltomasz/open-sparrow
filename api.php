@@ -325,7 +325,7 @@ try {
                         $sqlWhere,
                         pg_ident($grpCol)
                     );
-                    
+
                     $res = @pg_query($conn, $sql);
                     if ($res) {
                         $data = [];
@@ -334,6 +334,7 @@ try {
                             $data[] = $r;
                         }
                         pg_free_result($res);
+                        $widget['column_type'] = $tableCfg['columns'][$grpCol]['type'] ?? 'text';
                     } else {
                         $widget['sql_error'] = pg_last_error($conn);
                     }
@@ -366,7 +367,7 @@ try {
                         $dir,
                         $limit
                     );
-                    
+
                     $res = @pg_query($conn, $sql);
                     if ($res) {
                         $data = [];
@@ -374,6 +375,11 @@ try {
                             $data[] = $r;
                         }
                         pg_free_result($res);
+                        $colTypes = [];
+                        foreach ($validCols as $col) {
+                            $colTypes[$col] = $tableCfg['columns'][$col]['type'] ?? 'text';
+                        }
+                        $widget['column_types'] = $colTypes;
                     } else {
                         $widget['sql_error'] = pg_last_error($conn);
                     }

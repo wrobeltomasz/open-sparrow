@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Hrvatski", "dir": "ltr" },
+    "_meta": {
+        "name": "Hrvatski",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Spremi",
         "cancel": "Odustani",
@@ -13,7 +16,11 @@
         "loading": "Učitavanje…",
         "error_generic": "Došlo je do pogreške. Pokušajte ponovo.",
         "confirm_delete": "Obrisati ovaj zapis? Ova operacija ne može biti poništena.",
-        "remove_filter": "Ukloni filter"
+        "remove_filter": "Ukloni filter",
+        "boolean": {
+            "true": "Da",
+            "false": "Ne"
+        }
     },
     "grid": {
         "title": "Tablica",
@@ -88,8 +95,8 @@
         "change_avatar": "Promijeni avatar"
     },
     "header": {
-        "toggle_sidebar": "Uključi\/isključi bočnu traku",
-        "toggle_search": "Uključi\/isključi pretragu",
+        "toggle_sidebar": "Uključi/isključi bočnu traku",
+        "toggle_search": "Uključi/isključi pretragu",
         "notifications": "Obavijesti",
         "admin_panel": "Administratorska ploča",
         "user_menu": "Korisnički izbornik",
@@ -120,21 +127,29 @@
         "min": "Min:",
         "max": "Maks:",
         "all": "Sve",
-        "yes_true": "Da \/ Točno",
-        "no_false": "Ne \/ Netočno"
+        "yes_true": "Da / Točno",
+        "no_false": "Ne / Netočno"
     },
     "files": {
         "upload": "Učitaj datoteku",
         "download": "Preuzmi",
         "delete_confirm": "Obrisati ovu datoteku?",
         "size_limit": "Datoteka premašuje ograničenje od {max} MB",
-        "count": { "one": "{count} datoteka", "few": "{count} datoteke", "other": "{count} datoteka" }
+        "count": {
+            "one": "{count} datoteka",
+            "few": "{count} datoteke",
+            "other": "{count} datoteka"
+        }
     },
     "notifications": {
         "mark_read": "Označi kao pročitano",
         "mark_all_read": "Označi sve kao pročitano",
         "none": "Nema novih obavijesti",
-        "count": { "one": "{count} obavijest", "few": "{count} obavijesti", "other": "{count} obavijesti" }
+        "count": {
+            "one": "{count} obavijest",
+            "few": "{count} obavijesti",
+            "other": "{count} obavijesti"
+        }
     },
     "dashboard": {
         "loading": "Učitavanje podataka…",
@@ -144,7 +159,11 @@
         "click_details": "Kliknite za detalje"
     },
     "workflow": {
-        "steps": { "one": "{count} korak", "few": "{count} koraka", "other": "{count} koraka" },
+        "steps": {
+            "one": "{count} korak",
+            "few": "{count} koraka",
+            "other": "{count} koraka"
+        },
         "step_of": "{title} — Korak {current} od {total}",
         "start": "Pokreni tijek rada →",
         "finish_return": "Završi i vrati se",
@@ -191,7 +210,11 @@
         "error": "Pogreška: {message}",
         "open": "Otvori prikaz →",
         "back": "◀ Natrag",
-        "rows": { "one": "{count} redak", "few": "{count} retka", "other": "{count} redaka" },
+        "rows": {
+            "one": "{count} redak",
+            "few": "{count} retka",
+            "other": "{count} redaka"
+        },
         "rows_filtered": "(filtrirano od {total})",
         "fn_sum": "ZBROJ",
         "fn_avg": "PROSJEK",

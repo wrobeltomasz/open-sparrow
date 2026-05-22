@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Română", "dir": "ltr" },
+    "_meta": {
+        "name": "Română",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Salvează",
         "cancel": "Anulează",
@@ -13,7 +16,11 @@
         "loading": "Se încarcă…",
         "error_generic": "A apărut o eroare. Încearcă din nou.",
         "confirm_delete": "Ștergi acest înregistrare? Această operațiune nu poate fi anulată.",
-        "remove_filter": "Elimină filtrul"
+        "remove_filter": "Elimină filtrul",
+        "boolean": {
+            "true": "Da",
+            "false": "Nu"
+        }
     },
     "grid": {
         "title": "Tabel",
@@ -120,21 +127,29 @@
         "min": "Min:",
         "max": "Max:",
         "all": "Toate",
-        "yes_true": "Da \/ Adevărat",
-        "no_false": "Nu \/ Fals"
+        "yes_true": "Da / Adevărat",
+        "no_false": "Nu / Fals"
     },
     "files": {
         "upload": "Încarcă fișier",
         "download": "Descarcă",
         "delete_confirm": "Ștergi acest fișier?",
         "size_limit": "Fișierul depășește limita de {max} MB",
-        "count": { "one": "{count} fișier", "few": "{count} fișiere", "other": "{count} de fișiere" }
+        "count": {
+            "one": "{count} fișier",
+            "few": "{count} fișiere",
+            "other": "{count} de fișiere"
+        }
     },
     "notifications": {
         "mark_read": "Marchează ca citit",
         "mark_all_read": "Marchează totul ca citit",
         "none": "Nicio notificare nouă",
-        "count": { "one": "{count} notificare", "few": "{count} notificări", "other": "{count} de notificări" }
+        "count": {
+            "one": "{count} notificare",
+            "few": "{count} notificări",
+            "other": "{count} de notificări"
+        }
     },
     "dashboard": {
         "loading": "Se încarcă datele…",
@@ -144,7 +159,11 @@
         "click_details": "Clic pentru detalii"
     },
     "workflow": {
-        "steps": { "one": "{count} pas", "few": "{count} pași", "other": "{count} de pași" },
+        "steps": {
+            "one": "{count} pas",
+            "few": "{count} pași",
+            "other": "{count} de pași"
+        },
         "step_of": "{title} — Pasul {current} din {total}",
         "start": "Pornește fluxul de lucru →",
         "finish_return": "Termină și revino",
@@ -191,7 +210,11 @@
         "error": "Eroare: {message}",
         "open": "Deschide vizualizarea →",
         "back": "◀ Înapoi",
-        "rows": { "one": "{count} rând", "few": "{count} rânduri", "other": "{count} de rânduri" },
+        "rows": {
+            "one": "{count} rând",
+            "few": "{count} rânduri",
+            "other": "{count} de rânduri"
+        },
         "rows_filtered": "(filtrat din {total})",
         "fn_sum": "SUMĂ",
         "fn_avg": "MEDIE",

@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Español", "dir": "ltr" },
+    "_meta": {
+        "name": "Español",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Guardar",
         "cancel": "Cancelar",
@@ -13,7 +16,11 @@
         "loading": "Cargando…",
         "error_generic": "Se ha producido un error. Por favor, inténtalo de nuevo.",
         "confirm_delete": "¿Eliminar este registro? Esta operación no se puede deshacer.",
-        "remove_filter": "Eliminar filtro"
+        "remove_filter": "Eliminar filtro",
+        "boolean": {
+            "true": "Sí",
+            "false": "No"
+        }
     },
     "grid": {
         "title": "Tabla",
@@ -120,21 +127,27 @@
         "min": "Mín:",
         "max": "Máx:",
         "all": "Todos",
-        "yes_true": "Sí \/ Verdadero",
-        "no_false": "No \/ Falso"
+        "yes_true": "Sí / Verdadero",
+        "no_false": "No / Falso"
     },
     "files": {
         "upload": "Subir archivo",
         "download": "Descargar",
         "delete_confirm": "¿Eliminar este archivo?",
         "size_limit": "El archivo supera el límite de {max} MB",
-        "count": { "one": "{count} archivo", "other": "{count} archivos" }
+        "count": {
+            "one": "{count} archivo",
+            "other": "{count} archivos"
+        }
     },
     "notifications": {
         "mark_read": "Marcar como leído",
         "mark_all_read": "Marcar todo como leído",
         "none": "Sin nuevas notificaciones",
-        "count": { "one": "{count} notificación", "other": "{count} notificaciones" }
+        "count": {
+            "one": "{count} notificación",
+            "other": "{count} notificaciones"
+        }
     },
     "dashboard": {
         "loading": "Cargando datos…",
@@ -144,7 +157,10 @@
         "click_details": "Clic para ver detalles"
     },
     "workflow": {
-        "steps": { "one": "{count} paso", "other": "{count} pasos" },
+        "steps": {
+            "one": "{count} paso",
+            "other": "{count} pasos"
+        },
         "step_of": "{title} — Paso {current} de {total}",
         "start": "Iniciar workflow →",
         "finish_return": "Finalizar y volver",
@@ -191,7 +207,10 @@
         "error": "Error: {message}",
         "open": "Abrir vista →",
         "back": "◀ Atrás",
-        "rows": { "one": "{count} fila", "other": "{count} filas" },
+        "rows": {
+            "one": "{count} fila",
+            "other": "{count} filas"
+        },
         "rows_filtered": "(filtrado de {total})",
         "fn_sum": "SUMA",
         "fn_avg": "PROM",

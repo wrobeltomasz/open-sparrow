@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Български", "dir": "ltr" },
+    "_meta": {
+        "name": "Български",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Запазване",
         "cancel": "Отказ",
@@ -13,7 +16,11 @@
         "loading": "Зареждане…",
         "error_generic": "Възникна грешка. Моля, опитайте отново.",
         "confirm_delete": "Изтриване на този запис? Тази операция не може да бъде отменена.",
-        "remove_filter": "Премахване на филтъра"
+        "remove_filter": "Премахване на филтъра",
+        "boolean": {
+            "true": "Да",
+            "false": "Не"
+        }
     },
     "grid": {
         "title": "Таблица",
@@ -120,21 +127,27 @@
         "min": "Мин:",
         "max": "Макс:",
         "all": "Всички",
-        "yes_true": "Да \/ Вярно",
-        "no_false": "Не \/ Невярно"
+        "yes_true": "Да / Вярно",
+        "no_false": "Не / Невярно"
     },
     "files": {
         "upload": "Качване на файл",
         "download": "Изтегляне",
         "delete_confirm": "Изтриване на този файл?",
         "size_limit": "Файлът надвишава ограничението от {max} МБ",
-        "count": { "one": "{count} файл", "other": "{count} файла" }
+        "count": {
+            "one": "{count} файл",
+            "other": "{count} файла"
+        }
     },
     "notifications": {
         "mark_read": "Маркиране като прочетено",
         "mark_all_read": "Маркиране на всички като прочетени",
         "none": "Няма нови известия",
-        "count": { "one": "{count} известие", "other": "{count} известия" }
+        "count": {
+            "one": "{count} известие",
+            "other": "{count} известия"
+        }
     },
     "dashboard": {
         "loading": "Зареждане на данни…",
@@ -144,7 +157,10 @@
         "click_details": "Натиснете за подробности"
     },
     "workflow": {
-        "steps": { "one": "{count} стъпка", "other": "{count} стъпки" },
+        "steps": {
+            "one": "{count} стъпка",
+            "other": "{count} стъпки"
+        },
         "step_of": "{title} — Стъпка {current} от {total}",
         "start": "Стартиране на работния процес →",
         "finish_return": "Завършване и връщане",
@@ -191,7 +207,10 @@
         "error": "Грешка: {message}",
         "open": "Отваряне на изглед →",
         "back": "◀ Назад",
-        "rows": { "one": "{count} ред", "other": "{count} реда" },
+        "rows": {
+            "one": "{count} ред",
+            "other": "{count} реда"
+        },
         "rows_filtered": "(филтрирано от {total})",
         "fn_sum": "СУМА",
         "fn_avg": "СРЕДНО",

@@ -1,5 +1,6 @@
 import { applyDrillDown } from '../drill-down.js';
 import { WidgetRegistry } from '../registry.js';
+import { formatCellValue } from '../../util/format-value.js';
 
 const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
@@ -14,6 +15,7 @@ function renderPieChart(widget) {
     if (total === 0) { wrapper.textContent = 'Sum is zero'; return wrapper; }
 
     const groupCol = widget.query?.group_column;
+    const columnType = widget.column_type;
     const legend = document.createElement('div');
     legend.className = 'dash-pie-legend';
 
@@ -35,8 +37,9 @@ function renderPieChart(widget) {
         box.className = 'dash-pie-color-box';
         box.style.backgroundColor = color;
 
+        const displayLabel = formatCellValue(row.label || 'None', columnType);
         const lbl = document.createElement('span');
-        lbl.textContent = `${row.label || 'None'} - ${val} (${percent.toFixed(1)}%)`;
+        lbl.textContent = `${displayLabel} - ${val} (${percent.toFixed(1)}%)`;
 
         item.append(box, lbl);
         applyDrillDown(item, widget.table, groupCol, row.label);

@@ -1,4 +1,5 @@
 import { applyDrillDown } from '../drill-down.js';
+import { formatCellValue } from '../../util/format-value.js';
 
 export function renderBars(widget, orientation) {
     const data = widget.data || [];
@@ -10,6 +11,7 @@ export function renderBars(widget, orientation) {
 
     const maxVal = Math.max(...data.map(d => parseFloat(d.value)));
     const groupCol = widget.query?.group_column;
+    const columnType = widget.column_type;
     const wrapper = orientation === 'horizontal'
         ? createHorizontalWrapper()
         : createVerticalWrapper();
@@ -17,8 +19,8 @@ export function renderBars(widget, orientation) {
     data.forEach(row => {
         const percent = maxVal > 0 ? (row.value / maxVal) * 100 : 0;
         const el = orientation === 'horizontal'
-            ? buildHorizontalBar(row, percent, widget.color)
-            : buildVerticalBar(row, percent, widget.color);
+            ? buildHorizontalBar(row, percent, widget.color, columnType)
+            : buildVerticalBar(row, percent, widget.color, columnType);
         applyDrillDown(el, widget.table, groupCol, row.label);
         wrapper.appendChild(el);
     });
@@ -38,13 +40,14 @@ function createVerticalWrapper() {
     return div;
 }
 
-function buildHorizontalBar(row, percent, color) {
+function buildHorizontalBar(row, percent, color, columnType) {
     const rowEl = document.createElement('div');
     rowEl.className = 'bar-row';
 
     const label = document.createElement('div');
     label.className = 'bar-label';
-    label.textContent = row.label || 'None';
+    const displayLabel = formatCellValue(row.label || 'None', columnType);
+    label.textContent = displayLabel;
 
     const track = document.createElement('div');
     track.className = 'bar-track';
@@ -63,7 +66,7 @@ function buildHorizontalBar(row, percent, color) {
     return rowEl;
 }
 
-function buildVerticalBar(row, percent, color) {
+function buildVerticalBar(row, percent, color, columnType) {
     const colEl = document.createElement('div');
     colEl.className = 'dash-vbar-col';
 
@@ -81,7 +84,8 @@ function buildVerticalBar(row, percent, color) {
 
     const label = document.createElement('div');
     label.className = 'dash-vbar-label';
-    label.textContent = row.label || 'None';
+    const displayLabel = formatCellValue(row.label || 'None', columnType);
+    label.textContent = displayLabel;
 
     track.appendChild(bar);
     colEl.append(val, track, label);

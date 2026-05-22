@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Magyar", "dir": "ltr" },
+    "_meta": {
+        "name": "Magyar",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Mentés",
         "cancel": "Mégse",
@@ -13,7 +16,11 @@
         "loading": "Betöltés…",
         "error_generic": "Hiba történt. Kérjük, próbálja újra.",
         "confirm_delete": "Törli ezt a rekordot? Ez a művelet nem vonható vissza.",
-        "remove_filter": "Szűrő eltávolítása"
+        "remove_filter": "Szűrő eltávolítása",
+        "boolean": {
+            "true": "Igen",
+            "false": "Nem"
+        }
     },
     "grid": {
         "title": "Táblázat",
@@ -120,21 +127,27 @@
         "min": "Min:",
         "max": "Max:",
         "all": "Összes",
-        "yes_true": "Igen \/ Igaz",
-        "no_false": "Nem \/ Hamis"
+        "yes_true": "Igen / Igaz",
+        "no_false": "Nem / Hamis"
     },
     "files": {
         "upload": "Fájl feltöltése",
         "download": "Letöltés",
         "delete_confirm": "Törli ezt a fájlt?",
         "size_limit": "A fájl meghaladja a(z) {max} MB-os korlátot",
-        "count": { "one": "{count} fájl", "other": "{count} fájl" }
+        "count": {
+            "one": "{count} fájl",
+            "other": "{count} fájl"
+        }
     },
     "notifications": {
         "mark_read": "Megjelölés olvasottként",
         "mark_all_read": "Összes megjelölése olvasottként",
         "none": "Nincsenek új értesítések",
-        "count": { "one": "{count} értesítés", "other": "{count} értesítés" }
+        "count": {
+            "one": "{count} értesítés",
+            "other": "{count} értesítés"
+        }
     },
     "dashboard": {
         "loading": "Adatok betöltése…",
@@ -144,7 +157,10 @@
         "click_details": "Kattintson a részletekért"
     },
     "workflow": {
-        "steps": { "one": "{count} lépés", "other": "{count} lépés" },
+        "steps": {
+            "one": "{count} lépés",
+            "other": "{count} lépés"
+        },
         "step_of": "{title} — {current}. lépés / {total}",
         "start": "Munkafolyamat indítása →",
         "finish_return": "Befejezés és visszatérés",
@@ -191,7 +207,10 @@
         "error": "Hiba: {message}",
         "open": "Nézet megnyitása →",
         "back": "◀ Vissza",
-        "rows": { "one": "{count} sor", "other": "{count} sor" },
+        "rows": {
+            "one": "{count} sor",
+            "other": "{count} sor"
+        },
         "rows_filtered": "({total}-ból szűrve)",
         "fn_sum": "ÖSSZEG",
         "fn_avg": "ÁTLAG",

@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Svenska", "dir": "ltr" },
+    "_meta": {
+        "name": "Svenska",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Spara",
         "cancel": "Avbryt",
@@ -13,7 +16,11 @@
         "loading": "Laddar…",
         "error_generic": "Ett fel uppstod. Försök igen.",
         "confirm_delete": "Ta bort den här posten? Åtgärden kan inte ångras.",
-        "remove_filter": "Ta bort filter"
+        "remove_filter": "Ta bort filter",
+        "boolean": {
+            "true": "Ja",
+            "false": "Nej"
+        }
     },
     "grid": {
         "title": "Tabell",
@@ -120,21 +127,27 @@
         "min": "Min:",
         "max": "Max:",
         "all": "Alla",
-        "yes_true": "Ja \/ Sant",
-        "no_false": "Nej \/ Falskt"
+        "yes_true": "Ja / Sant",
+        "no_false": "Nej / Falskt"
     },
     "files": {
         "upload": "Ladda upp fil",
         "download": "Ladda ned",
         "delete_confirm": "Ta bort den här filen?",
         "size_limit": "Filen överskrider gränsen på {max} MB",
-        "count": { "one": "{count} fil", "other": "{count} filer" }
+        "count": {
+            "one": "{count} fil",
+            "other": "{count} filer"
+        }
     },
     "notifications": {
         "mark_read": "Markera som läst",
         "mark_all_read": "Markera allt som läst",
         "none": "Inga nya aviseringar",
-        "count": { "one": "{count} avisering", "other": "{count} aviseringar" }
+        "count": {
+            "one": "{count} avisering",
+            "other": "{count} aviseringar"
+        }
     },
     "dashboard": {
         "loading": "Laddar data…",
@@ -144,7 +157,10 @@
         "click_details": "Klicka för att visa detaljer"
     },
     "workflow": {
-        "steps": { "one": "{count} steg", "other": "{count} steg" },
+        "steps": {
+            "one": "{count} steg",
+            "other": "{count} steg"
+        },
         "step_of": "{title} — Steg {current} av {total}",
         "start": "Starta arbetsflöde →",
         "finish_return": "Slutför och återgå",
@@ -191,7 +207,10 @@
         "error": "Fel: {message}",
         "open": "Öppna vy →",
         "back": "◀ Tillbaka",
-        "rows": { "one": "{count} rad", "other": "{count} rader" },
+        "rows": {
+            "one": "{count} rad",
+            "other": "{count} rader"
+        },
         "rows_filtered": "(filtrerat från {total})",
         "fn_sum": "SUMMA",
         "fn_avg": "MEDEL",

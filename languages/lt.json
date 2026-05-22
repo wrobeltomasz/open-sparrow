@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Lietuvių", "dir": "ltr" },
+    "_meta": {
+        "name": "Lietuvių",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Išsaugoti",
         "cancel": "Atšaukti",
@@ -13,7 +16,11 @@
         "loading": "Kraunama…",
         "error_generic": "Įvyko klaida. Bandykite dar kartą.",
         "confirm_delete": "Ištrinti šį įrašą? Šios operacijos negalima atšaukti.",
-        "remove_filter": "Pašalinti filtrą"
+        "remove_filter": "Pašalinti filtrą",
+        "boolean": {
+            "true": "Taip",
+            "false": "Ne"
+        }
     },
     "grid": {
         "title": "Lentelė",
@@ -120,21 +127,29 @@
         "min": "Min:",
         "max": "Maks:",
         "all": "Visi",
-        "yes_true": "Taip \/ Teisinga",
-        "no_false": "Ne \/ Neteisinga"
+        "yes_true": "Taip / Teisinga",
+        "no_false": "Ne / Neteisinga"
     },
     "files": {
         "upload": "Įkelti failą",
         "download": "Atsisiųsti",
         "delete_confirm": "Ištrinti šį failą?",
         "size_limit": "Failas viršija {max} MB ribą",
-        "count": { "one": "{count} failas", "few": "{count} failai", "other": "{count} failų" }
+        "count": {
+            "one": "{count} failas",
+            "few": "{count} failai",
+            "other": "{count} failų"
+        }
     },
     "notifications": {
         "mark_read": "Pažymėti kaip skaitytą",
         "mark_all_read": "Pažymėti visus kaip skaitytus",
         "none": "Nėra naujų pranešimų",
-        "count": { "one": "{count} pranešimas", "few": "{count} pranešimai", "other": "{count} pranešimų" }
+        "count": {
+            "one": "{count} pranešimas",
+            "few": "{count} pranešimai",
+            "other": "{count} pranešimų"
+        }
     },
     "dashboard": {
         "loading": "Kraunami duomenys…",
@@ -144,7 +159,11 @@
         "click_details": "Spustelėkite detalėms peržiūrėti"
     },
     "workflow": {
-        "steps": { "one": "{count} žingsnis", "few": "{count} žingsniai", "other": "{count} žingsnių" },
+        "steps": {
+            "one": "{count} žingsnis",
+            "few": "{count} žingsniai",
+            "other": "{count} žingsnių"
+        },
         "step_of": "{title} — Žingsnis {current} iš {total}",
         "start": "Pradėti darbo eigą →",
         "finish_return": "Baigti ir grįžti",
@@ -191,7 +210,11 @@
         "error": "Klaida: {message}",
         "open": "Atidaryti rodinį →",
         "back": "◀ Atgal",
-        "rows": { "one": "{count} eilutė", "few": "{count} eilutės", "other": "{count} eilučių" },
+        "rows": {
+            "one": "{count} eilutė",
+            "few": "{count} eilutės",
+            "other": "{count} eilučių"
+        },
         "rows_filtered": "(filtruota iš {total})",
         "fn_sum": "SUMA",
         "fn_avg": "VIDURKIS",

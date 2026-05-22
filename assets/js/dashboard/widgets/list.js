@@ -1,4 +1,5 @@
 import { WidgetRegistry } from '../registry.js';
+import { formatCellValue } from '../../util/format-value.js';
 
 function renderList(widget) {
     const wrapper = document.createElement('div');
@@ -14,10 +15,16 @@ function renderList(widget) {
     const data = widget.data || [];
     if (data.length === 0) { wrapper.textContent = 'No data'; return wrapper; }
 
+    const colTypes = widget.column_types || {};
     const ul = document.createElement('ul');
     data.forEach(row => {
         const li = document.createElement('li');
-        li.textContent = cols.map(col => row[col] || '').join(' - ');
+        const displayParts = cols.map(col => {
+            const raw = row[col] || '';
+            const colType = colTypes[col];
+            return formatCellValue(raw, colType);
+        });
+        li.textContent = displayParts.join(' - ');
         if (row.id) {
             li.style.cursor = 'pointer';
             li.title = 'Click to edit record';

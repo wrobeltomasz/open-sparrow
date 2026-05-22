@@ -13,7 +13,11 @@
         "loading": "Laden…",
         "error_generic": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
         "confirm_delete": "Diesen Datensatz löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
-        "remove_filter": "Filter entfernen"
+        "remove_filter": "Filter entfernen",
+        "boolean": {
+            "true": "Ja",
+            "false": "Nein"
+        }
     },
     "grid": {
         "title": "Tabelle",

@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Latviešu", "dir": "ltr" },
+    "_meta": {
+        "name": "Latviešu",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Saglabāt",
         "cancel": "Atcelt",
@@ -13,7 +16,11 @@
         "loading": "Ielādē…",
         "error_generic": "Radās kļūda. Lūdzu, mēģiniet vēlreiz.",
         "confirm_delete": "Dzēst šo ierakstu? Šo operāciju nevar atsaukt.",
-        "remove_filter": "Noņemt filtru"
+        "remove_filter": "Noņemt filtru",
+        "boolean": {
+            "true": "Jā",
+            "false": "Nē"
+        }
     },
     "grid": {
         "title": "Tabula",
@@ -120,21 +127,27 @@
         "min": "Min:",
         "max": "Maks:",
         "all": "Visi",
-        "yes_true": "Jā \/ Patiess",
-        "no_false": "Nē \/ Nepatiess"
+        "yes_true": "Jā / Patiess",
+        "no_false": "Nē / Nepatiess"
     },
     "files": {
         "upload": "Augšupielādēt failu",
         "download": "Lejupielādēt",
         "delete_confirm": "Dzēst šo failu?",
         "size_limit": "Fails pārsniedz {max} MB ierobežojumu",
-        "count": { "one": "{count} fails", "other": "{count} faili" }
+        "count": {
+            "one": "{count} fails",
+            "other": "{count} faili"
+        }
     },
     "notifications": {
         "mark_read": "Atzīmēt kā lasītu",
         "mark_all_read": "Atzīmēt visus kā lasītus",
         "none": "Nav jaunu paziņojumu",
-        "count": { "one": "{count} paziņojums", "other": "{count} paziņojumi" }
+        "count": {
+            "one": "{count} paziņojums",
+            "other": "{count} paziņojumi"
+        }
     },
     "dashboard": {
         "loading": "Ielādē datus…",
@@ -144,7 +157,10 @@
         "click_details": "Noklikšķiniet, lai skatītu detaļas"
     },
     "workflow": {
-        "steps": { "one": "{count} solis", "other": "{count} soļi" },
+        "steps": {
+            "one": "{count} solis",
+            "other": "{count} soļi"
+        },
         "step_of": "{title} — Solis {current} no {total}",
         "start": "Sākt darbplūsmu →",
         "finish_return": "Pabeigt un atgriezties",
@@ -191,7 +207,10 @@
         "error": "Kļūda: {message}",
         "open": "Atvērt skatu →",
         "back": "◀ Atpakaļ",
-        "rows": { "one": "{count} rinda", "other": "{count} rindas" },
+        "rows": {
+            "one": "{count} rinda",
+            "other": "{count} rindas"
+        },
         "rows_filtered": "(filtrēts no {total})",
         "fn_sum": "SUMMA",
         "fn_avg": "VIDĒJAIS",

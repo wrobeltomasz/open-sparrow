@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Italiano", "dir": "ltr" },
+    "_meta": {
+        "name": "Italiano",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Salva",
         "cancel": "Annulla",
@@ -13,7 +16,11 @@
         "loading": "Caricamento…",
         "error_generic": "Si è verificato un errore. Riprova.",
         "confirm_delete": "Eliminare questo record? Questa operazione non può essere annullata.",
-        "remove_filter": "Rimuovi filtro"
+        "remove_filter": "Rimuovi filtro",
+        "boolean": {
+            "true": "Sì",
+            "false": "No"
+        }
     },
     "grid": {
         "title": "Tabella",
@@ -88,8 +95,8 @@
         "change_avatar": "Cambia avatar"
     },
     "header": {
-        "toggle_sidebar": "Attiva\/disattiva barra laterale",
-        "toggle_search": "Attiva\/disattiva ricerca",
+        "toggle_sidebar": "Attiva/disattiva barra laterale",
+        "toggle_search": "Attiva/disattiva ricerca",
         "notifications": "Notifiche",
         "admin_panel": "Pannello di amministrazione",
         "user_menu": "Menu utente",
@@ -120,21 +127,27 @@
         "min": "Min:",
         "max": "Max:",
         "all": "Tutti",
-        "yes_true": "Sì \/ Vero",
-        "no_false": "No \/ Falso"
+        "yes_true": "Sì / Vero",
+        "no_false": "No / Falso"
     },
     "files": {
         "upload": "Carica file",
         "download": "Scarica",
         "delete_confirm": "Eliminare questo file?",
         "size_limit": "Il file supera il limite di {max} MB",
-        "count": { "one": "{count} file", "other": "{count} file" }
+        "count": {
+            "one": "{count} file",
+            "other": "{count} file"
+        }
     },
     "notifications": {
         "mark_read": "Segna come letto",
         "mark_all_read": "Segna tutto come letto",
         "none": "Nessuna nuova notifica",
-        "count": { "one": "{count} notifica", "other": "{count} notifiche" }
+        "count": {
+            "one": "{count} notifica",
+            "other": "{count} notifiche"
+        }
     },
     "dashboard": {
         "loading": "Caricamento dati…",
@@ -144,7 +157,10 @@
         "click_details": "Clicca per vedere i dettagli"
     },
     "workflow": {
-        "steps": { "one": "{count} passaggio", "other": "{count} passaggi" },
+        "steps": {
+            "one": "{count} passaggio",
+            "other": "{count} passaggi"
+        },
         "step_of": "{title} — Passaggio {current} di {total}",
         "start": "Avvia workflow →",
         "finish_return": "Termina e torna",
@@ -191,7 +207,10 @@
         "error": "Errore: {message}",
         "open": "Apri vista →",
         "back": "◀ Indietro",
-        "rows": { "one": "{count} riga", "other": "{count} righe" },
+        "rows": {
+            "one": "{count} riga",
+            "other": "{count} righe"
+        },
         "rows_filtered": "(filtrato da {total})",
         "fn_sum": "SOMMA",
         "fn_avg": "MEDIA",

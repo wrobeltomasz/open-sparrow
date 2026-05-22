@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Dansk", "dir": "ltr" },
+    "_meta": {
+        "name": "Dansk",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Gem",
         "cancel": "Annuller",
@@ -13,7 +16,11 @@
         "loading": "Indlæser…",
         "error_generic": "Der opstod en fejl. Prøv igen.",
         "confirm_delete": "Slette denne post? Denne handling kan ikke fortrydes.",
-        "remove_filter": "Fjern filter"
+        "remove_filter": "Fjern filter",
+        "boolean": {
+            "true": "Ja",
+            "false": "Nej"
+        }
     },
     "grid": {
         "title": "Tabel",
@@ -88,8 +95,8 @@
         "change_avatar": "Skift avatar"
     },
     "header": {
-        "toggle_sidebar": "Slå sidebjælke til\/fra",
-        "toggle_search": "Slå søgning til\/fra",
+        "toggle_sidebar": "Slå sidebjælke til/fra",
+        "toggle_search": "Slå søgning til/fra",
         "notifications": "Notifikationer",
         "admin_panel": "Adminpanel",
         "user_menu": "Brugermenu",
@@ -120,21 +127,27 @@
         "min": "Min:",
         "max": "Maks:",
         "all": "Alle",
-        "yes_true": "Ja \/ Sand",
-        "no_false": "Nej \/ Falsk"
+        "yes_true": "Ja / Sand",
+        "no_false": "Nej / Falsk"
     },
     "files": {
         "upload": "Upload fil",
         "download": "Download",
         "delete_confirm": "Slette denne fil?",
         "size_limit": "Filen overskrider grænsen på {max} MB",
-        "count": { "one": "{count} fil", "other": "{count} filer" }
+        "count": {
+            "one": "{count} fil",
+            "other": "{count} filer"
+        }
     },
     "notifications": {
         "mark_read": "Markér som læst",
         "mark_all_read": "Markér alle som læst",
         "none": "Ingen nye notifikationer",
-        "count": { "one": "{count} notifikation", "other": "{count} notifikationer" }
+        "count": {
+            "one": "{count} notifikation",
+            "other": "{count} notifikationer"
+        }
     },
     "dashboard": {
         "loading": "Indlæser data…",
@@ -144,7 +157,10 @@
         "click_details": "Klik for at se detaljer"
     },
     "workflow": {
-        "steps": { "one": "{count} trin", "other": "{count} trin" },
+        "steps": {
+            "one": "{count} trin",
+            "other": "{count} trin"
+        },
         "step_of": "{title} — Trin {current} af {total}",
         "start": "Start arbejdsgang →",
         "finish_return": "Afslut og vend tilbage",
@@ -191,7 +207,10 @@
         "error": "Fejl: {message}",
         "open": "Åbn visning →",
         "back": "◀ Tilbage",
-        "rows": { "one": "{count} række", "other": "{count} rækker" },
+        "rows": {
+            "one": "{count} række",
+            "other": "{count} rækker"
+        },
         "rows_filtered": "(filtreret fra {total})",
         "fn_sum": "SUM",
         "fn_avg": "GNSN",

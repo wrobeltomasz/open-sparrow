@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Português", "dir": "ltr" },
+    "_meta": {
+        "name": "Português",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Guardar",
         "cancel": "Cancelar",
@@ -13,7 +16,11 @@
         "loading": "A carregar…",
         "error_generic": "Ocorreu um erro. Por favor, tente novamente.",
         "confirm_delete": "Eliminar este registo? Esta operação não pode ser revertida.",
-        "remove_filter": "Remover filtro"
+        "remove_filter": "Remover filtro",
+        "boolean": {
+            "true": "Sim",
+            "false": "Não"
+        }
     },
     "grid": {
         "title": "Tabela",
@@ -120,21 +127,27 @@
         "min": "Mín:",
         "max": "Máx:",
         "all": "Todos",
-        "yes_true": "Sim \/ Verdadeiro",
-        "no_false": "Não \/ Falso"
+        "yes_true": "Sim / Verdadeiro",
+        "no_false": "Não / Falso"
     },
     "files": {
         "upload": "Carregar ficheiro",
         "download": "Transferir",
         "delete_confirm": "Eliminar este ficheiro?",
         "size_limit": "O ficheiro excede o limite de {max} MB",
-        "count": { "one": "{count} ficheiro", "other": "{count} ficheiros" }
+        "count": {
+            "one": "{count} ficheiro",
+            "other": "{count} ficheiros"
+        }
     },
     "notifications": {
         "mark_read": "Marcar como lido",
         "mark_all_read": "Marcar tudo como lido",
         "none": "Sem novas notificações",
-        "count": { "one": "{count} notificação", "other": "{count} notificações" }
+        "count": {
+            "one": "{count} notificação",
+            "other": "{count} notificações"
+        }
     },
     "dashboard": {
         "loading": "A carregar dados…",
@@ -144,7 +157,10 @@
         "click_details": "Clique para ver detalhes"
     },
     "workflow": {
-        "steps": { "one": "{count} passo", "other": "{count} passos" },
+        "steps": {
+            "one": "{count} passo",
+            "other": "{count} passos"
+        },
         "step_of": "{title} — Passo {current} de {total}",
         "start": "Iniciar fluxo de trabalho →",
         "finish_return": "Terminar e voltar",
@@ -191,7 +207,10 @@
         "error": "Erro: {message}",
         "open": "Abrir vista →",
         "back": "◀ Voltar",
-        "rows": { "one": "{count} linha", "other": "{count} linhas" },
+        "rows": {
+            "one": "{count} linha",
+            "other": "{count} linhas"
+        },
         "rows_filtered": "(filtrado de {total})",
         "fn_sum": "SOMA",
         "fn_avg": "MÉDIA",

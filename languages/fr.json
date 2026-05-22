@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Français", "dir": "ltr" },
+    "_meta": {
+        "name": "Français",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Enregistrer",
         "cancel": "Annuler",
@@ -13,7 +16,11 @@
         "loading": "Chargement…",
         "error_generic": "Une erreur s'est produite. Veuillez réessayer.",
         "confirm_delete": "Supprimer cet enregistrement ? Cette opération est irréversible.",
-        "remove_filter": "Supprimer le filtre"
+        "remove_filter": "Supprimer le filtre",
+        "boolean": {
+            "true": "Oui",
+            "false": "Non"
+        }
     },
     "grid": {
         "title": "Tableau",
@@ -120,21 +127,27 @@
         "min": "Min :",
         "max": "Max :",
         "all": "Tous",
-        "yes_true": "Oui \/ Vrai",
-        "no_false": "Non \/ Faux"
+        "yes_true": "Oui / Vrai",
+        "no_false": "Non / Faux"
     },
     "files": {
         "upload": "Téléverser un fichier",
         "download": "Télécharger",
         "delete_confirm": "Supprimer ce fichier ?",
         "size_limit": "Le fichier dépasse la limite de {max} Mo",
-        "count": { "one": "{count} fichier", "other": "{count} fichiers" }
+        "count": {
+            "one": "{count} fichier",
+            "other": "{count} fichiers"
+        }
     },
     "notifications": {
         "mark_read": "Marquer comme lu",
         "mark_all_read": "Tout marquer comme lu",
         "none": "Aucune nouvelle notification",
-        "count": { "one": "{count} notification", "other": "{count} notifications" }
+        "count": {
+            "one": "{count} notification",
+            "other": "{count} notifications"
+        }
     },
     "dashboard": {
         "loading": "Chargement des données…",
@@ -144,7 +157,10 @@
         "click_details": "Cliquer pour voir les détails"
     },
     "workflow": {
-        "steps": { "one": "{count} étape", "other": "{count} étapes" },
+        "steps": {
+            "one": "{count} étape",
+            "other": "{count} étapes"
+        },
         "step_of": "{title} — Étape {current} sur {total}",
         "start": "Démarrer le workflow →",
         "finish_return": "Terminer et retour",
@@ -191,7 +207,10 @@
         "error": "Erreur : {message}",
         "open": "Ouvrir la vue →",
         "back": "◀ Retour",
-        "rows": { "one": "{count} ligne", "other": "{count} lignes" },
+        "rows": {
+            "one": "{count} ligne",
+            "other": "{count} lignes"
+        },
         "rows_filtered": "(filtré depuis {total})",
         "fn_sum": "SOMME",
         "fn_avg": "MOY",

@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Slovenčina", "dir": "ltr" },
+    "_meta": {
+        "name": "Slovenčina",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Uložiť",
         "cancel": "Zrušiť",
@@ -13,7 +16,11 @@
         "loading": "Načítanie…",
         "error_generic": "Vyskytla sa chyba. Skúste to znova.",
         "confirm_delete": "Zmazať tento záznam? Túto operáciu nie je možné vrátiť späť.",
-        "remove_filter": "Odstrániť filter"
+        "remove_filter": "Odstrániť filter",
+        "boolean": {
+            "true": "Áno",
+            "false": "Nie"
+        }
     },
     "grid": {
         "title": "Tabuľka",
@@ -120,21 +127,29 @@
         "min": "Min:",
         "max": "Max:",
         "all": "Všetko",
-        "yes_true": "Áno \/ Pravda",
-        "no_false": "Nie \/ Nepravda"
+        "yes_true": "Áno / Pravda",
+        "no_false": "Nie / Nepravda"
     },
     "files": {
         "upload": "Nahrať súbor",
         "download": "Stiahnuť",
         "delete_confirm": "Zmazať tento súbor?",
         "size_limit": "Súbor presahuje limit {max} MB",
-        "count": { "one": "{count} súbor", "few": "{count} súbory", "other": "{count} súborov" }
+        "count": {
+            "one": "{count} súbor",
+            "few": "{count} súbory",
+            "other": "{count} súborov"
+        }
     },
     "notifications": {
         "mark_read": "Označiť ako prečítané",
         "mark_all_read": "Označiť všetko ako prečítané",
         "none": "Žiadne nové oznámenia",
-        "count": { "one": "{count} oznámenie", "few": "{count} oznámenia", "other": "{count} oznámení" }
+        "count": {
+            "one": "{count} oznámenie",
+            "few": "{count} oznámenia",
+            "other": "{count} oznámení"
+        }
     },
     "dashboard": {
         "loading": "Načítanie dát…",
@@ -144,7 +159,11 @@
         "click_details": "Kliknite pre zobrazenie podrobností"
     },
     "workflow": {
-        "steps": { "one": "{count} krok", "few": "{count} kroky", "other": "{count} krokov" },
+        "steps": {
+            "one": "{count} krok",
+            "few": "{count} kroky",
+            "other": "{count} krokov"
+        },
         "step_of": "{title} — Krok {current} z {total}",
         "start": "Spustiť pracovný postup →",
         "finish_return": "Dokončiť a vrátiť sa",
@@ -191,7 +210,11 @@
         "error": "Chyba: {message}",
         "open": "Otvoriť pohľad →",
         "back": "◀ Späť",
-        "rows": { "one": "{count} riadok", "few": "{count} riadky", "other": "{count} riadkov" },
+        "rows": {
+            "one": "{count} riadok",
+            "few": "{count} riadky",
+            "other": "{count} riadkov"
+        },
         "rows_filtered": "(filtrované z {total})",
         "fn_sum": "SÚČET",
         "fn_avg": "PRIEMER",

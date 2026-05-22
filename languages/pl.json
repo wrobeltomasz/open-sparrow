@@ -13,7 +13,11 @@
         "loading": "Ładowanie…",
         "error_generic": "Wystąpił błąd. Spróbuj ponownie.",
         "confirm_delete": "Usunąć ten rekord? Tej operacji nie można cofnąć.",
-        "remove_filter": "Usuń filtr"
+        "remove_filter": "Usuń filtr",
+        "boolean": {
+            "true": "Tak",
+            "false": "Nie"
+        }
     },
     "grid": {
         "title": "Tabela",

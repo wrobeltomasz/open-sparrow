@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Slovenščina", "dir": "ltr" },
+    "_meta": {
+        "name": "Slovenščina",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Shrani",
         "cancel": "Prekliči",
@@ -13,7 +16,11 @@
         "loading": "Nalaganje…",
         "error_generic": "Prišlo je do napake. Poskusite znova.",
         "confirm_delete": "Izbrisati ta zapis? Te operacije ni mogoče razveljaviti.",
-        "remove_filter": "Odstrani filter"
+        "remove_filter": "Odstrani filter",
+        "boolean": {
+            "true": "Da",
+            "false": "Ne"
+        }
     },
     "grid": {
         "title": "Tabela",
@@ -120,21 +127,31 @@
         "min": "Min:",
         "max": "Maks:",
         "all": "Vse",
-        "yes_true": "Da \/ Res",
-        "no_false": "Ne \/ Ni res"
+        "yes_true": "Da / Res",
+        "no_false": "Ne / Ni res"
     },
     "files": {
         "upload": "Naloži datoteko",
         "download": "Prenesi",
         "delete_confirm": "Izbrisati to datoteko?",
         "size_limit": "Datoteka presega omejitev {max} MB",
-        "count": { "one": "{count} datoteka", "two": "{count} datoteki", "few": "{count} datoteke", "other": "{count} datotek" }
+        "count": {
+            "one": "{count} datoteka",
+            "two": "{count} datoteki",
+            "few": "{count} datoteke",
+            "other": "{count} datotek"
+        }
     },
     "notifications": {
         "mark_read": "Označi kot prebrano",
         "mark_all_read": "Označi vse kot prebrano",
         "none": "Ni novih obvestil",
-        "count": { "one": "{count} obvestilo", "two": "{count} obvestili", "few": "{count} obvestila", "other": "{count} obvestil" }
+        "count": {
+            "one": "{count} obvestilo",
+            "two": "{count} obvestili",
+            "few": "{count} obvestila",
+            "other": "{count} obvestil"
+        }
     },
     "dashboard": {
         "loading": "Nalaganje podatkov…",
@@ -144,7 +161,12 @@
         "click_details": "Kliknite za podrobnosti"
     },
     "workflow": {
-        "steps": { "one": "{count} korak", "two": "{count} koraka", "few": "{count} koraki", "other": "{count} korakov" },
+        "steps": {
+            "one": "{count} korak",
+            "two": "{count} koraka",
+            "few": "{count} koraki",
+            "other": "{count} korakov"
+        },
         "step_of": "{title} — Korak {current} od {total}",
         "start": "Začni potek dela →",
         "finish_return": "Dokončaj in se vrni",
@@ -191,7 +213,12 @@
         "error": "Napaka: {message}",
         "open": "Odpri pogled →",
         "back": "◀ Nazaj",
-        "rows": { "one": "{count} vrstica", "two": "{count} vrstici", "few": "{count} vrstice", "other": "{count} vrstic" },
+        "rows": {
+            "one": "{count} vrstica",
+            "two": "{count} vrstici",
+            "few": "{count} vrstice",
+            "other": "{count} vrstic"
+        },
         "rows_filtered": "(filtrirano od {total})",
         "fn_sum": "VSOTA",
         "fn_avg": "POVPREČJE",
