@@ -364,7 +364,19 @@ export const STRINGS = {
         env_demo: 'Block all write operations in admin API.',
         env_files: 'Default upload size limit.',
         env_snapshots: 'Enable record snapshots system-wide.',
-        env_pgschema: 'Schema for <code>spw_*</code> tables.'
+        env_pgschema: 'Schema for <code>spw_*</code> tables.',
+        s13_head: '13. RAG (Retrieval-Augmented Generation)',
+        s13_desc: 'Local knowledge base powered by Ollama. Upload .txt documents and query them with AI-generated answers grounded in your data.',
+        s13_docs_label: 'Upload Documents',
+        s13_docs: 'Navigate to <strong>Admin → RAG Knowledge Base → Documents</strong>. Upload .txt files, tag them by topic (e.g. <em>legal</em>, <em>faq</em>), and optionally assign a language. Documents are stored in <code>spw_rag_files</code> and indexed for full-text search.',
+        s13_config_label: 'Configure Ollama',
+        s13_config: 'Go to <strong>Settings tab</strong>. Enter your Ollama URL (default: <code>http://localhost:11434</code>) and select a model. Click <strong>Test &amp; load models</strong> to verify connection and list locally-pulled models.',
+        s13_test_label: 'Test Queries',
+        s13_test: 'Use the <strong>Test tab</strong> to send questions against your knowledge base. Optionally filter by tag or select a response language. The result shows the generated answer and which documents were matched.',
+        s13_stats_label: 'Statistics',
+        s13_stats: 'View query history, token counts, and response times in the <strong>Statistics tab</strong>. Track Ollama performance and document relevance over time.',
+        s13_multilang_label: 'Multilingual Support',
+        s13_multilang: 'Queries automatically respond in the user\'s current UI language. Optionally tag documents with language codes (e.g. <em>lang:pl</em>, <em>lang:en</em>) for organization. No schema migration required.'
     },
     pl: {
         sidebarTitle: 'Spis treści',
@@ -730,7 +742,19 @@ export const STRINGS = {
         env_demo: 'Zablokuj wszystkie operacje zapisu w API administracyjnym.',
         env_files: 'Domyślny limit rozmiaru przesyłania.',
         env_snapshots: 'Włącz migawki rekordów w całym systemie.',
-        env_pgschema: 'Schemat dla tabel <code>spw_*</code>.'
+        env_pgschema: 'Schemat dla tabel <code>spw_*</code>.',
+        s13_head: '13. RAG (Retrieval-Augmented Generation)',
+        s13_desc: 'Lokalna baza wiedzy zasilana przez Ollama. Prześlij dokumenty .txt i odpytuj je za pomocą odpowiedzi wygenerowanych przez AI na podstawie Twoich danych.',
+        s13_docs_label: 'Prześlij dokumenty',
+        s13_docs: 'Przejdź do <strong>Admin → Centrum AI → Dokumenty</strong>. Prześlij pliki .txt, oznacz je tagami (np. <em>legal</em>, <em>faq</em>) i opcjonalnie przypisz język. Dokumenty są przechowywane w <code>spw_rag_files</code> i indeksowane do wyszukiwania pełnotekstowego.',
+        s13_config_label: 'Skonfiguruj Ollama',
+        s13_config: 'Przejdź do karty <strong>Ustawienia</strong>. Wpisz adres URL Ollama (domyślnie: <code>http://localhost:11434</code>) i wybierz model. Kliknij <strong>Testuj i załaduj modele</strong>, aby zweryfikować połączenie i wyświetlić listy lokalnie pobieranych modeli.',
+        s13_test_label: 'Testuj zapytania',
+        s13_test: 'Użyj karty <strong>Test</strong>, aby wysyłać pytania do bazy wiedzy. Opcjonalnie filtruj po tagach lub wybierz język odpowiedzi. Wynik pokazuje wygenerowaną odpowiedź i które dokumenty zostały dopasowane.',
+        s13_stats_label: 'Statystyki',
+        s13_stats: 'Wyświetl historię zapytań, liczby tokenów i czasy odpowiedzi na karcie <strong>Statystyki</strong>. Śledź wydajność Ollama i trafność dokumentów w czasie.',
+        s13_multilang_label: 'Obsługa wielojęzyczności',
+        s13_multilang: 'Zapytania automatycznie odpowiadają w bieżącym języku interfejsu użytkownika. Opcjonalnie oznacz dokumenty kodami języka (np. <em>lang:pl</em>, <em>lang:en</em>) dla organizacji. Nie wymagana zmiana schematu.'
     },
     de: {
         sidebarTitle: 'Inhaltsverzeichnis',
@@ -1096,7 +1120,19 @@ export const STRINGS = {
         env_demo: 'Alle Schreibvorgänge blockieren.',
         env_files: 'Standard-Upload-Limit.',
         env_snapshots: 'Systemweite Snapshots aktivieren.',
-        env_pgschema: 'Schema für <code>spw_*</code>-Tabellen.'
+        env_pgschema: 'Schema für <code>spw_*</code>-Tabellen.',
+        s13_head: '13. RAG (Retrieval-Augmented Generation)',
+        s13_desc: 'Lokale Wissensbasis mit Ollama. Laden Sie .txt-Dokumente hoch und befragen Sie sie mit KI-generierten Antworten, die auf Ihren Daten basieren.',
+        s13_docs_label: 'Dokumente hochladen',
+        s13_docs: 'Gehen Sie zu <strong>Admin → Centrum AI → Dokumente</strong>. Laden Sie .txt-Dateien hoch, markieren Sie sie mit Tags (z. B. <em>legal</em>, <em>faq</em>) und weisen Sie optional eine Sprache zu. Dokumente werden in <code>spw_rag_files</code> gespeichert und für Volltextsuche indiziert.',
+        s13_config_label: 'Ollama konfigurieren',
+        s13_config: 'Wechseln Sie zur Registerkarte <strong>Einstellungen</strong>. Geben Sie Ihre Ollama-URL ein (Standard: <code>http://localhost:11434</code>) und wählen Sie ein Modell. Klicken Sie auf <strong>Testen und Modelle laden</strong>, um die Verbindung zu überprüfen und lokal gezogene Modelle aufzulisten.',
+        s13_test_label: 'Abfragen testen',
+        s13_test: 'Verwenden Sie die Registerkarte <strong>Test</strong>, um Fragen an Ihre Wissensbasis zu senden. Filtern Sie optional nach Tags oder wählen Sie eine Antwortsprache. Das Ergebnis zeigt die generierte Antwort und welche Dokumente übereinstimmen.',
+        s13_stats_label: 'Statistiken',
+        s13_stats: 'Zeigen Sie Abfrageverlauf, Token-Zählungen und Antwortzeiten auf der Registerkarte <strong>Statistiken</strong> an. Verfolgen Sie die Ollama-Leistung und Dokumentrelevanz im Laufe der Zeit.',
+        s13_multilang_label: 'Mehrsprachige Unterstützung',
+        s13_multilang: 'Abfragen reagieren automatisch in der aktuellen Sprache der Benutzeroberfläche. Markieren Sie Dokumente optional mit Sprachcodes (z. B. <em>lang:pl</em>, <em>lang:en</em>) zur Organisation. Keine Schemaänderung erforderlich.'
     },
     fr: {
         sidebarTitle: 'Sommaire',
@@ -1462,7 +1498,19 @@ export const STRINGS = {
         env_demo: 'Bloquer les opérations d\'écriture.',
         env_files: 'Limite de taille de téléchargement.',
         env_snapshots: 'Activer les snapshots.',
-        env_pgschema: 'Schéma pour tables <code>spw_*</code>.'
+        env_pgschema: 'Schéma pour tables <code>spw_*</code>.',
+        s13_head: '13. RAG (Retrieval-Augmented Generation)',
+        s13_desc: 'Base de connaissances locale alimentée par Ollama. Téléchargez des documents .txt et interrogez-les avec des réponses générées par IA basées sur vos données.',
+        s13_docs_label: 'Télécharger les documents',
+        s13_docs: 'Accédez à <strong>Admin → Centrum AI → Documents</strong>. Téléchargez des fichiers .txt, balisez-les par sujet (par exemple <em>legal</em>, <em>faq</em>) et attribuez éventuellement une langue. Les documents sont stockés dans <code>spw_rag_files</code> et indexés pour la recherche en texte intégral.',
+        s13_config_label: 'Configurer Ollama',
+        s13_config: 'Allez à l\'onglet <strong>Paramètres</strong>. Entrez votre URL Ollama (par défaut : <code>http://localhost:11434</code>) et sélectionnez un modèle. Cliquez sur <strong>Tester et charger les modèles</strong> pour vérifier la connexion et lister les modèles tirés localement.',
+        s13_test_label: 'Tester les requêtes',
+        s13_test: 'Utilisez l\'onglet <strong>Test</strong> pour envoyer des questions à votre base de connaissances. Filtrez éventuellement par tag ou sélectionnez une langue de réponse. Le résultat affiche la réponse générée et les documents correspondants.',
+        s13_stats_label: 'Statistiques',
+        s13_stats: 'Affichez l\'historique des requêtes, les nombres de tokens et les temps de réponse dans l\'onglet <strong>Statistiques</strong>. Suivez les performances d\'Ollama et la pertinence des documents au fil du temps.',
+        s13_multilang_label: 'Support multilingue',
+        s13_multilang: 'Les requêtes répondent automatiquement dans la langue actuelle de l\'interface utilisateur. Balisez éventuellement les documents avec des codes de langue (par exemple <em>lang:pl</em>, <em>lang:en</em>) pour l\'organisation. Aucune migration de schéma requise.'
     },
     it: {
         sidebarTitle: 'Sommario',
@@ -1828,7 +1876,19 @@ export const STRINGS = {
         env_demo: 'Blocca operazioni di scrittura.',
         env_files: 'Limite dimensione upload.',
         env_snapshots: 'Abilita snapshots in tutto il sistema.',
-        env_pgschema: 'Schema per le tabelle <code>spw_*</code>.'
+        env_pgschema: 'Schema per le tabelle <code>spw_*</code>.',
+        s13_head: '13. RAG (Retrieval-Augmented Generation)',
+        s13_desc: 'Base di conoscenze locale alimentata da Ollama. Carica documenti .txt e interrogali con risposte generate dall\'IA basate sui tuoi dati.',
+        s13_docs_label: 'Carica documenti',
+        s13_docs: 'Vai a <strong>Admin → Centrum AI → Documenti</strong>. Carica file .txt, etichettali per argomento (ad esempio <em>legal</em>, <em>faq</em>) e facoltativamente assegna una lingua. I documenti sono archiviati in <code>spw_rag_files</code> e indicizzati per la ricerca full-text.',
+        s13_config_label: 'Configura Ollama',
+        s13_config: 'Vai alla scheda <strong>Impostazioni</strong>. Inserisci l\'URL di Ollama (predefinito: <code>http://localhost:11434</code>) e seleziona un modello. Fai clic su <strong>Testa e carica modelli</strong> per verificare la connessione ed elencare i modelli estratti localmente.',
+        s13_test_label: 'Testa query',
+        s13_test: 'Utilizza la scheda <strong>Test</strong> per inviare domande alla tua base di conoscenze. Facoltativamente filtra per tag o seleziona una lingua di risposta. Il risultato mostra la risposta generata e quali documenti corrispondevano.',
+        s13_stats_label: 'Statistiche',
+        s13_stats: 'Visualizza la cronologia delle query, i conteggi dei token e i tempi di risposta nella scheda <strong>Statistiche</strong>. Traccia le prestazioni di Ollama e la rilevanza dei documenti nel tempo.',
+        s13_multilang_label: 'Supporto multilingue',
+        s13_multilang: 'Le query rispondono automaticamente nella lingua dell\'interfaccia utente corrente. Facoltativamente etichetta i documenti con codici di lingua (ad esempio <em>lang:pl</em>, <em>lang:en</em>) per l\'organizzazione. Nessuna migrazione dello schema richiesta.'
     },
     es: {
         sidebarTitle: 'Contenido',
@@ -2194,7 +2254,19 @@ export const STRINGS = {
         env_demo: 'Bloquear operaciones de escritura en la API.',
         env_files: 'Límite de tamaño de archivo predeterminado.',
         env_snapshots: 'Habilitar capturas en todo el sistema.',
-        env_pgschema: 'Esquema para tablas <code>spw_*</code>.'
+        env_pgschema: 'Esquema para tablas <code>spw_*</code>.',
+        s13_head: '13. RAG (Retrieval-Augmented Generation)',
+        s13_desc: 'Base de conocimientos local impulsada por Ollama. Carga documentos .txt e interrogalos con respuestas generadas por IA basadas en tus datos.',
+        s13_docs_label: 'Cargar documentos',
+        s13_docs: 'Ve a <strong>Admin → Centrum AI → Documentos</strong>. Carga archivos .txt, etiquétalos por tema (por ejemplo <em>legal</em>, <em>faq</em>) y opcionalmente asigna un idioma. Los documentos se almacenan en <code>spw_rag_files</code> e se indexan para búsqueda de texto completo.',
+        s13_config_label: 'Configurar Ollama',
+        s13_config: 'Ve a la pestaña <strong>Configuración</strong>. Introduce tu URL de Ollama (predeterminado: <code>http://localhost:11434</code>) y selecciona un modelo. Haz clic en <strong>Probar y cargar modelos</strong> para verificar la conexión y enumerar los modelos descargados localmente.',
+        s13_test_label: 'Probar consultas',
+        s13_test: 'Usa la pestaña <strong>Test</strong> para enviar preguntas a tu base de conocimientos. Opcionalmente filtra por etiqueta o selecciona un idioma de respuesta. El resultado muestra la respuesta generada y qué documentos coincidían.',
+        s13_stats_label: 'Estadísticas',
+        s13_stats: 'Ve el historial de consultas, conteos de tokens y tiempos de respuesta en la pestaña <strong>Estadísticas</strong>. Sigue el rendimiento de Ollama y la relevancia de los documentos a lo largo del tiempo.',
+        s13_multilang_label: 'Soporte multilingüe',
+        s13_multilang: 'Las consultas responden automáticamente en el idioma actual de la interfaz de usuario. Opcionalmente etiqueta documentos con códigos de idioma (por ejemplo <em>lang:pl</em>, <em>lang:en</em>) para organización. No se requiere migración de esquema.'
     }
 };
 
