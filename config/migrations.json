@@ -4,5 +4,11 @@
         "deprecated_files": [],
         "removed_config_keys": [],
         "notes": "Added Release Migration Manager. No file or config cleanup required for this release."
+    },
+    "2.5.0": {
+        "removed_files": [],
+        "deprecated_files": [],
+        "removed_config_keys": [],
+        "notes": "Added Grid Keyboard Shortcuts module (arrow navigation, selection, clipboard, search highlight, help modal) and Quick Data Cleanup module (find/replace with accent support)."
     }
 }
