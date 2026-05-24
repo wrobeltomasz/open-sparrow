@@ -261,5 +261,23 @@
         "month_oct": "Říjen",
         "month_nov": "Listopad",
         "month_dec": "Prosinec"
+    },
+    "shortcuts": {
+        "help_title": "Klávesové zkratky",
+        "navigate": "Navigace mezi buňkami",
+        "tab_nav": "Tab mezi buňkami",
+        "row_bounds": "Začátek / konec řádku",
+        "grid_bounds": "První / poslední buňka",
+        "page_nav": "Stránka nahoru / dolů",
+        "edit": "Upravit záznam",
+        "escape": "Zrušit výběr",
+        "extend_sel": "Rozšířit výběr",
+        "select_all": "Vybrat vše",
+        "copy": "Kopírovat výběr",
+        "search": "Hledat / zvýraznit",
+        "help": "Zobrazit klávesové zkratky",
+        "close_help": "Zavřít",
+        "all_selected": "Vybráno {n} buněk",
+        "copied": "Zkopírováno do schránky"
     }
 }

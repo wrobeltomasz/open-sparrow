@@ -261,5 +261,23 @@
         "month_oct": "Spalis",
         "month_nov": "Lapkritis",
         "month_dec": "Gruodis"
+    },
+    "shortcuts": {
+        "help_title": "Spartieji klavišai",
+        "navigate": "Naršyti tarp langelių",
+        "tab_nav": "Tab tarp langelių",
+        "row_bounds": "Eilutės pradžia / pabaiga",
+        "grid_bounds": "Pirmas / paskutinis langelis",
+        "page_nav": "Puslapis aukštyn / žemyn",
+        "edit": "Redaguoti įrašą",
+        "escape": "Išvalyti pasirinkimą",
+        "extend_sel": "Išplėsti pasirinkimą",
+        "select_all": "Pasirinkti viską",
+        "copy": "Kopijuoti pasirinkimą",
+        "search": "Ieškoti / paryškinti",
+        "help": "Rodyti sparčiuosius klavišus",
+        "close_help": "Uždaryti",
+        "all_selected": "Pasirinkta {n} langelių",
+        "copied": "Nukopijuota į iškarpinę"
     }
 }

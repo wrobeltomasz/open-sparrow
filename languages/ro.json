@@ -261,5 +261,23 @@
         "month_oct": "Octombrie",
         "month_nov": "Noiembrie",
         "month_dec": "Decembrie"
+    },
+    "shortcuts": {
+        "help_title": "Scurtături de tastatură",
+        "navigate": "Navigare între celule",
+        "tab_nav": "Tab între celule",
+        "row_bounds": "Început / sfârșit rând",
+        "grid_bounds": "Prima / ultima celulă",
+        "page_nav": "Pagina sus / jos",
+        "edit": "Editare înregistrare",
+        "escape": "Ștergere selecție",
+        "extend_sel": "Extindere selecție",
+        "select_all": "Selectare tot",
+        "copy": "Copiere selecție",
+        "search": "Căutare / evidențiere",
+        "help": "Afișare scurtături",
+        "close_help": "Închide",
+        "all_selected": "{n} celule selectate",
+        "copied": "Copiat în clipboard"
     }
 }

@@ -257,5 +257,23 @@
         "month_oct": "Oktober",
         "month_nov": "November",
         "month_dec": "Dezember"
+    },
+    "shortcuts": {
+        "help_title": "Tastaturkürzel",
+        "navigate": "Zellen navigieren",
+        "tab_nav": "Tab zwischen Zellen",
+        "row_bounds": "Zeilenanfang / -ende",
+        "grid_bounds": "Erste / letzte Zelle",
+        "page_nav": "Seite hoch / runter",
+        "edit": "Datensatz bearbeiten",
+        "escape": "Auswahl aufheben",
+        "extend_sel": "Auswahl erweitern",
+        "select_all": "Alle Zellen auswählen",
+        "copy": "Auswahl kopieren",
+        "search": "Suchen / hervorheben",
+        "help": "Tastaturkürzel anzeigen",
+        "close_help": "Schließen",
+        "all_selected": "{n} Zellen ausgewählt",
+        "copied": "In Zwischenablage kopiert"
     }
 }

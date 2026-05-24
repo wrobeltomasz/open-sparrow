@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "Polski", "dir": "ltr" },
+    "_meta": {
+        "name": "Polski",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Zapisz",
         "cancel": "Anuluj",
@@ -124,8 +127,8 @@
         "min": "Min:",
         "max": "Maks:",
         "all": "Wszystkie",
-        "yes_true": "Tak \/ Prawda",
-        "no_false": "Nie \/ Fałsz"
+        "yes_true": "Tak / Prawda",
+        "no_false": "Nie / Fałsz"
     },
     "files": {
         "upload": "Prześlij plik",
@@ -133,8 +136,8 @@
         "delete_confirm": "Usunąć ten plik?",
         "size_limit": "Plik przekracza limit {max} MB",
         "count": {
-            "one":  "{count} plik",
-            "few":  "{count} pliki",
+            "one": "{count} plik",
+            "few": "{count} pliki",
             "many": "{count} plików"
         }
     },
@@ -143,8 +146,8 @@
         "mark_all_read": "Oznacz wszystkie jako przeczytane",
         "none": "Brak nowych powiadomień",
         "count": {
-            "one":  "{count} powiadomienie",
-            "few":  "{count} powiadomienia",
+            "one": "{count} powiadomienie",
+            "few": "{count} powiadomienia",
             "many": "{count} powiadomień"
         }
     },
@@ -156,7 +159,11 @@
         "click_details": "Kliknij, aby zobaczyć szczegóły"
     },
     "workflow": {
-        "steps": { "one": "{count} krok", "few": "{count} kroki", "many": "{count} kroków" },
+        "steps": {
+            "one": "{count} krok",
+            "few": "{count} kroki",
+            "many": "{count} kroków"
+        },
         "step_of": "{title} — Krok {current} z {total}",
         "start": "Rozpocznij →",
         "finish_return": "Zakończ i wróć",
@@ -203,7 +210,11 @@
         "error": "Błąd: {message}",
         "open": "Otwórz widok →",
         "back": "◀ Wstecz",
-        "rows": { "one": "{count} wiersz", "few": "{count} wiersze", "many": "{count} wierszy" },
+        "rows": {
+            "one": "{count} wiersz",
+            "few": "{count} wiersze",
+            "many": "{count} wierszy"
+        },
         "rows_filtered": "(odfiltrowano z {total})",
         "fn_sum": "Suma",
         "fn_avg": "Śr.",
@@ -250,5 +261,23 @@
         "month_oct": "Październik",
         "month_nov": "Listopad",
         "month_dec": "Grudzień"
+    },
+    "shortcuts": {
+        "help_title": "Skróty klawiaturowe",
+        "navigate": "Nawiguj między komórkami",
+        "tab_nav": "Przejdź do następnej/poprzedniej komórki",
+        "row_bounds": "Początek / koniec wiersza",
+        "grid_bounds": "Pierwsza / ostatnia komórka",
+        "page_nav": "Strona w górę / w dół",
+        "edit": "Edytuj rekord",
+        "escape": "Wyczyść zaznaczenie",
+        "extend_sel": "Rozszerz zaznaczenie",
+        "select_all": "Zaznacz wszystkie komórki",
+        "copy": "Skopiuj zaznaczenie",
+        "search": "Szukaj / podświetl komórki",
+        "help": "Pokaż skróty klawiaturowe",
+        "close_help": "Zamknij",
+        "all_selected": "Zaznaczono {n} komórek",
+        "copied": "Skopiowano do schowka"
     }
 }

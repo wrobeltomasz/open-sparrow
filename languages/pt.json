@@ -257,5 +257,23 @@
         "month_oct": "Outubro",
         "month_nov": "Novembro",
         "month_dec": "Dezembro"
+    },
+    "shortcuts": {
+        "help_title": "Atalhos de teclado",
+        "navigate": "Navegar entre células",
+        "tab_nav": "Tab entre células",
+        "row_bounds": "Início / fim da linha",
+        "grid_bounds": "Primeira / última célula",
+        "page_nav": "Página acima / abaixo",
+        "edit": "Editar registo",
+        "escape": "Limpar seleção",
+        "extend_sel": "Expandir seleção",
+        "select_all": "Selecionar tudo",
+        "copy": "Copiar seleção",
+        "search": "Pesquisar / realçar",
+        "help": "Mostrar atalhos",
+        "close_help": "Fechar",
+        "all_selected": "{n} células selecionadas",
+        "copied": "Copiado para a área de transferência"
     }
 }

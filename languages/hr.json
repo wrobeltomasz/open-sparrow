@@ -261,5 +261,23 @@
         "month_oct": "Listopad",
         "month_nov": "Studeni",
         "month_dec": "Prosinac"
+    },
+    "shortcuts": {
+        "help_title": "Tipkovničke prečice",
+        "navigate": "Navigacija između ćelija",
+        "tab_nav": "Tab između ćelija",
+        "row_bounds": "Početak / kraj retka",
+        "grid_bounds": "Prva / zadnja ćelija",
+        "page_nav": "Stranica gore / dolje",
+        "edit": "Uredi zapis",
+        "escape": "Očisti odabir",
+        "extend_sel": "Proširi odabir",
+        "select_all": "Odaberi sve",
+        "copy": "Kopiraj odabir",
+        "search": "Traži / istakni",
+        "help": "Prikaži prečice",
+        "close_help": "Zatvori",
+        "all_selected": "Odabrano {n} ćelija",
+        "copied": "Kopirano u međuspremnik"
     }
 }

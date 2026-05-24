@@ -257,5 +257,23 @@
         "month_oct": "Október",
         "month_nov": "November",
         "month_dec": "December"
+    },
+    "shortcuts": {
+        "help_title": "Billentyűparancsok",
+        "navigate": "Navigálás cellák között",
+        "tab_nav": "Tab a cellák között",
+        "row_bounds": "Sor eleje / vége",
+        "grid_bounds": "Első / utolsó cella",
+        "page_nav": "Oldal fel / le",
+        "edit": "Rekord szerkesztése",
+        "escape": "Kijelölés törlése",
+        "extend_sel": "Kijelölés kiterjesztése",
+        "select_all": "Összes kijelölése",
+        "copy": "Kijelölés másolása",
+        "search": "Keresés / kiemelés",
+        "help": "Billentyűparancsok megjelenítése",
+        "close_help": "Bezárás",
+        "all_selected": "{n} cella kijelölve",
+        "copied": "Vágólapra másolva"
     }
 }

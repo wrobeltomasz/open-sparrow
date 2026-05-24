@@ -257,5 +257,23 @@
         "month_oct": "Oktoober",
         "month_nov": "November",
         "month_dec": "Detsember"
+    },
+    "shortcuts": {
+        "help_title": "Kiirklahvid",
+        "navigate": "Liigu lahtrite vahel",
+        "tab_nav": "Tab lahtrite vahel",
+        "row_bounds": "Rea algus / lõpp",
+        "grid_bounds": "Esimene / viimane lahter",
+        "page_nav": "Lehekülg üles / alla",
+        "edit": "Muuda kirjet",
+        "escape": "Tühista valik",
+        "extend_sel": "Laienda valikut",
+        "select_all": "Vali kõik",
+        "copy": "Kopeeri valik",
+        "search": "Otsi / tõsta esile",
+        "help": "Näita kiirklahve",
+        "close_help": "Sulge",
+        "all_selected": "Valitud {n} lahtrit",
+        "copied": "Kopeeritud lõikelauale"
     }
 }

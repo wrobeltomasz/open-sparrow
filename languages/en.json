@@ -1,5 +1,8 @@
 {
-    "_meta": { "name": "English", "dir": "ltr" },
+    "_meta": {
+        "name": "English",
+        "dir": "ltr"
+    },
     "common": {
         "save": "Save",
         "cancel": "Cancel",
@@ -124,21 +127,27 @@
         "min": "Min:",
         "max": "Max:",
         "all": "All",
-        "yes_true": "Yes \/ True",
-        "no_false": "No \/ False"
+        "yes_true": "Yes / True",
+        "no_false": "No / False"
     },
     "files": {
         "upload": "Upload file",
         "download": "Download",
         "delete_confirm": "Delete this file?",
         "size_limit": "File exceeds {max} MB limit",
-        "count": { "one": "{count} file", "other": "{count} files" }
+        "count": {
+            "one": "{count} file",
+            "other": "{count} files"
+        }
     },
     "notifications": {
         "mark_read": "Mark as read",
         "mark_all_read": "Mark all as read",
         "none": "No new notifications",
-        "count": { "one": "{count} notification", "other": "{count} notifications" }
+        "count": {
+            "one": "{count} notification",
+            "other": "{count} notifications"
+        }
     },
     "dashboard": {
         "loading": "Loading data…",
@@ -148,7 +157,10 @@
         "click_details": "Click to view details"
     },
     "workflow": {
-        "steps": { "one": "{count} step", "other": "{count} steps" },
+        "steps": {
+            "one": "{count} step",
+            "other": "{count} steps"
+        },
         "step_of": "{title} — Step {current} of {total}",
         "start": "Start Workflow →",
         "finish_return": "Finish & Return",
@@ -195,7 +207,10 @@
         "error": "Error: {message}",
         "open": "Open View →",
         "back": "◀ Back",
-        "rows": { "one": "{count} row", "other": "{count} rows" },
+        "rows": {
+            "one": "{count} row",
+            "other": "{count} rows"
+        },
         "rows_filtered": "(filtered from {total})",
         "fn_sum": "SUM",
         "fn_avg": "AVG",
@@ -242,5 +257,23 @@
         "month_oct": "October",
         "month_nov": "November",
         "month_dec": "December"
+    },
+    "shortcuts": {
+        "help_title": "Keyboard Shortcuts",
+        "navigate": "Navigate cells",
+        "tab_nav": "Tab between cells",
+        "row_bounds": "Row start / end",
+        "grid_bounds": "Grid first / last cell",
+        "page_nav": "Page up / down",
+        "edit": "Edit record",
+        "escape": "Clear selection",
+        "extend_sel": "Extend selection",
+        "select_all": "Select all cells",
+        "copy": "Copy selection",
+        "search": "Search / highlight cells",
+        "help": "Show shortcuts help",
+        "close_help": "Close",
+        "all_selected": "Selected {n} cells",
+        "copied": "Copied to clipboard"
     }
 }

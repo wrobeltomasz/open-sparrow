@@ -41,6 +41,7 @@ include __DIR__ . '/header.php';
                     <?php if (($userRole ?? '') === 'editor') : ?>
                     <option value="data-cleanup"><?= htmlspecialchars(t('data_cleanup.title'), ENT_QUOTES, 'UTF-8') ?></option>
                     <?php endif; ?>
+                    <option value="keyboard-help"><?= htmlspecialchars(t('shortcuts.help_title'), ENT_QUOTES, 'UTF-8') ?></option>
                 </select>
 
                 <?php if (($userRole ?? '') === 'editor') : ?>
@@ -50,6 +51,7 @@ include __DIR__ . '/header.php';
                 <?php if (($userRole ?? '') === 'editor') : ?>
                 <button id="dataCleanupBtn" data-cy="data-cleanup"><?= htmlspecialchars(t('data_cleanup.title'), ENT_QUOTES, 'UTF-8') ?></button>
                 <?php endif; ?>
+                <button id="kgHelpBtn" data-cy="keyboard-help" class="kg-help-btn" title="<?= htmlspecialchars(t('shortcuts.help_title'), ENT_QUOTES, 'UTF-8') ?>">&#9000;</button>
             </div>
 
             <div id="pagination" data-cy="pagination" class="pagination"></div>
@@ -72,6 +74,7 @@ include __DIR__ . '/header.php';
                 if (action === "add") { const b = document.getElementById("addRow"); if (b) b.click(); }
                 if (action === "export") { const b = document.getElementById("exportCsv"); if (b) b.click(); }
                 if (action === "data-cleanup") { const b = document.getElementById("dataCleanupBtn"); if (b) b.click(); }
+                if (action === "keyboard-help") { const b = document.getElementById("kgHelpBtn"); if (b) b.click(); }
                 if (action === "refresh") location.reload();
                 mobileActions.value = "";
             });

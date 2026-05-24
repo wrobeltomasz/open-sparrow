@@ -257,5 +257,23 @@
         "month_oct": "Ottobre",
         "month_nov": "Novembre",
         "month_dec": "Dicembre"
+    },
+    "shortcuts": {
+        "help_title": "Scorciatoie da tastiera",
+        "navigate": "Naviga tra le celle",
+        "tab_nav": "Tab tra le celle",
+        "row_bounds": "Inizio / fine riga",
+        "grid_bounds": "Prima / ultima cella",
+        "page_nav": "Pagina su / giù",
+        "edit": "Modifica record",
+        "escape": "Cancella selezione",
+        "extend_sel": "Estendi selezione",
+        "select_all": "Seleziona tutto",
+        "copy": "Copia selezione",
+        "search": "Cerca / evidenzia",
+        "help": "Mostra scorciatoie",
+        "close_help": "Chiudi",
+        "all_selected": "{n} celle selezionate",
+        "copied": "Copiato negli appunti"
     }
 }

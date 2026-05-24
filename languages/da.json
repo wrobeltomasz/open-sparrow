@@ -257,5 +257,23 @@
         "month_oct": "Oktober",
         "month_nov": "November",
         "month_dec": "December"
+    },
+    "shortcuts": {
+        "help_title": "Tastaturgenveje",
+        "navigate": "Naviger mellem celler",
+        "tab_nav": "Tab mellem celler",
+        "row_bounds": "Rækkestart / -slut",
+        "grid_bounds": "Første / sidste celle",
+        "page_nav": "Side op / ned",
+        "edit": "Rediger post",
+        "escape": "Ryd markering",
+        "extend_sel": "Udvid markering",
+        "select_all": "Vælg alle",
+        "copy": "Kopier markering",
+        "search": "Søg / fremhæv",
+        "help": "Vis genveje",
+        "close_help": "Luk",
+        "all_selected": "{n} celler valgt",
+        "copied": "Kopieret til udklipsholder"
     }
 }

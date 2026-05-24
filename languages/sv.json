@@ -257,5 +257,23 @@
         "month_oct": "Oktober",
         "month_nov": "November",
         "month_dec": "December"
+    },
+    "shortcuts": {
+        "help_title": "Tangentbordsgenvägar",
+        "navigate": "Navigera mellan celler",
+        "tab_nav": "Tab mellan celler",
+        "row_bounds": "Radens start / slut",
+        "grid_bounds": "Första / sista cellen",
+        "page_nav": "Sida upp / ned",
+        "edit": "Redigera post",
+        "escape": "Rensa markering",
+        "extend_sel": "Utöka markering",
+        "select_all": "Markera alla",
+        "copy": "Kopiera markering",
+        "search": "Sök / markera",
+        "help": "Visa genvägar",
+        "close_help": "Stäng",
+        "all_selected": "{n} celler valda",
+        "copied": "Kopierat till urklipp"
     }
 }

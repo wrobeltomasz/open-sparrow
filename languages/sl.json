@@ -265,5 +265,23 @@
         "month_oct": "Oktober",
         "month_nov": "November",
         "month_dec": "December"
+    },
+    "shortcuts": {
+        "help_title": "Bližnjice na tipkovnici",
+        "navigate": "Navigacija med celicami",
+        "tab_nav": "Tab med celicami",
+        "row_bounds": "Začetek / konec vrstice",
+        "grid_bounds": "Prva / zadnja celica",
+        "page_nav": "Stran gor / dol",
+        "edit": "Uredi zapis",
+        "escape": "Počisti izbor",
+        "extend_sel": "Razširi izbor",
+        "select_all": "Izberi vse",
+        "copy": "Kopiraj izbor",
+        "search": "Iskanje / poudarjanje",
+        "help": "Pokaži bližnjice",
+        "close_help": "Zapri",
+        "all_selected": "Izbranih {n} celic",
+        "copied": "Kopirano v odložišče"
     }
 }

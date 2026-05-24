@@ -257,5 +257,23 @@
         "month_oct": "Oktobris",
         "month_nov": "Novembris",
         "month_dec": "Decembris"
+    },
+    "shortcuts": {
+        "help_title": "Īsinājumtaustiņi",
+        "navigate": "Navigēt starp šūnām",
+        "tab_nav": "Tab starp šūnām",
+        "row_bounds": "Rindas sākums / beigas",
+        "grid_bounds": "Pirmā / pēdējā šūna",
+        "page_nav": "Lapa uz augšu / leju",
+        "edit": "Rediģēt ierakstu",
+        "escape": "Notīrīt atlasi",
+        "extend_sel": "Paplašināt atlasi",
+        "select_all": "Atlasīt visu",
+        "copy": "Kopēt atlasi",
+        "search": "Meklēt / izcelt",
+        "help": "Rādīt īsinājumtaustiņus",
+        "close_help": "Aizvērt",
+        "all_selected": "Atlasītas {n} šūnas",
+        "copied": "Nokopēts starpliktuvē"
     }
 }

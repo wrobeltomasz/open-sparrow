@@ -261,5 +261,23 @@
         "month_oct": "Október",
         "month_nov": "November",
         "month_dec": "December"
+    },
+    "shortcuts": {
+        "help_title": "Klávesové skratky",
+        "navigate": "Navigácia medzi bunkami",
+        "tab_nav": "Tab medzi bunkami",
+        "row_bounds": "Začiatok / koniec riadku",
+        "grid_bounds": "Prvá / posledná bunka",
+        "page_nav": "Stránka nahor / nadol",
+        "edit": "Upraviť záznam",
+        "escape": "Zrušiť výber",
+        "extend_sel": "Rozšíriť výber",
+        "select_all": "Vybrať všetko",
+        "copy": "Kopírovať výber",
+        "search": "Hľadať / zvýrazniť",
+        "help": "Zobraziť klávesové skratky",
+        "close_help": "Zavrieť",
+        "all_selected": "Vybraných {n} buniek",
+        "copied": "Skopírované do schránky"
     }
 }
