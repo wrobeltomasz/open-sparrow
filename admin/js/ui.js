@@ -293,27 +293,15 @@ export function renderGlobalSettings(ctx, options = {}) {
     heading.textContent = title;
     workspaceEl.appendChild(heading);
 
-    const preview = createMenuPreview();
-    workspaceEl.appendChild(preview.el);
-
-    const refreshPreview = () => preview.update({
-        name: currentConfig.menu_name || defaultMenuName,
-        icon: currentConfig.menu_icon || '',
-        hidden: !!currentConfig.hidden,
-    });
-    refreshPreview();
-
     workspaceEl.appendChild(createTextInput('menu_name', 'Menu Display Name',
         currentConfig.menu_name || defaultMenuName, v => {
             currentConfig.menu_name = v;
-            refreshPreview();
         }));
 
     workspaceEl.appendChild(createIconPicker('menu_icon', 'Menu Icon',
         currentConfig.menu_icon || '', v => {
             if (v && v.trim() !== '') currentConfig.menu_icon = v;
             else delete currentConfig.menu_icon;
-            refreshPreview();
         }));
 
     if (includeHidden) {
@@ -321,7 +309,6 @@ export function renderGlobalSettings(ctx, options = {}) {
             currentConfig.hidden, v => {
                 if (v) currentConfig.hidden = true;
                 else delete currentConfig.hidden;
-                refreshPreview();
             }, false));
     }
 
@@ -680,6 +667,46 @@ export function createMultiSelect(key, labelText, options, selectedValues, onCha
         help.textContent = helpTexts[key];
         wrapper.appendChild(help);
     }
-    
+
     return wrapper;
+}
+
+// ── Shared inner-tab builder ──────────────────────────────────────────────────
+// tabs = [{label}] — returns array of panel divs (caller fills each panel)
+export function buildInnerTabs(container, tabs) {
+    const bar = document.createElement('div');
+    bar.style.cssText = 'display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;';
+
+    const panels = [];
+    const btns   = [];
+
+    tabs.forEach(({ label }) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.style.cssText = 'padding:10px 20px;background:none;border:none;'
+            + 'border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;'
+            + 'font-size:13px;font-weight:600;color:var(--muted);transition:color .15s,border-color .15s;';
+        btn.textContent = label;
+        bar.appendChild(btn);
+        btns.push(btn);
+
+        const panel = document.createElement('div');
+        panel.style.display = 'none';
+        container.appendChild(panel);
+        panels.push(panel);
+    });
+
+    container.insertBefore(bar, container.firstChild);
+
+    function activate(i) {
+        panels.forEach((p, j) => { p.style.display = j === i ? '' : 'none'; });
+        btns.forEach((b, j) => {
+            b.style.color = j === i ? 'var(--accent)' : 'var(--muted)';
+            b.style.borderBottomColor = j === i ? 'var(--accent)' : 'transparent';
+        });
+    }
+    btns.forEach((btn, i) => btn.addEventListener('click', () => activate(i)));
+    activate(0);
+
+    return panels;
 }

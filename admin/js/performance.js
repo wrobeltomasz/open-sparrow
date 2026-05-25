@@ -1,4 +1,5 @@
 // admin/performance.js — Performance & Index Advisor
+import { buildInnerTabs } from './ui.js';
 
 function escHtml(str) {
     return String(str ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -441,64 +442,70 @@ export function renderPerformancePage(ctx) {
     workspaceEl.appendChild(h2);
 
     const topRow = document.createElement('div');
-    topRow.style.cssText = 'display:flex; align-items:center; gap:14px; margin-bottom:24px;';
+    topRow.style.cssText = 'display:flex; align-items:center; gap:14px; margin-bottom:20px;';
 
     const btnAll = document.createElement('button');
     btnAll.className = 'btn-action';
     btnAll.style.cssText = 'padding:8px 20px; font-size:14px;';
-    btnAll.textContent = 'Run Full Analysis';
+    btnAll.textContent = 'Run All';
     topRow.appendChild(btnAll);
-
-    const topNote = document.createElement('span');
-    topNote.style.cssText = 'font-size:12px; color:var(--muted);';
-    topNote.textContent = 'Or expand individual sections below.';
-    topRow.appendChild(topNote);
     workspaceEl.appendChild(topRow);
+
+    const tabContainer = document.createElement('div');
+    workspaceEl.appendChild(tabContainer);
 
     const sections = [
         {
-            title: '1. Missing Index Advisor',
-            desc:  'Detects columns needing indexes: foreign keys, subtable joins, default sort, widget filters.',
+            label:  'Index Advisor',
+            title:  '1. Missing Index Advisor',
+            desc:   'Detects columns needing indexes: foreign keys, subtable joins, default sort, widget filters.',
             action: 'performance_check',
             render: renderIndexAdvisor,
         },
         {
-            title: '2. Unused Indexes',
-            desc:  'Finds existing indexes with zero scans — candidates for removal to speed up writes.',
+            label:  'Unused Indexes',
+            title:  '2. Unused Indexes',
+            desc:   'Finds existing indexes with zero scans — candidates for removal to speed up writes.',
             action: 'performance_unused_indexes',
             render: renderUnusedIndexes,
         },
         {
-            title: '3. Slow Query Analyzer',
-            desc:  'Top 15 slowest queries by avg execution time (requires pg_stat_statements extension).',
+            label:  'Slow Queries',
+            title:  '3. Slow Query Analyzer',
+            desc:   'Top 15 slowest queries by avg execution time (requires pg_stat_statements extension).',
             action: 'performance_slow_queries',
             render: renderSlowQueries,
         },
         {
-            title: '4. Table Statistics & Bloat',
-            desc:  'Dead row ratio, seq vs index scans, last vacuum/analyze per table.',
+            label:  'Table Stats',
+            title:  '4. Table Statistics & Bloat',
+            desc:   'Dead row ratio, seq vs index scans, last vacuum/analyze per table.',
             action: 'performance_table_stats',
             render: renderTableStats,
         },
         {
-            title: '5. Database Health',
-            desc:  'Cache hit ratio, connection usage, deadlocks, committed transactions.',
+            label:  'DB Health',
+            title:  '5. Database Health',
+            desc:   'Cache hit ratio, connection usage, deadlocks, committed transactions.',
             action: 'performance_db_health',
             render: renderDbHealth,
         },
         {
-            title: '6. Schema Configuration Warnings',
-            desc:  'Tables missing load limits, widgets without row caps, subtables without column lists.',
+            label:  'Schema Warnings',
+            title:  '6. Schema Configuration Warnings',
+            desc:   'Tables missing load limits, widgets without row caps, subtables without column lists.',
             action: 'performance_schema_warnings',
             render: renderSchemaWarnings,
         },
     ];
 
+    const panels = buildInnerTabs(tabContainer, sections);
+
     const built = sections.map((s, i) => {
         const { card, btn, body } = makeSection(s.title, s.desc);
         card.id = `perf-section-${i}`;
         btn.addEventListener('click', () => runSection(s.action, s.render, btn, body));
-        workspaceEl.appendChild(card);
+        panels[i].appendChild(card);
         return { btn, body, ...s };
     });
 
@@ -507,6 +514,6 @@ export function renderPerformancePage(ctx) {
         btnAll.textContent = 'Running…';
         await Promise.all(built.map(s => runSection(s.action, s.render, s.btn, s.body)));
         btnAll.disabled = false;
-        btnAll.textContent = 'Run Full Analysis';
+        btnAll.textContent = 'Run All';
     });
 }

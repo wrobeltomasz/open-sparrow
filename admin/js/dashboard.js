@@ -1,14 +1,14 @@
 // admin/dashboard.js
 import { createTextInput, createSelectInput, createColorInput, createIconPicker, createCheckbox, renderGlobalSettings } from './ui.js';
-import { WidgetRegistry } from '../assets/js/dashboard/registry.js';
+import { WidgetRegistry } from '../../assets/js/dashboard/registry.js';
 
 // Import widgets so they self-register into WidgetRegistry
-import '../assets/js/dashboard/widgets/kpi-card.js';
-import '../assets/js/dashboard/widgets/stat-card.js';
-import '../assets/js/dashboard/widgets/bar-chart.js';
-import '../assets/js/dashboard/widgets/vertical-bar-chart.js';
-import '../assets/js/dashboard/widgets/pie-chart.js';
-import '../assets/js/dashboard/widgets/list.js';
+import '../../assets/js/dashboard/widgets/kpi-card.js';
+import '../../assets/js/dashboard/widgets/stat-card.js';
+import '../../assets/js/dashboard/widgets/bar-chart.js';
+import '../../assets/js/dashboard/widgets/vertical-bar-chart.js';
+import '../../assets/js/dashboard/widgets/pie-chart.js';
+import '../../assets/js/dashboard/widgets/list.js';
 
 const CONDITION_OPS = [
     { value: '=',           label: '= (equals)' },

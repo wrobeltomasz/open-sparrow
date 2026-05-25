@@ -321,7 +321,7 @@ if (empty($_SESSION['csrf_token'])) {
 <!-- Hidden file input for import (must remain in DOM) -->
 <input type="file" id="importFileInput" accept=".zip" style="display: none;">
 
-<script type="module" src="app.js?v=<?php echo @filemtime('app.js'); ?>"></script>
+<script type="module" src="js/app.js?v=<?php echo @filemtime('js/app.js'); ?>"></script>
 <script>
     // Collapsible nav sections
     document.querySelectorAll('.nav-section-header').forEach(function(header) {

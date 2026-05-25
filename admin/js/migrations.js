@@ -1,18 +1,22 @@
+import { buildInnerTabs } from './ui.js';
+
 export async function renderMigrationsPage(ctx) {
     const { workspaceEl } = ctx;
 
     workspaceEl.innerHTML = '';
 
-    // --- DB migrations section ---
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'padding:24px; max-width:860px;';
+    const outer = document.createElement('div');
+    outer.style.cssText = 'padding:24px; max-width:860px;';
+    workspaceEl.appendChild(outer);
 
-    const heading = document.createElement('h2');
-    heading.style.cssText = 'margin:0 0 6px; font-size:20px; color:#0f172a;';
-    heading.textContent = 'Database Migrations';
+    const [panel0, panel1] = buildInnerTabs(outer, [
+        { label: 'Database Migrations' },
+        { label: 'Release Migrations' },
+    ]);
 
+    // --- Tab 0: DB migrations ---
     const sub = document.createElement('p');
-    sub.style.cssText = 'margin:0 0 24px; font-size:13px; color:#64748b;';
+    sub.style.cssText = 'margin:0 0 20px; font-size:13px; color:#64748b;';
     sub.textContent = 'Each migration runs once and is recorded in spw_migrations. Running "Apply Migrations" is safe to repeat.';
 
     const runBtn = document.createElement('button');
@@ -28,31 +32,21 @@ export async function renderMigrationsPage(ctx) {
     tableWrap.id = 'mig-table';
     tableWrap.innerHTML = '<p style="color:#94a3b8; font-size:13px;">Loading…</p>';
 
-    wrap.append(heading, sub, runBtn, statusEl, tableWrap);
+    panel0.append(sub, runBtn, statusEl, tableWrap);
 
-    // --- Release migrations section ---
-    const divider = document.createElement('hr');
-    divider.style.cssText = 'border:none; border-top:1px solid #e2e8f0; margin:32px 0 24px;';
-
-    const relHeading = document.createElement('h2');
-    relHeading.style.cssText = 'margin:0 0 6px; font-size:20px; color:#0f172a;';
-    relHeading.textContent = 'Release Migrations';
-
+    // --- Tab 1: Release migrations ---
     const relSub = document.createElement('p');
-    relSub.style.cssText = 'margin:0 0 24px; font-size:13px; color:#64748b;';
+    relSub.style.cssText = 'margin:0 0 20px; font-size:13px; color:#64748b;';
     relSub.textContent = 'File and config cleanup tasks defined in config/migrations.json. Run after upgrading to a new version.';
 
     const relContainer = document.createElement('div');
     relContainer.id = 'mig-release-container';
     relContainer.innerHTML = '<p style="color:#94a3b8; font-size:13px;">Loading…</p>';
 
-    const relWrap = document.createElement('div');
-    relWrap.style.cssText = 'padding:0 24px 24px; max-width:860px;';
-    relWrap.append(divider, relHeading, relSub, relContainer);
+    panel1.append(relSub, relContainer);
 
     // Append ALL DOM to workspace synchronously before any await
-    workspaceEl.appendChild(wrap);
-    workspaceEl.appendChild(relWrap);
+    // (outer already appended above)
 
     // Event listener before async work
     runBtn.addEventListener('click', async () => {

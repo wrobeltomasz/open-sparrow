@@ -1,4 +1,5 @@
 // admin/cron.js — Cron Notifications management page
+import { buildInnerTabs } from './ui.js';
 
 function cronEscHtml(str) {
     return String(str ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -436,29 +437,22 @@ function buildCleanupSection() {
 export function renderCronPage(ctx) {
     const { workspaceEl } = ctx;
 
-    const wrap = document.createElement('div');
-
-    const hdr = document.createElement('div');
-    hdr.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:10px;';
-
-    const titleEl = document.createElement('div');
-    const h2 = document.createElement('h3');
-    h2.textContent = 'Notification Cron';
-    h2.style.margin = '0 0 4px';
-    const sub = document.createElement('p');
-    sub.textContent = 'Schedule, monitor, and manage the notification dispatch cron job.';
-    sub.style.cssText = 'margin:0; color:var(--muted); font-size:14px;';
-    titleEl.append(h2, sub);
-
-    hdr.appendChild(titleEl);
-    wrap.appendChild(hdr);
-
-    wrap.appendChild(buildManualRunSection());
-    wrap.appendChild(buildRunHistorySection());
-    wrap.appendChild(buildStatsSection());
-    wrap.appendChild(buildSetupSection());
-    wrap.appendChild(buildCleanupSection());
-
     workspaceEl.innerHTML = '';
+
+    const wrap = document.createElement('div');
     workspaceEl.appendChild(wrap);
+
+    const [p0, p1, p2, p3, p4] = buildInnerTabs(wrap, [
+        { label: 'Run' },
+        { label: 'History' },
+        { label: 'Statistics' },
+        { label: 'Setup' },
+        { label: 'Cleanup' },
+    ]);
+
+    p0.appendChild(buildManualRunSection());
+    p1.appendChild(buildRunHistorySection());
+    p2.appendChild(buildStatsSection());
+    p3.appendChild(buildSetupSection());
+    p4.appendChild(buildCleanupSection());
 }
