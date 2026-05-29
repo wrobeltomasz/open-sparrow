@@ -184,21 +184,23 @@ describe('OpenSparrow – Login & Logout flow', () => {
   });
 
   it('logs out successfully', () => {
+    // Intercept i18n bundle BEFORE login — dashboard load triggers it, which
+    // then calls initUserMenu(). Without waiting, click handlers may not be
+    // attached yet when we try to open the user dropdown.
+    cy.intercept('GET', /action=i18n_bundle/).as('i18nReady');
+
     // Login first
     cy.get('[data-cy=username], input[name="username"]').clear().type('test');
     cy.get('[data-cy=password], input[name="password"]').clear().type('test');
     cy.get('[data-cy=loginBtn], button[type="submit"]').click();
 
     cy.url({ timeout: CypressHelpers.TIMEOUTS.long }).should('include', '/dashboard.php');
+    // Wait for i18n bundle to complete — after this, initUserMenu() has run
+    cy.wait('@i18nReady', { timeout: CypressHelpers.TIMEOUTS.medium });
 
-    // Open user menu and click logout
-    cy.get('[data-cy=user-avatar], #userAvatarBtn', {
-      timeout: CypressHelpers.TIMEOUTS.medium,
-    }).click();
-
-    cy.get('[data-cy=logout], #logoutBtn', {
-      timeout: CypressHelpers.TIMEOUTS.medium,
-    }).click();
+    cy.get('[data-cy=user-avatar], #userAvatarBtn').click();
+    cy.get('#userAvatarMenu').should('have.class', 'open');
+    cy.get('[data-cy=logout], #logoutBtn').click();
 
     // Should be redirected to login
     cy.url({ timeout: CypressHelpers.TIMEOUTS.long }).should('include', 'login.php');

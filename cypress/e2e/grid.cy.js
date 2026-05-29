@@ -206,7 +206,7 @@ describe('OpenSparrow – Grid Row Actions', () => {
         // Row action buttons are hidden behind CSS hover; check existence not visibility
         cy.get('[data-cy=grid] tbody tr, #grid tbody tr')
           .first()
-          .find('button[title="Edit"], button.btn-icon[title="Edit"]')
+          .find('td.td-actions button:first-child')
           .should('exist');
       }
     });
@@ -217,7 +217,7 @@ describe('OpenSparrow – Grid Row Actions', () => {
       if (res.type === 'grid') {
         cy.get('[data-cy=grid] tbody tr, #grid tbody tr')
           .first()
-          .find('button[title="Edit"]')
+          .find('td.td-actions button:first-child')
           .should('exist')
           .click({ force: true });
 
@@ -231,7 +231,7 @@ describe('OpenSparrow – Grid Row Actions', () => {
       if (res.type === 'grid') {
         cy.get('[data-cy=grid] tbody tr, #grid tbody tr')
           .first()
-          .find('button[title="Duplicate"]')
+          .find('td.td-actions button:nth-child(2)')
           .then($btn => {
             if ($btn.length > 0) {
               cy.wrap($btn).should('exist');
@@ -246,7 +246,7 @@ describe('OpenSparrow – Grid Row Actions', () => {
       if (res.type === 'grid') {
         cy.get('[data-cy=grid] tbody tr, #grid tbody tr')
           .first()
-          .find('button[title="Delete"], button.btn-icon-danger[title="Delete"]')
+          .find('td.td-actions button.btn-icon-danger')
           .then($btn => {
             if ($btn.length > 0) {
               cy.wrap($btn).should('exist');
@@ -313,21 +313,12 @@ describe('OpenSparrow – Grid Mobile', () => {
   });
 
   it('mobileActions select has Export option', () => {
-    cy.get('#mobileActions')
-      .find('option')
-      .then($opts => {
-        const optTexts = $opts.toArray().map(o => o.textContent.toLowerCase());
-        expect(optTexts.some(t => t.includes('export'))).to.be.true;
-      });
+    // Check by value (locale-independent), not text
+    cy.get('#mobileActions option[value="export"]').should('exist');
   });
 
   it('mobileActions select has Refresh option', () => {
-    cy.get('#mobileActions')
-      .find('option')
-      .then($opts => {
-        const optTexts = $opts.toArray().map(o => o.textContent.toLowerCase());
-        expect(optTexts.some(t => t.includes('refresh'))).to.be.true;
-      });
+    cy.get('#mobileActions option[value="refresh"]').should('exist');
   });
 
   it('mobileActions select has export option value', () => {

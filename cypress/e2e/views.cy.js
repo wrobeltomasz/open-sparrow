@@ -138,7 +138,7 @@ describe('OpenSparrow – Views: Open View', () => {
     cy.get('#viewContainer').then($el => {
       if ($el.find('.vw-selector-card').length === 0) return;
       cy.get('.vw-selector-card').first().click();
-      cy.get('#viewContainer', { timeout: CypressHelpers.TIMEOUTS.long }).then($cnt => {
+      cy.get('#viewContainer', { timeout: CypressHelpers.TIMEOUTS.long }).should($cnt => {
         const hasTable = $cnt.find('.vw-table-wrap').length > 0;
         const hasEmpty = $cnt.find('.vw-empty').length > 0;
         expect(hasTable || hasEmpty).to.be.true;

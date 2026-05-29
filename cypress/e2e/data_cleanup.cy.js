@@ -187,4 +187,82 @@ describe('OpenSparrow – Data Cleanup Preview', () => {
       });
     });
   });
+
+  it('apply button becomes enabled after preview finds matches', () => {
+    cy.get('body').then($body => {
+      if ($body.find('#dataCleanupBtn').length === 0) return;
+      cy.get('#dataCleanupBtn').click({ force: true });
+      cy.get('#dc-column option', { timeout: CypressHelpers.TIMEOUTS.medium })
+        .should('have.length.greaterThan', 0);
+      cy.get('#dc-find').type('e');
+      cy.get('#dc-preview-area', { timeout: CypressHelpers.TIMEOUTS.long }).then($area => {
+        if ($area.find('.dc-preview-table').length === 0) {
+          Cypress.log({ message: 'No preview table — no matches; apply stays disabled (OK)' });
+          return;
+        }
+        cy.get('#dc-apply').should('not.be.disabled');
+      });
+    });
+  });
+
+  it('apply button disabled again after clear', () => {
+    cy.get('body').then($body => {
+      if ($body.find('#dataCleanupBtn').length === 0) return;
+      cy.get('#dataCleanupBtn').click({ force: true });
+      cy.get('#dc-column option', { timeout: CypressHelpers.TIMEOUTS.medium })
+        .should('have.length.greaterThan', 0);
+      cy.get('#dc-find').type('e');
+      cy.wait(600);
+      cy.get('#dc-find').clear();
+      cy.wait(600);
+      cy.get('#dc-apply').should('be.disabled');
+    });
+  });
+});
+
+// ============================================================================
+// Test Suite: Data Cleanup Apply Flow
+// ============================================================================
+
+describe('OpenSparrow – Data Cleanup Apply', () => {
+  beforeEach(() => {
+    loginAsTestUser();
+    cy.visit(`${BASE}/index.php?table=${TEST_TABLE}`);
+    waitForGridOrEmpty();
+  });
+
+  it('apply triggers POST to api_data_cleanup.php', () => {
+    cy.intercept('POST', '**/api_data_cleanup.php**').as('cleanupApply');
+    cy.get('body').then($body => {
+      if ($body.find('#dataCleanupBtn').length === 0) return;
+      cy.get('#dataCleanupBtn').click({ force: true });
+      cy.get('#dc-column option', { timeout: CypressHelpers.TIMEOUTS.medium })
+        .should('have.length.greaterThan', 0);
+      cy.get('#dc-find').type('e');
+      cy.get('#dc-preview-area', { timeout: CypressHelpers.TIMEOUTS.long }).then($area => {
+        if ($area.find('.dc-preview-table').length === 0) return;
+        cy.get('#dc-apply').should('not.be.disabled').click();
+        cy.wait('@cleanupApply', { timeout: CypressHelpers.TIMEOUTS.long });
+        cy.get('#dc-status', { timeout: CypressHelpers.TIMEOUTS.medium })
+          .invoke('text')
+          .should('not.be.empty');
+      });
+    });
+  });
+
+  it('after apply: apply button returns to disabled', () => {
+    cy.get('body').then($body => {
+      if ($body.find('#dataCleanupBtn').length === 0) return;
+      cy.get('#dataCleanupBtn').click({ force: true });
+      cy.get('#dc-column option', { timeout: CypressHelpers.TIMEOUTS.medium })
+        .should('have.length.greaterThan', 0);
+      cy.get('#dc-find').type('e');
+      cy.get('#dc-preview-area', { timeout: CypressHelpers.TIMEOUTS.long }).then($area => {
+        if ($area.find('.dc-preview-table').length === 0) return;
+        cy.get('#dc-apply').should('not.be.disabled').click();
+        cy.get('#dc-apply', { timeout: CypressHelpers.TIMEOUTS.medium })
+          .should('be.disabled');
+      });
+    });
+  });
 });
