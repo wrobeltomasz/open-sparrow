@@ -338,39 +338,20 @@ body {
     font-weight: 600;
 }
 
-/* Editor area: item list sidebar + workspace */
+/* Editor area: workspace */
 .admin-content {
     flex: 1;
     display: flex;
     overflow: hidden;
 }
 
-/* ===== Item list sidebar (right side) ===== */
-.admin-sidebar {
-    flex: 0 0 260px;
-    width: 260px;
-    background-color: var(--panel);
-    border-left: 1px solid var(--border);
-    padding: 20px 15px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    transition: width 200ms ease, flex-basis 200ms ease, padding 200ms ease;
-}
-
-.admin-sidebar.collapsed {
-    flex: 0 0 0;
-    width: 0;
-    padding: 0;
-    overflow: hidden;
-}
-
-/* ===== Sidebar edge collapse tabs ===== */
-.nav-edge-toggle,
-.sidebar-edge-toggle {
+/* ===== Left nav edge collapse tab ===== */
+.nav-edge-toggle {
     flex: 0 0 14px;
     width: 14px;
     padding: 0;
     border: none;
+    border-right: 1px solid var(--border);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -384,51 +365,84 @@ body {
     z-index: 5;
 }
 
-.nav-edge-toggle {
-    border-right: 1px solid var(--border);
-}
-
-.sidebar-edge-toggle {
-    border-left: 1px solid var(--border);
-}
-
-.nav-edge-toggle:hover,
-.sidebar-edge-toggle:hover {
+.nav-edge-toggle:hover {
     background: var(--accent-light);
     color: var(--accent);
 }
 
-.admin-sidebar h3 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: var(--text);
-    font-size: 15px;
-    font-weight: 600;
-    padding-left: 10px;
+/* ===== Item panel (replaces right sidebar) ===== */
+.admin-item-panel:empty {
+    display: none;
 }
 
-.admin-sidebar ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.item-panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
 }
 
-.admin-sidebar li {
-    padding: 10px 14px;
+.item-panel-actions .btn-add {
+    margin-bottom: 0;
+}
+
+.item-panel-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border-bottom: 2px solid var(--border, #CBD5E1);
+    margin-bottom: 24px;
+}
+
+
+.item-btn-wrapper {
+    display: flex;
+    align-items: flex-end;
+}
+
+.item-btn {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
     cursor: pointer;
-    border-radius: var(--radius);
-    color: var(--muted);
     font-size: 13px;
-    font-weight: 500;
-    transition: background-color var(--transition), color var(--transition);
-    margin-bottom: 2px;
+    font-weight: 600;
+    color: var(--muted, #64748B);
+    transition: color .15s, border-color .15s;
+    white-space: nowrap;
 }
 
-.admin-sidebar li:hover,
-.admin-sidebar li.active {
-    background-color: var(--accent-light);
+.item-btn:hover {
+    color: var(--accent, #1E6FC0);
+}
+
+.item-btn.active {
+    color: var(--accent, #1E6FC0);
+    border-color: var(--accent, #1E6FC0);
+}
+
+.item-order-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0 3px 11px;
+    color: var(--muted);
+    line-height: 1;
+}
+
+.item-order-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.item-order-btn:not(:disabled):hover {
     color: var(--accent);
-    font-weight: 600;
 }
 
 /* ===== Collapsible column / subtable blocks ===== */
@@ -666,16 +680,16 @@ body {
     background: var(--danger);
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 10px 16px;
     border-radius: var(--radius);
     cursor: pointer;
-    font-size: 12px;
     font-weight: 600;
-    float: right;
-    transition: background var(--transition);
+    font-size: 14px;
+    transition: background var(--transition), transform 100ms;
 }
 
 .btn-remove:hover { background: #a80000; }
+.btn-remove:active { transform: scale(0.98); }
 
 /* ===== Data tables ===== */
 .admin-table {

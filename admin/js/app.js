@@ -23,7 +23,7 @@ import { renderDemoPage } from './demo.js';
 import { renderSettingsPage } from './settings.js';
 import { renderCsvImportPage } from './csv_import.js';
 import { renderRagPage } from './rag.js';
-import { renderAutomationsPage } from './automations.js';
+import { renderAutomationsPage, autoActions } from './automations.js';
 import { renderOverviewPage } from './overview.js';
 
 let currentConfig = null;
@@ -32,7 +32,7 @@ let currentItemKey = null;
 let globalSchemaObj = null;
 let isDirty = false;
 
-const itemListEl = document.getElementById('itemList');
+const itemPanelEl = document.getElementById('itemPanel');
 const workspaceEl = document.getElementById('editorForm');
 const btnSave = document.getElementById('btnSave');
 const tabs = document.querySelectorAll('.admin-tab');
@@ -263,14 +263,18 @@ async function loadConfigFile(fileName) {
             currentConfig = {};
         }
 
-        if (fileName === 'dashboard' || fileName === 'calendar' || fileName === 'workflows' || fileName === 'files' || fileName === 'automations') {
+        if (fileName === 'schema' || fileName === 'dashboard' || fileName === 'calendar' || fileName === 'workflows') {
+            currentItemKey = null;
+            renderSidebar();
+            renderItemCards();
+        } else if (fileName === 'automations') {
+            currentItemKey = null;
+            renderSidebar();
+            renderEditor('ALL', null, false);
+        } else if (fileName === 'files') {
             currentItemKey = 'LAYOUT';
             renderSidebar();
             renderEditor('LAYOUT', null, false);
-        } else if (fileName === 'schema') {
-            currentItemKey = 'GLOBAL_SCHEMA';
-            renderSidebar();
-            renderEditor('GLOBAL_SCHEMA', null, false);
         } else if (fileName === 'database' || fileName === 'security' || fileName === 'views') {
             renderSidebar();
             renderEditor('SETTINGS', currentConfig, false);
@@ -321,142 +325,29 @@ function clearConfig() {
 }
 
 function renderSidebar() {
-    itemListEl.innerHTML = '';
-    
-    if (currentFile === 'overview' || currentFile === 'database' || currentFile === 'security' || currentFile === 'health' || currentFile === 'docs' || currentFile === 'users' || currentFile === 'backup' || currentFile === 'menu' || currentFile === 'audit' || currentFile === 'add_table' || currentFile === 'migrations' || currentFile === 'performance' || currentFile === 'cron' || currentFile === 'm2m' || currentFile === 'erd' || currentFile === 'demo' || currentFile === 'settings' || currentFile === 'csv_import' || currentFile === 'rag') {
-        document.getElementById('sidebarTitle').textContent = currentFile.charAt(0).toUpperCase() + currentFile.slice(1);
-        const actionDiv = document.getElementById('sidebarActions');
-        if (actionDiv) actionDiv.innerHTML = ''; 
+    itemPanelEl.innerHTML = '';
 
-        const li = document.createElement('li');
-        let title = "Settings";
-        if (currentFile === 'health') {
-            const healthSections = [
-                'PHP Environment',
-                'PHP Extensions',
-                'Security Functions',
-                'Database',
-                'Filesystem',
-                'Config Files',
-            ];
-            const hdr = document.createElement('li');
-            hdr.textContent = 'Health Check';
-            hdr.style.cssText = 'font-weight:bold; border-bottom:2px solid var(--accent);';
-            itemListEl.appendChild(hdr);
-            healthSections.forEach((name, i) => {
-                const item = document.createElement('li');
-                item.textContent = name;
-                item.style.cssText = 'cursor:pointer; font-size:13px; padding:6px 8px;';
-                item.addEventListener('mouseover', () => item.style.background = 'var(--accent-light)');
-                item.addEventListener('mouseout',  () => item.style.background = '');
-                item.addEventListener('click', () => {
-                    const el = document.getElementById(`health-section-${i}`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-                itemListEl.appendChild(item);
-            });
-            return;
-        }
-        if (currentFile === 'overview') title = "Overview";
-        if (currentFile === 'docs') title = "Read Documentation";
-        if (currentFile === 'users') title = "System Users";
-        if (currentFile === 'backup') title = "Backup Tables";
-        if (currentFile === 'menu') title = "View Preview";
-        if (currentFile === 'audit') title = "Audit & Snapshots";
-        if (currentFile === 'settings') title = "Application Settings";
-        if (currentFile === 'csv_import') title = "CSV Import";
-        if (currentFile === 'rag') title = "RAG Documents";
-        if (currentFile === 'add_table') title = "Add New Table";
-        if (currentFile === 'migrations') title = "Migration History";
-        if (currentFile === 'performance') {
-            const perfSections = [
-                'Missing Index Advisor',
-                'Unused Indexes',
-                'Slow Query Analyzer',
-                'Table Stats & Bloat',
-                'Database Health',
-                'Schema Warnings',
-            ];
-            const hdr = document.createElement('li');
-            hdr.textContent = 'Performance';
-            hdr.style.cssText = 'font-weight:bold; border-bottom:2px solid var(--accent);';
-            itemListEl.appendChild(hdr);
-            perfSections.forEach((name, i) => {
-                const item = document.createElement('li');
-                item.textContent = name;
-                item.style.cssText = 'cursor:pointer; font-size:13px; padding:6px 8px;';
-                item.addEventListener('mouseover', () => item.style.background = 'var(--accent-light)');
-                item.addEventListener('mouseout',  () => item.style.background = '');
-                item.addEventListener('click', () => {
-                    const el = document.getElementById(`perf-section-${i}`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-                itemListEl.appendChild(item);
-            });
-            return;
-        }
-        if (currentFile === 'm2m')  title = "M2M Builder";
-        if (currentFile === 'erd')  title = "Schema Map";
-        if (currentFile === 'demo') title = "Demo Systems";
-        if (currentFile === 'cron') {
-            const cronSections = [
-                'Manual Run',
-                'Run History',
-                'Notification Stats',
-                'Cron Setup',
-                'Log Cleanup',
-            ];
-            const hdr = document.createElement('li');
-            hdr.textContent = 'Cron Notifications';
-            hdr.style.cssText = 'font-weight:bold; border-bottom:2px solid var(--accent);';
-            itemListEl.appendChild(hdr);
-            cronSections.forEach((name, i) => {
-                const item = document.createElement('li');
-                item.textContent = name;
-                item.style.cssText = 'cursor:pointer; font-size:13px; padding:6px 8px;';
-                item.addEventListener('mouseover', () => item.style.background = 'var(--accent-light)');
-                item.addEventListener('mouseout',  () => item.style.background = '');
-                item.addEventListener('click', () => {
-                    const el = document.getElementById(`cron-section-${i}`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                });
-                itemListEl.appendChild(item);
-            });
-            return;
-        }
+    const fullPageTabs = new Set([
+        'overview', 'database', 'security', 'health', 'docs', 'users', 'backup',
+        'menu', 'audit', 'add_table', 'migrations', 'performance', 'cron',
+        'm2m', 'erd', 'demo', 'settings', 'csv_import', 'rag', 'views',
+    ]);
 
-        li.textContent = title;
-        li.style.fontWeight = 'bold';
-        li.style.borderBottom = '2px solid var(--accent)';
-        li.classList.add('active');
-        itemListEl.appendChild(li);
+    if (fullPageTabs.has(currentFile)) {
         return;
     }
 
-    if (currentFile === 'views') {
-        document.getElementById('sidebarTitle').textContent = 'Views';
-        const vActionDiv = document.getElementById('sidebarActions');
-        if (vActionDiv) vActionDiv.innerHTML = '';
-        const vLi = document.createElement('li');
-        vLi.textContent = 'Views Configuration';
-        vLi.style.cssText = 'font-weight:bold; border-bottom:2px solid var(--accent);';
-        vLi.classList.add('active');
-        itemListEl.appendChild(vLi);
-        return;
-    }
+    const isCardTab = currentFile === 'schema' || currentFile === 'dashboard' || currentFile === 'calendar' || currentFile === 'workflows';
 
-    document.getElementById('sidebarTitle').textContent = currentFile === 'schema' ? 'Tables' : currentFile === 'dashboard' ? 'Widgets' : currentFile === 'workflows' ? 'Workflows' : currentFile === 'files' ? 'Files Config' : 'Sources';
-    
-    let actionDiv = document.getElementById('sidebarActions');
-    if (!actionDiv) {
-        actionDiv = document.createElement('div'); actionDiv.id = 'sidebarActions'; actionDiv.style.marginBottom = '15px';
-        itemListEl.parentNode.insertBefore(actionDiv, itemListEl);
-    }
-    actionDiv.innerHTML = ''; 
+    // ── Action buttons row ───────────────────────────────────────────────────
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'item-panel-actions';
 
     if (currentFile === 'schema') {
         const btnSync = document.createElement('button');
-        btnSync.className = 'btn-add'; btnSync.style.width = '100%'; btnSync.innerHTML = 'Sync DB Tables';
+        btnSync.type = 'button';
+        btnSync.className = 'btn-add';
+        btnSync.textContent = 'Sync DB Tables';
         btnSync.onclick = () => {
             const schemaName = prompt("Enter database schema name to sync:", "public");
             if (schemaName) syncSchemaTables(currentConfig, schemaName,
@@ -468,117 +359,353 @@ function renderSidebar() {
                 },
                 (err) => showStatusPill(btnSync, err, 'error'));
         };
-        actionDiv.appendChild(btnSync);
+        actionsRow.appendChild(btnSync);
+        const btnClear = document.createElement('button');
+        btnClear.type = 'button'; btnClear.className = 'btn-remove'; btnClear.style.float = 'none';
+        btnClear.textContent = 'Clear Entire Config'; btnClear.onclick = clearConfig;
+        actionsRow.appendChild(btnClear);
+    } else if (currentFile === 'automations') {
+        const btnNew = document.createElement('button');
+        btnNew.type = 'button'; btnNew.className = 'btn-add';
+        btnNew.textContent = '+ New Automation';
+        btnNew.onclick = () => { if (autoActions.openNew) autoActions.openNew(null); };
+        actionsRow.appendChild(btnNew);
     } else if (currentFile !== 'files') {
         const btnAdd = document.createElement('button');
-        btnAdd.className = 'btn-add'; btnAdd.style.width = '100%'; 
-        btnAdd.innerHTML = currentFile === 'dashboard' ? '+ Add New Widget' : currentFile === 'workflows' ? '+ Add New Workflow' : '+ Add New Source';
+        btnAdd.type = 'button'; btnAdd.className = 'btn-add';
+        btnAdd.textContent = currentFile === 'dashboard' ? '+ Add New Widget' : currentFile === 'workflows' ? '+ Add New Workflow' : '+ Add New Source';
         btnAdd.onclick = addNewItem;
-        actionDiv.appendChild(btnAdd);
+        actionsRow.appendChild(btnAdd);
+        const btnClear = document.createElement('button');
+        btnClear.type = 'button'; btnClear.className = 'btn-remove'; btnClear.style.float = 'none';
+        btnClear.textContent = 'Clear Entire Config'; btnClear.onclick = clearConfig;
+        actionsRow.appendChild(btnClear);
     }
 
-    if (currentFile !== 'files') {
-        const btnClear = document.createElement('button');
-        btnClear.className = 'btn-remove'; btnClear.style.width = '100%'; btnClear.style.marginTop = '10px'; btnClear.style.float = 'none';
-        btnClear.innerHTML = 'Clear Entire Config'; btnClear.onclick = clearConfig;
-        actionDiv.appendChild(btnClear);
+    if (actionsRow.children.length > 0) {
+        itemPanelEl.appendChild(actionsRow);
     }
+
+    // ── Tab bar ──────────────────────────────────────────────────────────────
+    const itemsRow = document.createElement('div');
+    itemsRow.className = 'item-panel-items';
 
     if (currentFile === 'schema') {
-        const globalLi = document.createElement('li');
-        globalLi.textContent = 'Global Grid Settings';
-        globalLi.style.cssText = 'font-weight:bold; border-bottom:2px solid var(--accent); cursor:pointer;';
-        if (currentItemKey === 'GLOBAL_SCHEMA') globalLi.classList.add('active');
-        globalLi.onclick = () => {
-            currentItemKey = 'GLOBAL_SCHEMA';
-            renderSidebar();
-            renderEditor('GLOBAL_SCHEMA', null, false);
-        };
-        itemListEl.appendChild(globalLi);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'item-btn' + (currentItemKey === 'GLOBAL_SCHEMA' ? ' active' : '');
+        btn.textContent = 'Global Grid Settings';
+        btn.onclick = () => { currentItemKey = 'GLOBAL_SCHEMA'; renderSidebar(); renderEditor('GLOBAL_SCHEMA', null, false); };
+        itemsRow.appendChild(btn);
     }
 
-    if (currentFile === 'dashboard' || currentFile === 'calendar' || currentFile === 'workflows' || currentFile === 'files') {
-        const layoutLi = document.createElement('li');
-        layoutLi.textContent = "Global Settings"; layoutLi.style.fontWeight = 'bold'; layoutLi.style.borderBottom = '2px solid var(--accent)';
-        if (currentItemKey === 'LAYOUT') layoutLi.classList.add('active');
-        layoutLi.onclick = () => {
-            currentItemKey = 'LAYOUT';
-            renderSidebar();
-            renderEditor('LAYOUT', null, false);
-        };
-        itemListEl.appendChild(layoutLi);
+    if (currentFile === 'dashboard' || currentFile === 'calendar' || currentFile === 'workflows' || currentFile === 'files' || currentFile === 'automations') {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'item-btn' + (currentItemKey === 'LAYOUT' ? ' active' : '');
+        btn.textContent = 'Global Settings';
+        btn.onclick = () => { currentItemKey = 'LAYOUT'; renderSidebar(); renderEditor('LAYOUT', null, false); };
+        itemsRow.appendChild(btn);
     }
 
     if (currentFile === 'files') {
-        const managerLi = document.createElement('li');
-        managerLi.textContent = "File Explorer"; managerLi.style.fontWeight = 'bold'; managerLi.style.borderBottom = '2px solid var(--accent)';
-        if (currentItemKey === 'MANAGER') managerLi.classList.add('active');
-        managerLi.onclick = () => {
-            currentItemKey = 'MANAGER';
-            renderSidebar();
-            renderEditor('MANAGER', null, false);
-        };
-        itemListEl.appendChild(managerLi);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'item-btn' + (currentItemKey === 'MANAGER' ? ' active' : '');
+        btn.textContent = 'File Explorer';
+        btn.onclick = () => { currentItemKey = 'MANAGER'; renderSidebar(); renderEditor('MANAGER', null, false); };
+        itemsRow.appendChild(btn);
+        itemPanelEl.appendChild(itemsRow);
+        return;
     }
 
-    if (!currentConfig) return;
+    // Card tabs and automations: prepend "All X" button then return
+    if (isCardTab || currentFile === 'automations') {
+        const btnAll = document.createElement('button');
+        btnAll.type = 'button';
+        btnAll.className = 'item-btn' + (currentItemKey === null ? ' active' : '');
+        btnAll.textContent = currentFile === 'schema'       ? 'All Tables'
+                           : currentFile === 'dashboard'    ? 'All Widgets'
+                           : currentFile === 'workflows'    ? 'All Workflows'
+                           : currentFile === 'automations'  ? 'All Automations'
+                           : 'All Sources';
+        btnAll.onclick = () => {
+            currentItemKey = null;
+            renderSidebar();
+            if (currentFile === 'automations') renderEditor('ALL', null, false);
+            else renderItemCards();
+        };
+        itemsRow.insertBefore(btnAll, itemsRow.firstChild);
+        itemPanelEl.appendChild(itemsRow);
+        return;
+    }
 
-    if (currentFile === 'files') return; // Specific iteration bypass
+    if (!currentConfig) {
+        itemPanelEl.appendChild(itemsRow);
+        return;
+    }
 
-    let itemsToIterate = currentFile === 'schema' ? (currentConfig.tables || {}) : currentFile === 'dashboard' ? (currentConfig.widgets || []) : currentFile === 'workflows' ? (currentConfig.workflows || []) : (currentConfig.sources || []);
+    // Calendar sources: tab bar with up/down reorder buttons
+    let itemsToIterate = (currentConfig.sources || []);
     const isArray = Array.isArray(itemsToIterate);
     const keys = isArray ? itemsToIterate.map((_, i) => i) : Object.keys(itemsToIterate);
 
     keys.forEach((key, index) => {
         const item = itemsToIterate[key];
-        const li = document.createElement('li');
-        li.style.display = 'flex'; li.style.justifyContent = 'space-between'; li.style.alignItems = 'center';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'item-btn-wrapper';
 
-        const textSpan = document.createElement('span');
-        textSpan.textContent = currentFile === 'schema' ? (item.display_name || key) : currentFile === 'dashboard' ? (item.title || `Widget ${key}`) : currentFile === 'workflows' ? (item.title || `Workflow ${key}`) : (item.table || `Source ${key}`);
-        li.appendChild(textSpan);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'item-btn' + (String(currentItemKey) === String(key) ? ' active' : '');
+        btn.textContent = currentFile === 'workflows' ? (item.title || `Workflow ${key}`) : (item.table || `Source ${key}`);
+        btn.onclick = () => { currentItemKey = key; renderSidebar(); renderEditor(key, item, isArray); };
+        wrapper.appendChild(btn);
 
-        const controls = document.createElement('div');
         const btnUp = document.createElement('button');
-        btnUp.innerHTML = '^'; btnUp.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; padding:0 2px;';
-        if (index === 0) { btnUp.disabled = true; btnUp.style.opacity = '0.3'; btnUp.style.cursor = 'default'; }
+        btnUp.type = 'button';
+        btnUp.className = 'item-order-btn';
+        btnUp.textContent = '^';
+        btnUp.disabled = index === 0;
         btnUp.onclick = (e) => {
             e.stopPropagation();
-            if (isArray) {
-                moveArrayItem(itemsToIterate, key, -1);
-                if (currentItemKey === key) currentItemKey = key - 1; else if (currentItemKey === key - 1) currentItemKey = key;
-            } else { currentConfig.tables = moveObjectKey(itemsToIterate, key, -1); }
+            moveArrayItem(itemsToIterate, key, -1);
+            if (currentItemKey === key) currentItemKey = key - 1; else if (currentItemKey === key - 1) currentItemKey = key;
             markDirty();
             renderSidebar();
         };
 
         const btnDown = document.createElement('button');
-        btnDown.innerHTML = 'v'; btnDown.style.cssText = 'background:none; border:none; cursor:pointer; font-size:14px; padding:0 2px;';
-        if (index === keys.length - 1) { btnDown.disabled = true; btnDown.style.opacity = '0.3'; btnDown.style.cursor = 'default'; }
+        btnDown.type = 'button';
+        btnDown.className = 'item-order-btn';
+        btnDown.textContent = 'v';
+        btnDown.disabled = index === keys.length - 1;
         btnDown.onclick = (e) => {
             e.stopPropagation();
-            if (isArray) {
-                moveArrayItem(itemsToIterate, key, 1);
-                if (currentItemKey === key) currentItemKey = key + 1; else if (currentItemKey === key + 1) currentItemKey = key;
-            } else { currentConfig.tables = moveObjectKey(itemsToIterate, key, 1); }
+            moveArrayItem(itemsToIterate, key, 1);
+            if (currentItemKey === key) currentItemKey = key + 1; else if (currentItemKey === key + 1) currentItemKey = key;
             markDirty();
             renderSidebar();
         };
 
-        controls.appendChild(btnUp); controls.appendChild(btnDown); li.appendChild(controls);
-
-        if (String(currentItemKey) === String(key)) li.classList.add('active');
-
-        li.onclick = () => { currentItemKey = key; renderSidebar(); renderEditor(key, item, isArray); };
-        itemListEl.appendChild(li);
+        wrapper.appendChild(btnUp);
+        wrapper.appendChild(btnDown);
+        itemsRow.appendChild(wrapper);
     });
+
+    itemPanelEl.appendChild(itemsRow);
+}
+
+// ── Card-based item list (schema / dashboard / calendar) ─────────────────────
+
+function renderItemCards() {
+    workspaceEl.innerHTML = '';
+    btnSave.style.display = 'inline-block';
+
+    if (!currentConfig) return;
+
+    const isSchema    = currentFile === 'schema';
+    const isDashboard = currentFile === 'dashboard';
+    const isWorkflows = currentFile === 'workflows';
+
+    const rawItems    = isSchema    ? (currentConfig.tables    || {})
+                      : isDashboard ? (currentConfig.widgets   || [])
+                      : isWorkflows ? (currentConfig.workflows || [])
+                      : (currentConfig.sources || []);
+    const isArray     = Array.isArray(rawItems);
+
+    function getKeys(items) {
+        return isArray ? items.map((_, i) => i) : Object.keys(items);
+    }
+
+    const list = document.createElement('div');
+    list.style.cssText = 'display:flex; flex-direction:column; gap:8px; max-width:900px;';
+    workspaceEl.appendChild(list);
+
+    function redraw() {
+        const fresh    = isSchema    ? (currentConfig.tables    || {})
+                       : isDashboard ? (currentConfig.widgets   || [])
+                       : isWorkflows ? (currentConfig.workflows || [])
+                       : (currentConfig.sources || []);
+        const freshKeys = getKeys(fresh);
+        list.innerHTML = '';
+        if (freshKeys.length === 0) {
+            const empty = document.createElement('p');
+            empty.style.cssText = 'color:var(--muted); text-align:center; padding:40px;';
+            empty.textContent = isSchema    ? 'No tables defined. Use "Sync DB Tables" to get started.'
+                              : isDashboard ? 'No widgets yet. Click "+ Add New Widget".'
+                              : isWorkflows ? 'No workflows yet. Click "+ Add New Workflow".'
+                              : 'No sources yet. Click "+ Add New Source".';
+            list.appendChild(empty);
+            return;
+        }
+        freshKeys.forEach((k, idx) =>
+            list.appendChild(buildItemCard(k, fresh[k], idx, freshKeys.length, isArray, fresh, redraw))
+        );
+    }
+
+    redraw();
+}
+
+function buildItemCard(key, item, index, total, isArray, itemsRef, redraw) {
+    const isSchema    = currentFile === 'schema';
+    const isDashboard = currentFile === 'dashboard';
+    const isWorkflows = currentFile === 'workflows';
+
+    const card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;';
+
+    // ── Header ───────────────────────────────────────────────────────────────
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--panel); cursor:pointer;';
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.textContent = '▶';
+    toggleBtn.style.cssText = 'background:none; border:none; font-size:11px; cursor:pointer; color:var(--muted); padding:0 2px; flex-shrink:0; line-height:1; box-shadow:none;';
+
+    const nameSpan = document.createElement('strong');
+    nameSpan.style.cssText = 'font-size:14px; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+    nameSpan.textContent = isSchema    ? (item.display_name || key)
+                         : isDashboard ? (item.title || `Widget ${key}`)
+                         : isWorkflows ? (item.title || `Workflow ${key}`)
+                         : (item.table || `Source ${key}`);
+
+    hdr.appendChild(toggleBtn);
+    hdr.appendChild(nameSpan);
+
+    if (isSchema) {
+        const keySpan = document.createElement('span');
+        keySpan.style.cssText = 'font-size:11px; color:var(--muted); font-family:monospace; flex-shrink:0;';
+        keySpan.textContent = `(${key})`;
+        hdr.appendChild(keySpan);
+    }
+
+    const btnUp = document.createElement('button');
+    btnUp.type = 'button';
+    btnUp.title = 'Move up';
+    btnUp.textContent = '▲';
+    btnUp.style.cssText = 'background:none; border:none; cursor:pointer; font-size:11px; padding:2px 5px; color:var(--muted); flex-shrink:0; box-shadow:none;';
+    if (index === 0) { btnUp.disabled = true; btnUp.style.opacity = '0.3'; }
+    btnUp.onclick = e => {
+        e.stopPropagation();
+        if (isArray) moveArrayItem(itemsRef, key, -1);
+        else currentConfig.tables = moveObjectKey(itemsRef, key, -1);
+        markDirty();
+        redraw();
+    };
+
+    const btnDown = document.createElement('button');
+    btnDown.type = 'button';
+    btnDown.title = 'Move down';
+    btnDown.textContent = '▼';
+    btnDown.style.cssText = 'background:none; border:none; cursor:pointer; font-size:11px; padding:2px 5px; color:var(--muted); flex-shrink:0; box-shadow:none;';
+    if (index === total - 1) { btnDown.disabled = true; btnDown.style.opacity = '0.3'; }
+    btnDown.onclick = e => {
+        e.stopPropagation();
+        if (isArray) moveArrayItem(itemsRef, key, 1);
+        else currentConfig.tables = moveObjectKey(itemsRef, key, 1);
+        markDirty();
+        redraw();
+    };
+
+    // Delete — all card tabs except schema (which has its own delete button inside the editor)
+    if (!isSchema) {
+        const btnDel = document.createElement('button');
+        btnDel.type = 'button';
+        btnDel.title = 'Delete';
+        btnDel.textContent = '✕';
+        btnDel.style.cssText = 'background:none; border:none; cursor:pointer; font-size:13px; padding:2px 5px; color:var(--danger); flex-shrink:0; box-shadow:none;';
+        btnDel.onclick = e => {
+            e.stopPropagation();
+            const label = isDashboard ? (item.title || `Widget ${key}`)
+                        : isWorkflows ? (item.title || `Workflow ${key}`)
+                        : (item.table || `Source ${key}`);
+            if (!confirm(`Delete "${label}"?`)) return;
+            if (isDashboard)      currentConfig.widgets.splice(key, 1);
+            else if (isWorkflows) currentConfig.workflows.splice(key, 1);
+            else                  currentConfig.sources.splice(key, 1);
+            markDirty();
+            redraw();
+        };
+        hdr.appendChild(btnUp);
+        hdr.appendChild(btnDown);
+        hdr.appendChild(btnDel);
+    } else {
+        hdr.appendChild(btnUp);
+        hdr.appendChild(btnDown);
+    }
+
+    card.appendChild(hdr);
+
+    // ── Body ─────────────────────────────────────────────────────────────────
+    const body = document.createElement('div');
+    body.style.cssText = 'display:none; padding:20px; border-top:1px solid var(--border);';
+    card.appendChild(body);
+
+    let rendered = false;
+
+    function openCard() {
+        body.style.display = 'block';
+        toggleBtn.textContent = '▼';
+        hdr.style.borderBottom = 'none';
+        if (!rendered) {
+            rendered = true;
+            renderEditorIntoCard(key, item, isArray, body, nameSpan, redraw);
+        }
+    }
+
+    function closeCard() {
+        body.style.display = 'none';
+        toggleBtn.textContent = '▶';
+    }
+
+    toggleBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        body.style.display === 'block' ? closeCard() : openCard();
+    });
+
+    hdr.addEventListener('click', () => {
+        body.style.display === 'block' ? closeCard() : openCard();
+    });
+
+    return card;
+}
+
+function renderEditorIntoCard(key, item, isArray, bodyEl, nameSpan, redraw) {
+    const isSchema    = currentFile === 'schema';
+    const isDashboard = currentFile === 'dashboard';
+    const isWorkflows = currentFile === 'workflows';
+
+    const cardCtx = {
+        workspaceEl: bodyEl,
+        currentConfig,
+        getTableOptions,
+        getColumnOptionsForTable,
+        renderEditor: (k, d, arr) => {
+            bodyEl.innerHTML = '';
+            renderEditorIntoCard(k, d, arr !== undefined ? arr : isArray, bodyEl, nameSpan, redraw);
+        },
+        renderSidebar: isSchema
+            ? redraw
+            : () => {
+                nameSpan.textContent = isDashboard ? (item.title || `Widget ${key}`)
+                                     : isWorkflows ? (item.title || `Workflow ${key}`)
+                                     : (item.table || `Source ${key}`);
+            },
+    };
+
+    if (isSchema)         renderSchemaEditor(key, item, cardCtx);
+    else if (isDashboard) renderDashboardEditor(key, item, isArray, cardCtx);
+    else if (isWorkflows) renderWorkflowsEditor(key, item, isArray, cardCtx);
+    else                  renderCalendarEditor(key, item, isArray, cardCtx);
 }
 
 function renderEditor(key, itemData, isArray) {
     workspaceEl.innerHTML = '';
     const ctx = { workspaceEl, currentConfig, getTableOptions, getColumnOptionsForTable, renderEditor, renderSidebar };
     
-    if (['overview', 'health', 'docs', 'users', 'backup', 'menu', 'audit', 'add_table', 'migrations', 'performance', 'cron', 'm2m', 'erd', 'demo', 'settings', 'csv_import', 'rag'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
+    if (['overview', 'health', 'docs', 'users', 'backup', 'menu', 'audit', 'add_table', 'migrations', 'performance', 'cron', 'm2m', 'erd', 'demo', 'settings', 'csv_import', 'rag', 'automations'].includes(currentFile) || (currentFile === 'files' && key === 'MANAGER')) {
         btnSave.style.display = 'none';
     } else {
         btnSave.style.display = 'inline-block';
@@ -602,7 +729,16 @@ function renderEditor(key, itemData, isArray) {
     if (currentFile === 'settings') return renderSettingsPage(ctx);
     if (currentFile === 'csv_import') return renderCsvImportPage(ctx);
     if (currentFile === 'rag') return renderRagPage(ctx);
-    if (currentFile === 'automations') return renderAutomationsPage(ctx);
+    if (currentFile === 'automations') {
+        if (key === 'LAYOUT') {
+            const msg = document.createElement('p');
+            msg.style.cssText = 'color:var(--muted); padding:20px;';
+            msg.textContent = 'Automations have no global configuration settings.';
+            workspaceEl.appendChild(msg);
+            return;
+        }
+        return renderAutomationsPage(ctx);
+    }
     if (currentFile === 'views') return renderViewsEditor(ctx);
     if (currentFile === 'files' && key === 'MANAGER') return renderFilesEditor(ctx);
 

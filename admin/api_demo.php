@@ -157,6 +157,51 @@ if ($action === 'demo_install') {
         }
         file_put_contents($viewsPath, json_encode($viewsCfg, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
+        // files.json — merge demo relations if provided
+        if (!empty($demoData['files_relations']) && is_array($demoData['files_relations'])) {
+            $filesPath = $configDir . '/files.json';
+            $filesCfg  = file_exists($filesPath) ? (json_decode(file_get_contents($filesPath), true) ?? []) : [];
+            if (!isset($filesCfg['menu_name'])) {
+                $filesCfg['menu_name'] = 'Files';
+            }
+            if (!isset($filesCfg['menu_icon'])) {
+                $filesCfg['menu_icon'] = 'assets/icons/upload.png';
+            }
+            if (!isset($filesCfg['max_file_size_mb'])) {
+                $filesCfg['max_file_size_mb'] = 20;
+            }
+            if (!isset($filesCfg['storage_path'])) {
+                $filesCfg['storage_path'] = 'storage/files/';
+            }
+            if (!isset($filesCfg['allowed_types']) || !is_array($filesCfg['allowed_types'])) {
+                $filesCfg['allowed_types'] = ['image', 'spreadsheet', 'archive', 'other'];
+            }
+            if (!isset($filesCfg['allowed_extensions']) || !is_array($filesCfg['allowed_extensions'])) {
+                $filesCfg['allowed_extensions'] = [
+                    'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf',
+                    'doc', 'docx', 'odt', 'rtf',
+                    'xls', 'xlsx', 'ods', 'csv',
+                    'zip', 'tar', 'gz',
+                ];
+            }
+            if (!isset($filesCfg['public_access'])) {
+                $filesCfg['public_access'] = false;
+            }
+            if (!isset($filesCfg['virus_scan'])) {
+                $filesCfg['virus_scan'] = false;
+            }
+            if (!isset($filesCfg['relations']) || !is_array($filesCfg['relations'])) {
+                $filesCfg['relations'] = [];
+            }
+            $existingTables = array_column($filesCfg['relations'], 'table');
+            foreach ($demoData['files_relations'] as $rel) {
+                if (!in_array($rel['table'] ?? '', $existingTables, true)) {
+                    $filesCfg['relations'][] = $rel;
+                }
+            }
+            file_put_contents($filesPath, json_encode($filesCfg, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        }
+
         // menu.json — apply nested menu layout from demo definition
         $menuKeys = [];
         if (!empty($demoData['menu_items']) && is_array($demoData['menu_items'])) {

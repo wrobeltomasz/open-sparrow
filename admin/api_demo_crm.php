@@ -781,5 +781,10 @@ function demo_def_crm($conn): array
             ['key' => 'assets'],
             ['key' => 'activities'],
         ],
+        'files_relations' => [
+            ['table' => 'companies', 'col1' => 'name', 'col2' => ''],
+            ['table' => 'deals',     'col1' => 'name', 'col2' => ''],
+            ['table' => 'contacts',  'col1' => 'name', 'col2' => ''],
+        ],
     ];
 }

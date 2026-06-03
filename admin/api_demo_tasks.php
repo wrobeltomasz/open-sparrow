@@ -199,5 +199,10 @@ function demo_def_tasks($conn): array
             ]],
             ['key' => 'time_logs'],
         ],
+        'files_relations' => [
+            ['table' => 'projects',  'col1' => 'name', 'col2' => ''],
+            ['table' => 'tasks',     'col1' => 'name', 'col2' => ''],
+            ['table' => 'milestones','col1' => 'name', 'col2' => ''],
+        ],
     ];
 }

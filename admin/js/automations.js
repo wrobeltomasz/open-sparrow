@@ -578,6 +578,9 @@ function renderCreateRecordBody(bodyEl, action, tableOptions, getColumns) {
     renderSetRows();
 }
 
+// ── Shared action handle (set by renderAutomationsPage, used by item panel) ────
+export const autoActions = { openNew: null };
+
 // ── Main page ─────────────────────────────────────────────────────
 export async function renderAutomationsPage(ctx) {
     const { workspaceEl } = ctx;
@@ -593,11 +596,7 @@ export async function renderAutomationsPage(ctx) {
     const h2 = document.createElement('h2');
     h2.textContent = 'Automations';
     h2.style.margin = '0';
-    const btnNew = document.createElement('button');
-    btnNew.className = 'btn btn-primary';
-    btnNew.textContent = '+ New Automation';
     hdr.appendChild(h2);
-    hdr.appendChild(btnNew);
     wrap.appendChild(hdr);
 
     // ── Panels ──────────────────────────────────────────────────
@@ -665,75 +664,94 @@ export async function renderAutomationsPage(ctx) {
             return;
         }
 
-        const tbl = document.createElement('table');
-        tbl.className = 'adm-tbl';
-        tbl.style.width = '100%';
+        const cardList = document.createElement('div');
+        cardList.style.cssText = 'display:flex; flex-direction:column; gap:8px; max-width:900px;';
 
-        const thead = document.createElement('thead');
-        thead.innerHTML = `<tr>
-            <th class="adm-th">Name</th>
-            <th class="adm-th">Table</th>
-            <th class="adm-th">Event</th>
-            <th class="adm-th">Status</th>
-            <th class="adm-th" style="width:190px"></th>
-        </tr>`;
-        tbl.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
         for (const rule of rules) {
-            const tr = document.createElement('tr');
+            const card = document.createElement('div');
+            card.style.cssText = 'border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;';
 
-            const tdName = document.createElement('td');
-            tdName.className = 'adm-td';
-            tdName.textContent = rule.name;
+            // Header
+            const hdr = document.createElement('div');
+            hdr.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--panel); cursor:pointer;';
 
-            const tdTable = document.createElement('td');
-            tdTable.className = 'adm-td';
-            tdTable.textContent = schemaObj[rule.trigger_table]?.display_name || rule.trigger_table;
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.textContent = '▶';
+            toggleBtn.style.cssText = 'background:none; border:none; font-size:11px; cursor:pointer; color:var(--muted); padding:0 2px; flex-shrink:0; line-height:1; box-shadow:none;';
 
-            const tdEvent = document.createElement('td');
-            tdEvent.className = 'adm-td';
-            tdEvent.textContent = AUTO_EVENTS.find(e => e.value === rule.trigger_event)?.label ?? rule.trigger_event;
+            const nameSpan = document.createElement('strong');
+            nameSpan.style.cssText = 'font-size:14px; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+            nameSpan.textContent = rule.name;
 
-            const tdStatus = document.createElement('td');
-            tdStatus.className = 'adm-td';
+            const tableMeta = document.createElement('span');
+            tableMeta.style.cssText = 'font-size:12px; color:var(--muted); flex-shrink:0;';
+            tableMeta.textContent = (schemaObj[rule.trigger_table]?.display_name || rule.trigger_table)
+                + ' · ' + (AUTO_EVENTS.find(e => e.value === rule.trigger_event)?.label ?? rule.trigger_event);
+
             const badge = document.createElement('span');
             badge.className = rule.enabled ? 'adm-badge adm-badge-ok' : 'adm-badge adm-badge-muted';
             badge.textContent = rule.enabled ? 'Active' : 'Disabled';
-            tdStatus.appendChild(badge);
-
-            const tdActions = document.createElement('td');
-            tdActions.className = 'adm-td';
-            tdActions.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;';
-
-            const btnEdit = document.createElement('button');
-            btnEdit.className = 'btn btn-sm';
-            btnEdit.textContent = 'Edit';
-            btnEdit.addEventListener('click', () => openForm(rule));
+            badge.style.flexShrink = '0';
 
             const btnHist = document.createElement('button');
+            btnHist.type = 'button';
             btnHist.className = 'btn btn-sm';
             btnHist.textContent = 'History';
-            btnHist.addEventListener('click', () => showRunHistory(rule));
+            btnHist.style.flexShrink = '0';
+            btnHist.addEventListener('click', e => { e.stopPropagation(); showRunHistory(rule); });
 
             const btnDel = document.createElement('button');
-            btnDel.className = 'btn btn-sm btn-danger';
-            btnDel.textContent = 'Delete';
-            btnDel.addEventListener('click', () => deleteRule(rule.id, btnDel));
+            btnDel.type = 'button';
+            btnDel.title = 'Delete';
+            btnDel.textContent = '✕';
+            btnDel.style.cssText = 'background:none; border:none; cursor:pointer; font-size:13px; padding:2px 5px; color:var(--danger); flex-shrink:0; box-shadow:none;';
+            btnDel.addEventListener('click', e => { e.stopPropagation(); deleteRule(rule.id, btnDel); });
 
-            tdActions.appendChild(btnEdit);
-            tdActions.appendChild(btnHist);
-            tdActions.appendChild(btnDel);
+            hdr.appendChild(toggleBtn);
+            hdr.appendChild(nameSpan);
+            hdr.appendChild(tableMeta);
+            hdr.appendChild(badge);
+            hdr.appendChild(btnHist);
+            hdr.appendChild(btnDel);
+            card.appendChild(hdr);
 
-            tr.appendChild(tdName);
-            tr.appendChild(tdTable);
-            tr.appendChild(tdEvent);
-            tr.appendChild(tdStatus);
-            tr.appendChild(tdActions);
-            tbody.appendChild(tr);
+            // Body (lazy render)
+            const body = document.createElement('div');
+            body.style.cssText = 'display:none; padding:20px; border-top:1px solid var(--border);';
+            card.appendChild(body);
+
+            let rendered = false;
+
+            function openCard() {
+                body.style.display = 'block';
+                toggleBtn.textContent = '▼';
+                if (!rendered) {
+                    rendered = true;
+                    buildFormContent(body, rule, async () => {
+                        body.style.display = 'none';
+                        toggleBtn.textContent = '▶';
+                        rendered = false;
+                        await loadList();
+                    }, () => {
+                        body.style.display = 'none';
+                        toggleBtn.textContent = '▶';
+                    });
+                }
+            }
+
+            toggleBtn.addEventListener('click', e => {
+                e.stopPropagation();
+                body.style.display === 'block' ? (body.style.display = 'none', toggleBtn.textContent = '▶') : openCard();
+            });
+            hdr.addEventListener('click', () => {
+                body.style.display === 'block' ? (body.style.display = 'none', toggleBtn.textContent = '▶') : openCard();
+            });
+
+            cardList.appendChild(card);
         }
-        tbl.appendChild(tbody);
-        listWrap.appendChild(tbl);
+
+        listWrap.appendChild(cardList);
     }
 
     // ── Run History panel ────────────────────────────────────────
@@ -863,12 +881,9 @@ export async function renderAutomationsPage(ctx) {
         }
     }
 
-    // ── Form ─────────────────────────────────────────────────────
-    function openForm(rule = null) {
-        editingId = rule ? rule.id : null;
-        formWrap.style.display = '';
-        formWrap.innerHTML = '';
-        listWrap.style.display = 'none';
+    // ── Form content builder ─────────────────────────────────────
+    function buildFormContent(containerEl, rule, onSaved, onCancel) {
+        const currentId = rule ? rule.id : null;
 
         const parsed = rule ? {
             name:          rule.name,
@@ -890,20 +905,8 @@ export async function renderAutomationsPage(ctx) {
             actions:       [],
         };
 
-        const card = document.createElement('div');
-        card.style.cssText = 'border:1px solid var(--border);border-radius:8px;overflow:hidden;';
-
-        const cardHdr = document.createElement('div');
-        cardHdr.style.cssText = 'padding:14px 18px;background:var(--bg);border-bottom:1px solid var(--border);';
-        const cardTitle = document.createElement('h3');
-        cardTitle.textContent = editingId ? 'Edit Automation' : 'New Automation';
-        cardTitle.style.margin = '0';
-        cardHdr.appendChild(cardTitle);
-        card.appendChild(cardHdr);
-
         const cardBody = document.createElement('div');
-        cardBody.style.cssText = 'padding:18px;display:flex;flex-direction:column;gap:16px;';
-        card.appendChild(cardBody);
+        cardBody.style.cssText = 'display:flex;flex-direction:column;gap:16px;';
 
         // ── Name ─────────────────────────────────────────────────
         cardBody.appendChild(autoField('Name', () => {
@@ -968,20 +971,54 @@ export async function renderAutomationsPage(ctx) {
 
         const btnSave = document.createElement('button');
         btnSave.className   = 'btn btn-primary';
-        btnSave.textContent = editingId ? 'Save Changes' : 'Create Automation';
+        btnSave.textContent = currentId ? 'Save Changes' : 'Create Automation';
 
         const btnCancel = document.createElement('button');
         btnCancel.className   = 'btn';
         btnCancel.textContent = 'Cancel';
-        btnCancel.addEventListener('click', closeForm);
+        btnCancel.addEventListener('click', onCancel);
 
-        btnSave.addEventListener('click', () => saveRule(parsed, btnSave));
+        btnSave.addEventListener('click', async () => {
+            if (!parsed.name.trim()) { autoStatusPill(btnSave, 'Name is required', 'error'); return; }
+            if (!parsed.trigger_table) { autoStatusPill(btnSave, 'Select a trigger table', 'error'); return; }
+            const payload = {
+                id: currentId ?? null,
+                name: parsed.name.trim(),
+                enabled: parsed.enabled,
+                trigger_table: parsed.trigger_table,
+                trigger_event: parsed.trigger_event,
+                conditions: parsed.conditions,
+                actions: parsed.actions,
+            };
+            try {
+                const r    = await fetch('api.php?action=automations_save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': autoCsrf() },
+                    body: JSON.stringify(payload),
+                });
+                const data = await r.json();
+                if (data.ok) { await onSaved(); }
+                else { autoStatusPill(btnSave, data.error || 'Save failed', 'error'); }
+            } catch (_) { autoStatusPill(btnSave, 'Request failed', 'error'); }
+        });
 
         btnRow.appendChild(btnSave);
         btnRow.appendChild(btnCancel);
         cardBody.appendChild(btnRow);
 
-        formWrap.appendChild(card);
+        containerEl.appendChild(cardBody);
+    }
+
+    // ── Form panel (New Automation) ──────────────────────────────
+    function openForm(rule = null) {
+        editingId = rule ? rule.id : null;
+        formWrap.style.display = '';
+        formWrap.innerHTML = '';
+        listWrap.style.display = 'none';
+        buildFormContent(formWrap, rule, async () => {
+            closeForm();
+            await loadList();
+        }, closeForm);
     }
 
     function closeForm() {
@@ -989,48 +1026,6 @@ export async function renderAutomationsPage(ctx) {
         formWrap.innerHTML     = '';
         listWrap.style.display = '';
         editingId              = null;
-    }
-
-    // ── Save ─────────────────────────────────────────────────────
-    async function saveRule(parsed, btn) {
-        if (!parsed.name.trim()) {
-            autoStatusPill(btn, 'Name is required', 'error');
-            return;
-        }
-        if (!parsed.trigger_table) {
-            autoStatusPill(btn, 'Select a trigger table', 'error');
-            return;
-        }
-
-        const payload = {
-            id:            editingId ?? null,
-            name:          parsed.name.trim(),
-            enabled:       parsed.enabled,
-            trigger_table: parsed.trigger_table,
-            trigger_event: parsed.trigger_event,
-            conditions:    parsed.conditions,
-            actions:       parsed.actions,
-        };
-
-        try {
-            const r    = await fetch('api.php?action=automations_save', {
-                method:  'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': autoCsrf(),
-                },
-                body: JSON.stringify(payload),
-            });
-            const data = await r.json();
-            if (data.ok) {
-                closeForm();
-                await loadList();
-            } else {
-                autoStatusPill(btn, data.error || 'Save failed', 'error');
-            }
-        } catch (_) {
-            autoStatusPill(btn, 'Request failed', 'error');
-        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────
@@ -1054,7 +1049,7 @@ export async function renderAutomationsPage(ctx) {
         return wrap;
     }
 
-    btnNew.addEventListener('click', () => openForm(null));
+    autoActions.openNew = openForm;
 
     await loadList();
 }

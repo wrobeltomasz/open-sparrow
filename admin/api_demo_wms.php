@@ -425,5 +425,11 @@ function demo_def_wms($conn): array
                 ['key' => 'shipments'],
             ]],
         ],
+        'files_relations' => [
+            ['table' => 'products',        'col1' => 'name', 'col2' => ''],
+            ['table' => 'suppliers',       'col1' => 'name', 'col2' => ''],
+            ['table' => 'purchase_orders', 'col1' => 'name', 'col2' => ''],
+            ['table' => 'shipments',       'col1' => 'name', 'col2' => ''],
+        ],
     ];
 }

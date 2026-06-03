@@ -144,17 +144,21 @@ if (empty($_SESSION['csrf_token'])) {
                     <span class="nav-chevron">▼</span>
                 </div>
                 <div class="nav-section-items">
-                    <button class="admin-tab" data-file="schema">
-                        <img class="nav-item-icon" src="../assets/icons/data_table.png" alt="">
-                        Schema
-                    </button>
-                    <button class="admin-tab" data-file="dashboard">
-                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
-                        Dashboard
+                    <button class="admin-tab" data-file="add_table">
+                        <img class="nav-item-icon" src="../assets/icons/build.png" alt="">
+                        Add Table
                     </button>
                     <button class="admin-tab" data-file="calendar">
                         <img class="nav-item-icon" src="../assets/icons/manage_history.png" alt="">
                         Calendar
+                    </button>
+                    <button class="admin-tab" data-file="csv_import">
+                        <img class="nav-item-icon" src="../assets/icons/upload.png" alt="">
+                        CSV Import
+                    </button>
+                    <button class="admin-tab" data-file="dashboard">
+                        <img class="nav-item-icon" src="../assets/icons/ballot.png" alt="">
+                        Dashboard
                     </button>
                     <button class="admin-tab" data-file="files">
                         <img class="nav-item-icon" src="../assets/icons/upload.png" alt="">
@@ -164,13 +168,9 @@ if (empty($_SESSION['csrf_token'])) {
                         <img class="nav-item-icon" src="../assets/icons/table_edit.png" alt="">
                         Menu Preview
                     </button>
-                    <button class="admin-tab" data-file="add_table">
-                        <img class="nav-item-icon" src="../assets/icons/build.png" alt="">
-                        Add Table
-                    </button>
-                    <button class="admin-tab" data-file="csv_import">
-                        <img class="nav-item-icon" src="../assets/icons/upload.png" alt="">
-                        CSV Import
+                    <button class="admin-tab" data-file="schema">
+                        <img class="nav-item-icon" src="../assets/icons/data_table.png" alt="">
+                        Schema
                     </button>
                     <button class="admin-tab" data-file="erd">
                         <img class="nav-item-icon" src="../assets/icons/account_tree.png" alt="">
@@ -191,13 +191,13 @@ if (empty($_SESSION['csrf_token'])) {
                     <span class="nav-chevron">▼</span>
                 </div>
                 <div class="nav-section-items">
-                    <button class="admin-tab" data-file="workflows">
-                        <img class="nav-item-icon" src="../assets/icons/build.png" alt="">
-                        Workflow Manager
-                    </button>
                     <button class="admin-tab" data-file="automations">
                         <img class="nav-item-icon" src="../assets/icons/automation.png" alt="">
                         Automations
+                    </button>
+                    <button class="admin-tab" data-file="workflows">
+                        <img class="nav-item-icon" src="../assets/icons/build.png" alt="">
+                        Workflow Manager
                     </button>
                 </div>
             </div>
@@ -225,29 +225,33 @@ if (empty($_SESSION['csrf_token'])) {
                     <span class="nav-chevron">▼</span>
                 </div>
                 <div class="nav-section-items">
-                    <button class="admin-tab" data-file="database">
-                        <img class="nav-item-icon" src="../assets/icons/database.png" alt="">
-                        Database
-                    </button>
-                    <button class="admin-tab" data-file="users">
-                        <img class="nav-item-icon" src="../assets/icons/user_attributes.png" alt="">
-                        Users
-                    </button>
-                    <button class="admin-tab" data-file="health">
-                        <img class="nav-item-icon" src="../assets/icons/health_and_safety.png" alt="">
-                        Health Check
+                    <button class="admin-tab" data-file="audit">
+                        <img class="nav-item-icon" src="../assets/icons/fact_check.png" alt="">
+                        Audit &amp; Snapshots
                     </button>
                     <button class="admin-tab" data-file="backup">
                         <img class="nav-item-icon" src="../assets/icons/inventory.png" alt="">
                         Backup Tables
                     </button>
-                    <button class="admin-tab" data-file="settings">
+                    <button class="admin-tab" data-file="cron">
                         <img class="nav-item-icon" src="../assets/icons/manage_history.png" alt="">
-                        Settings
+                        Cron Notifications
                     </button>
-                    <button class="admin-tab" data-file="audit">
-                        <img class="nav-item-icon" src="../assets/icons/fact_check.png" alt="">
-                        Audit &amp; Snapshots
+                    <button class="admin-tab" data-file="database">
+                        <img class="nav-item-icon" src="../assets/icons/database.png" alt="">
+                        Database
+                    </button>
+                    <button class="admin-tab" data-file="demo">
+                        <img class="nav-item-icon" src="../assets/icons/playground.png" alt="">
+                        Demo Systems
+                    </button>
+                    <button class="admin-tab" data-file="health">
+                        <img class="nav-item-icon" src="../assets/icons/health_and_safety.png" alt="">
+                        Health Check
+                    </button>
+                    <button class="admin-tab" data-file="m2m">
+                        <img class="nav-item-icon" src="../assets/icons/account_tree.png" alt="">
+                        M2M Builder
                     </button>
                     <button class="admin-tab" data-file="migrations">
                         <img class="nav-item-icon" src="../assets/icons/database.png" alt="">
@@ -257,17 +261,13 @@ if (empty($_SESSION['csrf_token'])) {
                         <img class="nav-item-icon" src="../assets/icons/health_and_safety.png" alt="">
                         Performance
                     </button>
-                    <button class="admin-tab" data-file="cron">
+                    <button class="admin-tab" data-file="settings">
                         <img class="nav-item-icon" src="../assets/icons/manage_history.png" alt="">
-                        Cron Notifications
+                        Settings
                     </button>
-                    <button class="admin-tab" data-file="m2m">
-                        <img class="nav-item-icon" src="../assets/icons/account_tree.png" alt="">
-                        M2M Builder
-                    </button>
-                    <button class="admin-tab" data-file="demo">
-                        <img class="nav-item-icon" src="../assets/icons/playground.png" alt="">
-                        Demo Systems
+                    <button class="admin-tab" data-file="users">
+                        <img class="nav-item-icon" src="../assets/icons/user_attributes.png" alt="">
+                        Users
                     </button>
                 </div>
             </div>
@@ -311,20 +311,13 @@ if (empty($_SESSION['csrf_token'])) {
             <span class="breadcrumb-current" id="breadcrumbCurrent">Schema</span>
         </div>
 
-        <!-- Editor area: workspace + right item list sidebar -->
+        <!-- Editor area: workspace -->
         <div class="admin-content">
 
             <section class="admin-workspace" id="workspace">
+                <div id="itemPanel" class="admin-item-panel"></div>
                 <div id="editorForm"></div>
             </section>
-
-            <!-- Right sidebar edge collapse tab -->
-            <button class="sidebar-edge-toggle" id="sidebarEdgeToggle" title="Toggle item list" aria-label="Toggle item list">&#8250;</button>
-
-            <aside class="admin-sidebar" id="sidebar">
-                <h3 id="sidebarTitle">Tables</h3>
-                <ul id="itemList"></ul>
-            </aside>
 
         </div>
 
@@ -355,16 +348,6 @@ if (empty($_SESSION['csrf_token'])) {
         navEdgeToggle.innerHTML = collapsed ? '&#8250;' : '&#8249;';
     }
     navEdgeToggle.addEventListener('click', toggleNav);
-
-    // Right sidebar collapse — edge tab
-    var sidebarEdgeToggle = document.getElementById('sidebarEdgeToggle');
-    var adminSidebar      = document.getElementById('sidebar');
-
-    function toggleSidebar() {
-        var collapsed = adminSidebar.classList.toggle('collapsed');
-        sidebarEdgeToggle.innerHTML = collapsed ? '&#8249;' : '&#8250;';
-    }
-    sidebarEdgeToggle.addEventListener('click', toggleSidebar);
 
     // Breadcrumb: update on tab click
     var breadcrumbLabels = {

@@ -34,9 +34,6 @@ export function renderDocumentation(ctx) {
     wrapper.appendChild(contentArea);
     
     workspaceEl.appendChild(wrapper);
-
-    // Update side navigation
-    updateSidebar(s, contentArea);
 }
 
 function createLanguageBar(currentLang, ctx) {
@@ -70,28 +67,6 @@ function createContentArea(s) {
     return content;
 }
 
-function updateSidebar(s, contentEl) {
-    const sidebarTitle = document.getElementById('sidebarTitle');
-    if (sidebarTitle) sidebarTitle.textContent = s.sidebarTitle;
-
-    const itemListEl = document.getElementById('itemList');
-    if (!itemListEl) return;
-
-    itemListEl.innerHTML = '';
-    
-    // Attach scroll events to headers
-    contentEl.querySelectorAll('h3[id]').forEach(h => {
-        const li = document.createElement('li');
-        li.textContent = h.textContent.trim();
-        li.style.cssText = 'cursor:pointer; font-size:12px; line-height:1.4; padding:5px 8px; border-radius:4px; color:#64748B;';
-        
-        li.addEventListener('mouseover', () => { li.style.background = '#DDEAF4'; li.style.color = '#1E293B'; });
-        li.addEventListener('mouseout',  () => { li.style.background = '';        li.style.color = '#64748B'; });
-        li.addEventListener('click', () => h.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-        
-        itemListEl.appendChild(li);
-    });
-}
 
 function buildContent(s) {
     return `<div>
