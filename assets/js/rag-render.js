@@ -116,6 +116,11 @@ export function renderAnswer(raw, opts = {}) {
         return '\x00I' + (inline.length - 1) + '\x00';
     });
 
+    // Swallow any remaining [View: ...] markers the model emitted in a malformed
+    // shape (missing id, a wildcard like ":*", an unknown table) so they never
+    // render as literal text. Code regions are already protected as placeholders.
+    s = s.replace(/\s*\[View:[^\]]*\]/g, '');
+
     if (!markdown) {
         return restoreInline(escHtml(s)).replace(/\n/g, '<br>');
     }

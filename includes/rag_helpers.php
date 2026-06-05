@@ -293,41 +293,47 @@ function rag_build_prompt(string $query, array $files, string $pageContext = '',
 
 function rag_extract_suggestions(string $response): array
 {
+    // The FOLLOW_UP marker can appear anywhere — including inline on the same line
+    // as the answer when the model ignores the "new line" instruction. Match it
+    // regardless of position so the block is ALWAYS stripped and never leaks into
+    // the visible answer, even when its payload is malformed.
+    if (!preg_match('/FOLLOW_UP:/', $response)) {
+        return ['answer' => trim($response), 'suggestions' => []];
+    }
+
+    // Everything before the first marker is the answer; everything after is the block.
+    [$answer, $block] = array_pad(preg_split('/FOLLOW_UP:/', $response, 2), 2, '');
+    $answer = trim((string) $answer);
+    $block  = trim((string) $block);
+
     $suggestions = [];
-    $answer      = $response;
 
-    // JSON array format: FOLLOW_UP: ["q1", "q2"]
-    if (preg_match('/(?:^|\n)FOLLOW_UP:\s*(\[.*?\])\s*$/s', $response, $m)) {
-        $parsed = json_decode($m[1], true);
+    if (preg_match('/\[.*\]/s', $block, $m)) {
+        // Preferred format: a JSON array — FOLLOW_UP: ["q1", "q2"]
+        $parsed = json_decode($m[0], true);
         if (is_array($parsed)) {
-            $suggestions = array_slice(
-                array_values(array_filter(
-                    array_map('trim', array_map('strval', $parsed)),
-                    fn($q) => $q !== ''
-                )),
-                0,
-                3
-            );
+            $suggestions = $parsed;
+        } elseif (preg_match_all('/"([^"]*)"/', $m[0], $qm)) {
+            // Malformed JSON (e.g. a stray quote): salvage the quoted strings.
+            $suggestions = $qm[1];
         }
-        $answer = trim(preg_replace('/\s*\nFOLLOW_UP:\s*\[.*?\]\s*$/s', '', $response));
-        return ['answer' => $answer, 'suggestions' => $suggestions];
+    } else {
+        // Plain text, bullet list, or numbered list fallback.
+        foreach (preg_split('/\r?\n/', $block) as $line) {
+            $suggestions[] = preg_replace('/^(?:[-*]|\d+[.)])\s*/', '', trim((string) $line));
+        }
     }
 
-    // Fallback: model returned FOLLOW_UP as plain text, bullet list, or numbered list.
-    // Strip the block from the answer unconditionally and try to recover suggestions.
-    if (preg_match('/\nFOLLOW_UP:([\s\S]*)$/s', $response, $m)) {
-        $block = trim((string) $m[1]);
-        if ($block !== '') {
-            foreach (preg_split('/\r?\n/', $block) as $line) {
-                $line = trim((string) preg_replace('/^[-*\d]+[.)]\s*/', '', trim((string) $line)));
-                if ($line !== '') {
-                    $suggestions[] = $line;
-                }
-            }
-        }
-        $answer      = trim(preg_replace('/\nFOLLOW_UP:[\s\S]*$/s', '', $response));
-        $suggestions = array_slice($suggestions, 0, 3);
-    }
+    // Keep only non-empty entries that contain at least one letter (drops salvage
+    // noise such as a lone ", " left behind by malformed JSON), capped at three.
+    $suggestions = array_slice(
+        array_values(array_filter(
+            array_map('trim', array_map('strval', $suggestions)),
+            fn($q) => $q !== '' && preg_match('/\p{L}/u', $q) === 1
+        )),
+        0,
+        3
+    );
 
     return ['answer' => $answer, 'suggestions' => $suggestions];
 }
