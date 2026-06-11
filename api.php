@@ -358,6 +358,19 @@ try {
             exit;
         }
 
+        // Accept optional year/month params so the frontend can request only the
+        // visible month. Fall back to the current month when omitted.
+        $reqYear  = filter_var($_GET['year']  ?? date('Y'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 9999]]);
+        $reqMonth = filter_var($_GET['month'] ?? date('n'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 12]]);
+        if ($reqYear  === false) {
+            $reqYear  = (int)date('Y');
+        }
+        if ($reqMonth === false) {
+            $reqMonth = (int)date('n');
+        }
+        $dateFrom = sprintf('%04d-%02d-01', $reqYear, $reqMonth);
+        $dateTo   = date('Y-m-t', mktime(0, 0, 0, $reqMonth, 1, $reqYear));
+
         $calJson = file_get_contents($calPath);
         $calendar = json_decode($calJson, true, 512, JSON_THROW_ON_ERROR);
         $events = [];
@@ -382,8 +395,15 @@ try {
                 $cols = column_list($tableCfg);
                 $selectCols = array_values(array_unique(array_merge([$idCol], $cols)));
                 $selectSql = implode(', ', array_map(fn($c) => pg_ident($c), $selectCols));
-                $sql = sprintf('SELECT %s FROM %s.%s WHERE %s IS NOT NULL', $selectSql, pg_ident($schemaName), pg_ident($table), pg_ident($dateCol));
-                $res = @pg_query($conn, $sql);
+                $sql = sprintf(
+                    'SELECT %s FROM %s.%s WHERE %s IS NOT NULL AND %s BETWEEN $1 AND $2',
+                    $selectSql,
+                    pg_ident($schemaName),
+                    pg_ident($table),
+                    pg_ident($dateCol),
+                    pg_ident($dateCol)
+                );
+                $res = @pg_query_params($conn, $sql, [$dateFrom, $dateTo]);
                 if ($res) {
                     $rows = [];
                     while ($r = pg_fetch_assoc($res)) {

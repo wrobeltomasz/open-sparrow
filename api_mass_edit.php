@@ -110,31 +110,60 @@ if ($action === 'mass_edit_preview' && $method === 'POST') {
         exit(json_encode(['error' => 'No rows selected']));
     }
 
-    [, , , $colSql, $tblSql] = validateTableColumn($body, $schema);
+    [$tableCfg, $tableName, , $colSql, $tblSql] = validateTableColumn($body, $schema);
 
     $arrParam = pgIntArray($rowIds);
 
-    $countRes = @pg_query_params(
-        $conn,
-        "SELECT COUNT(*) FROM {$tblSql} WHERE id = ANY(\$1::int[])",
-        [$arrParam]
-    );
-    if (!$countRes) {
-        http_response_code(500);
-        exit(json_encode(['error' => 'Database query failed.']));
-    }
-    $count = (int)pg_fetch_result($countRes, 0, 0);
-    pg_free_result($countRes);
+    if (!empty($tableCfg['owner_restricted'])) {
+        $tOwners  = sys_table('record_owners');
+        $uid      = (int)$_SESSION['user_id'];
+        $ownerSql = " AND NOT EXISTS (SELECT 1 FROM {$tOwners} ro WHERE ro.table_name = \$2 AND ro.record_id = id AND ro.is_current = true AND ro.owner_id != \$3)";
 
-    $rowRes = @pg_query_params(
-        $conn,
-        "SELECT id, {$colSql} AS current_val
-         FROM {$tblSql}
-         WHERE id = ANY(\$1::int[])
-         ORDER BY id
-         LIMIT 10",
-        [$arrParam]
-    );
+        $countRes = @pg_query_params(
+            $conn,
+            "SELECT COUNT(*) FROM {$tblSql} WHERE id = ANY(\$1::int[]){$ownerSql}",
+            [$arrParam, $tableName, $uid]
+        );
+        if (!$countRes) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'Database query failed.']));
+        }
+        $count = (int)pg_fetch_result($countRes, 0, 0);
+        pg_free_result($countRes);
+
+        $rowRes = @pg_query_params(
+            $conn,
+            "SELECT id, {$colSql} AS current_val
+             FROM {$tblSql}
+             WHERE id = ANY(\$1::int[]){$ownerSql}
+             ORDER BY id
+             LIMIT 10",
+            [$arrParam, $tableName, $uid]
+        );
+    } else {
+        $countRes = @pg_query_params(
+            $conn,
+            "SELECT COUNT(*) FROM {$tblSql} WHERE id = ANY(\$1::int[])",
+            [$arrParam]
+        );
+        if (!$countRes) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'Database query failed.']));
+        }
+        $count = (int)pg_fetch_result($countRes, 0, 0);
+        pg_free_result($countRes);
+
+        $rowRes = @pg_query_params(
+            $conn,
+            "SELECT id, {$colSql} AS current_val
+             FROM {$tblSql}
+             WHERE id = ANY(\$1::int[])
+             ORDER BY id
+             LIMIT 10",
+            [$arrParam]
+        );
+    }
+
     if (!$rowRes) {
         http_response_code(500);
         exit(json_encode(['error' => 'Database query failed.']));
@@ -277,8 +306,20 @@ if ($action === 'mass_duplicate' && $method === 'POST') {
         ]));
     }
 
-    $duplicated = pg_num_rows($res);
+    $newIds = [];
+    while ($row = pg_fetch_row($res)) {
+        $newIds[] = (int)$row[0];
+    }
+    $duplicated = count($newIds);
     pg_free_result($res);
+
+    // Register ownership for every new row so owner-restricted tables stay protected.
+    if (!empty($tableCfg['owner_restricted'])) {
+        foreach ($newIds as $newId) {
+            set_record_owner($conn, $tableName, $newId, $uid, $uid);
+        }
+    }
+
     @pg_query($conn, 'COMMIT');
 
     $uid = (int)$_SESSION['user_id'];

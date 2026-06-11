@@ -161,7 +161,7 @@ if ($action === 'data_cleanup_preview' && $method === 'POST') {
         exit(json_encode(['count' => 0, 'rows' => []]));
     }
 
-    [, , , $colSql, $tblSql] = validateInput($body, $schema, $conn);
+    [$tableCfg, , $tableName, $colSql, $tblSql] = validateInput($body, $schema, $conn);
     [$pattern, $flags, $whereOp, $safeReplace] = buildExpressions(
         $find,
         $replace,
@@ -173,26 +173,58 @@ if ($action === 'data_cleanup_preview' && $method === 'POST') {
     $whereSql   = "{$colSql} {$whereOp} \$1 AND {$colSql} IS NOT NULL";
     $replaceExp = "regexp_replace({$colSql}, \$1, \$2, '{$flags}')";
 
-    $cntRes = @pg_query_params(
-        $conn,
-        "SELECT COUNT(*) FROM {$tblSql} WHERE {$whereSql}",
-        [$pattern]
-    );
-    if (!$cntRes) {
-        http_response_code(500);
-        exit(json_encode(['error' => 'Database query failed.']));
-    }
-    $count = (int)pg_fetch_result($cntRes, 0, 0);
-    pg_free_result($cntRes);
+    // Owner-restricted preview: count and sample rows must match what apply will actually touch.
+    // Param positions differ between count ($1=pattern) and row ($1=pattern,$2=safeReplace),
+    // so the owner params land at $2/$3 vs $3/$4 respectively — separate branches required.
+    if (!empty($tableCfg['owner_restricted'])) {
+        $tOwners  = sys_table('record_owners');
+        $uid      = (int)$_SESSION['user_id'];
+        $ownerCnt = " AND NOT EXISTS (SELECT 1 FROM {$tOwners} ro WHERE ro.table_name = \$2 AND ro.record_id = id AND ro.is_current = true AND ro.owner_id != \$3)";
+        $ownerRow = " AND NOT EXISTS (SELECT 1 FROM {$tOwners} ro WHERE ro.table_name = \$3 AND ro.record_id = id AND ro.is_current = true AND ro.owner_id != \$4)";
 
-    $rowRes = @pg_query_params(
-        $conn,
-        "SELECT id, {$colSql} AS before_val, {$replaceExp} AS after_val
-         FROM {$tblSql}
-         WHERE {$whereSql}
-         LIMIT 20",
-        [$pattern, $safeReplace]
-    );
+        $cntRes = @pg_query_params(
+            $conn,
+            "SELECT COUNT(*) FROM {$tblSql} WHERE {$whereSql}{$ownerCnt}",
+            [$pattern, $tableName, $uid]
+        );
+        if (!$cntRes) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'Database query failed.']));
+        }
+        $count = (int)pg_fetch_result($cntRes, 0, 0);
+        pg_free_result($cntRes);
+
+        $rowRes = @pg_query_params(
+            $conn,
+            "SELECT id, {$colSql} AS before_val, {$replaceExp} AS after_val
+             FROM {$tblSql}
+             WHERE {$whereSql}{$ownerRow}
+             LIMIT 20",
+            [$pattern, $safeReplace, $tableName, $uid]
+        );
+    } else {
+        $cntRes = @pg_query_params(
+            $conn,
+            "SELECT COUNT(*) FROM {$tblSql} WHERE {$whereSql}",
+            [$pattern]
+        );
+        if (!$cntRes) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'Database query failed.']));
+        }
+        $count = (int)pg_fetch_result($cntRes, 0, 0);
+        pg_free_result($cntRes);
+
+        $rowRes = @pg_query_params(
+            $conn,
+            "SELECT id, {$colSql} AS before_val, {$replaceExp} AS after_val
+             FROM {$tblSql}
+             WHERE {$whereSql}
+             LIMIT 20",
+            [$pattern, $safeReplace]
+        );
+    }
+
     if (!$rowRes) {
         http_response_code(500);
         exit(json_encode(['error' => 'Database query failed.']));

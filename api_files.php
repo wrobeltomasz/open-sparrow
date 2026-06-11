@@ -273,6 +273,8 @@ function actionUpload($conn): void
     $dir         = rtrim(__DIR__ . '/' . ($config['storage_path'] ?? 'storage/files'), '/');
     if (!is_dir($dir)) {
         mkdir($dir, 0750, true);
+        // Deny direct web access on Apache — mirrors the protection on storage/files/.htaccess.
+        @file_put_contents($dir . '/.htaccess', "Require all denied\n");
     }
 
     $destination = $dir . '/' . $filename;
@@ -388,7 +390,9 @@ function actionSaveConfig(array $body): void
         $raw = preg_replace('/\/+/', '/', $raw);
         $raw = trim($raw, '/');
 // Constrain to storage/ subtree — prevents uploads landing in web-accessible directories.
-        if ($raw === '' || !str_starts_with($raw, 'storage')) {
+// "storage" alone is accepted; anything that merely *starts with* "storage" as a prefix
+// (e.g. "storage-pub") is not, hence the explicit two-case check.
+        if ($raw !== 'storage' && !str_starts_with($raw, 'storage/')) {
             $raw = 'storage/files';
         }
         $current['storage_path'] = $raw . '/';

@@ -49,6 +49,10 @@ try {
     print_log("Connecting to the database...");
     $conn = db_connect();
     print_log("Database connected successfully.<br><hr>");
+
+    // Purge login attempts older than 30 days to prevent unbounded table growth.
+    pg_query($conn, "DELETE FROM " . sys_table('login_attempts') . " WHERE created_at < NOW() - INTERVAL '30 days'");
+
     $tCronLog = sys_table('users_notifications_log');
     $logRes = pg_query_params($conn, "INSERT INTO $tCronLog (triggered_by) VALUES ($1) RETURNING id", [$triggeredBy]);
     $logId = $logRes ? (int) pg_fetch_result($logRes, 0, 0) : null;

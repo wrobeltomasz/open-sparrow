@@ -932,10 +932,35 @@ if ($action === 'import' && isset($_FILES['backup_file'])) {
             $validFiles[] = $filename;
         }
 
-        // Validate JSON content before writing, then extract
+        if (empty($validFiles)) {
+            $zip->close();
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Archive contains no recognised config files.']);
+            exit;
+        }
+
+        // Validate JSON content before writing. 512 KB per file is far above any real
+        // config; the cap prevents zip-bomb decompression from exhausting memory.
+        $maxFileBytes = 524288;
         foreach ($validFiles as $file) {
             $jsonContent = $zip->getFromName($file);
-            if ($jsonContent === false || json_decode($jsonContent) === null) {
+            if ($jsonContent === false) {
+                $zip->close();
+                http_response_code(400);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Could not read file from archive: ' . $file]);
+                exit;
+            }
+            if (strlen($jsonContent) > $maxFileBytes) {
+                $zip->close();
+                http_response_code(400);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'File exceeds maximum allowed size: ' . $file]);
+                exit;
+            }
+            json_decode($jsonContent);
+            if (json_last_error() !== JSON_ERROR_NONE) {
                 $zip->close();
                 http_response_code(400);
                 header('Content-Type: application/json');

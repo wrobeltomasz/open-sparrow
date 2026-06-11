@@ -28,24 +28,26 @@ let appSchema = null;
 document.addEventListener('DOMContentLoaded', async () => {
     await fetchI18n();
     await fetchSchema();
-    await fetchEvents();
+    await fetchEvents(currentYear, currentMonth + 1);
     renderCalendar();
 
-    document.getElementById('btnPrev').addEventListener('click', () => {
+    document.getElementById('btnPrev').addEventListener('click', async () => {
         currentMonth--;
         if (currentMonth < 0) {
             currentMonth = 11;
             currentYear--;
         }
+        await fetchEvents(currentYear, currentMonth + 1);
         renderCalendar();
     });
 
-    document.getElementById('btnNext').addEventListener('click', () => {
+    document.getElementById('btnNext').addEventListener('click', async () => {
         currentMonth++;
         if (currentMonth > 11) {
             currentMonth = 0;
             currentYear++;
         }
+        await fetchEvents(currentYear, currentMonth + 1);
         renderCalendar();
     });
 });
@@ -67,10 +69,10 @@ async function fetchSchema() {
     }
 }
 
-// Fetch calendar events via API
-async function fetchEvents() {
+// Fetch calendar events for the given year/month (1-indexed) via API.
+async function fetchEvents(year, month) {
     try {
-        const res = await fetch('api.php?api=calendar', {
+        const res = await fetch(`api.php?api=calendar&year=${year}&month=${month}`, {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
         if (res.ok) {

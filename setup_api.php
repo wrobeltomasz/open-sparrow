@@ -250,12 +250,13 @@ if ($action === 'init_database') {
         }
 
         // Create default admin account (only if no users exist).
-        // Generates a random temporary password; logged to PHP error_log — must be changed on first login.
+        // Generates a random temporary password returned to the setup wizard for display.
+        // Do not log the password — it is already visible in the wizard response.
         $tmpPassword    = bin2hex(random_bytes(12));
         $firstAdminSalt = bin2hex(random_bytes(32));
         $argonOpts      = ['memory_cost' => 1 << 17, 'time_cost' => 4, 'threads' => 1];
         $firstAdminHash = password_hash($firstAdminSalt . $tmpPassword, PASSWORD_ARGON2ID, $argonOpts);
-        error_log('[OpenSparrow] First-run admin password: ' . $tmpPassword . ' — change immediately after login!');
+        error_log('[OpenSparrow] First-run admin account created. Change the password shown in the setup wizard immediately after login.');
         $resAdmin = @pg_query_params(
             $conn,
             "INSERT INTO $tUsers (username, password_hash, salt, password_algo, password_params, is_active, role) SELECT 'admin', \$1, \$2, \$3, \$4, true, 'admin' WHERE NOT EXISTS (SELECT 1 FROM $tUsers LIMIT 1)",
