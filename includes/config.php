@@ -77,6 +77,12 @@ if ($_sessSavePath === '' || $_sessSavePath[0] !== '/') {
         }
         if (is_dir($_absPath) && is_writable($_absPath)) {
             ini_set('session.save_path', $_absPath);
+            // Deny direct web access to session files on Apache (defence-in-depth).
+            $_htaccess = $_absPath . '/.htaccess';
+            if (!is_file($_htaccess)) {
+                @file_put_contents($_htaccess, "Require all denied\n");
+            }
+            unset($_htaccess);
         }
     }
     unset($_projectRoot, $_relPath, $_absPath);

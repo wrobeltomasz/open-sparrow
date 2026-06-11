@@ -22,5 +22,11 @@
         "deprecated_files": [],
         "removed_config_keys": [],
         "notes": "Added Automations module (rule-based triggers on record create/update/delete with template variables), document chunking for precise chunk-level retrieval (spw_rag_chunks), and expanded query history with source attribution and full prompt snapshots (spw_rag_query_sources). Run Initialize System Tables to apply all new migrations."
+    },
+    "2.8": {
+        "removed_files": [],
+        "deprecated_files": [],
+        "removed_config_keys": [],
+        "notes": "Security hardening: ownership checks enforced on mass edit/delete/duplicate, data cleanup and calendar drag-and-drop; setup wizard now generates a random Argon2id admin password; storage/sessions directory protected from web access on Apache; demo-mode import guard added; pg_last_error no longer exposed to non-admin clients; hardcoded schema name in files module replaced with sys_schema(); tag array literal escaping fixed; storage_path constrained to storage/ subtree."
     }
 }

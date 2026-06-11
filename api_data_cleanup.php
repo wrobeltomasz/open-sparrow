@@ -180,7 +180,7 @@ if ($action === 'data_cleanup_preview' && $method === 'POST') {
     );
     if (!$cntRes) {
         http_response_code(500);
-        exit(json_encode(['error' => pg_last_error($conn)]));
+        exit(json_encode(['error' => 'Database query failed.']));
     }
     $count = (int)pg_fetch_result($cntRes, 0, 0);
     pg_free_result($cntRes);
@@ -195,7 +195,7 @@ if ($action === 'data_cleanup_preview' && $method === 'POST') {
     );
     if (!$rowRes) {
         http_response_code(500);
-        exit(json_encode(['error' => pg_last_error($conn)]));
+        exit(json_encode(['error' => 'Database query failed.']));
     }
 
     $rows = [];
@@ -221,7 +221,7 @@ if ($action === 'data_cleanup_apply' && $method === 'POST') {
         exit(json_encode(['error' => 'Find string required']));
     }
 
-    [, , $tableName, $colSql, $tblSql] = validateInput($body, $schema, $conn);
+    [$tableCfg, , $tableName, $colSql, $tblSql] = validateInput($body, $schema, $conn);
     [$pattern, $flags, $whereOp, $safeReplace] = buildExpressions(
         $find,
         $replace,
@@ -235,16 +235,27 @@ if ($action === 'data_cleanup_apply' && $method === 'POST') {
 
     @pg_query($conn, 'BEGIN');
 
-    $res = @pg_query_params(
-        $conn,
-        "UPDATE {$tblSql} SET {$colSql} = {$replaceExp} WHERE {$whereSql}",
-        [$pattern, $safeReplace]
-    );
+    if (!empty($tableCfg['owner_restricted'])) {
+        $tOwners  = sys_table('record_owners');
+        $uid      = (int)$_SESSION['user_id'];
+        $ownerSql = " AND NOT EXISTS (SELECT 1 FROM {$tOwners} ro WHERE ro.table_name = \$3 AND ro.record_id = _t.id AND ro.is_current = true AND ro.owner_id != \$4)";
+        $res = @pg_query_params(
+            $conn,
+            "UPDATE {$tblSql} AS _t SET {$colSql} = {$replaceExp} WHERE {$whereSql}{$ownerSql}",
+            [$pattern, $safeReplace, $tableName, $uid]
+        );
+    } else {
+        $res = @pg_query_params(
+            $conn,
+            "UPDATE {$tblSql} SET {$colSql} = {$replaceExp} WHERE {$whereSql}",
+            [$pattern, $safeReplace]
+        );
+    }
 
     if (!$res) {
         @pg_query($conn, 'ROLLBACK');
         http_response_code(500);
-        exit(json_encode(['error' => pg_last_error($conn)]));
+        exit(json_encode(['error' => 'Database update failed.']));
     }
 
     $affected = pg_affected_rows($res);

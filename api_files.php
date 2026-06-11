@@ -48,7 +48,7 @@ function requireLogin(): void
 }
 
 // Editor validation helper (upload/delete requires editor role)
-function requireAdmin(): void
+function requireEditor(): void
 {
 
     if (($_SESSION['role'] ?? '') !== 'editor') {
@@ -212,7 +212,7 @@ function actionList($conn): void
 function actionGetConfig(): void
 {
 
-    requireAdmin();
+    requireEditor();
     jsonSuccess(['config' => loadConfig()]);
 }
 
@@ -233,7 +233,7 @@ function actionUpload($conn): void
     // Uploading is a write operation — restrict to the editor role, matching
     // delete/save_config. Viewers are read-only; the UI hides the upload control
     // for them but the server must enforce it too.
-    requireAdmin();
+    requireEditor();
     requireCsrfToken();
     if (!isset($_FILES['file'])) {
         jsonError('No file received.', 400);
@@ -307,7 +307,7 @@ function actionUpload($conn): void
     $tagsPgArray = null;
     if ($tagsInput !== '') {
         $tagsList    = array_slice(array_map('trim', explode(',', $tagsInput)), 0, 20);
-        $tagsPgArray = '{' . implode(',', array_map(fn($t) => '"' . str_replace('"', '\"', $t) . '"', $tagsList)) . '}';
+        $tagsPgArray = '{' . implode(',', array_map(fn($t) => '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $t) . '"', $tagsList)) . '}';
     }
 
     $sql = "
@@ -347,7 +347,7 @@ function actionUpload($conn): void
 function actionDelete($conn, array $body): void
 {
 
-    requireAdmin();
+    requireEditor();
     requireCsrfToken($body);
     $uuid = trim($body['uuid'] ?? '');
     if (!$uuid) {
@@ -372,7 +372,7 @@ function actionDelete($conn, array $body): void
 function actionSaveConfig(array $body): void
 {
 
-    requireAdmin();
+    requireEditor();
     requireCsrfToken($body);
     $current = loadConfig();
     if (isset($body['max_file_size_mb'])) {
@@ -386,7 +386,12 @@ function actionSaveConfig(array $body): void
         $raw = preg_replace('/\.{2,}/', '', $raw);
 // Normalize multiple slashes to a single slash
         $raw = preg_replace('/\/+/', '/', $raw);
-        $current['storage_path'] = trim($raw, '/') . '/';
+        $raw = trim($raw, '/');
+// Constrain to storage/ subtree — prevents uploads landing in web-accessible directories.
+        if ($raw === '' || !str_starts_with($raw, 'storage')) {
+            $raw = 'storage/files';
+        }
+        $current['storage_path'] = $raw . '/';
     }
 
     if (isset($body['allowed_types']) && is_array($body['allowed_types'])) {
@@ -441,8 +446,8 @@ function actionGetRelatedRecords($conn): void
     $col1 = $relConfig['col1'] ?: 'id';
     $col2 = $relConfig['col2'] ?: '';
 // Validate columns directly from database schema
-    $sqlCols = "SELECT column_name FROM information_schema.columns WHERE table_schema = 'app' AND table_name = $1";
-    $resCols = pg_query_params($conn, $sqlCols, [$reqTable]);
+    $sqlCols = "SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2";
+    $resCols = pg_query_params($conn, $sqlCols, [sys_schema(), $reqTable]);
     if (!$resCols) {
         error_log('api_files actionGetRelatedRecords schema check failed: ' . pg_last_error($conn));
         jsonError('Database error.', 500);
@@ -466,7 +471,8 @@ function actionGetRelatedRecords($conn): void
     $quotedTable = '"' . str_replace('"', '""', $reqTable) . '"';
     $quotedCol1  = '"' . str_replace('"', '""', $col1) . '"';
     $sel2        = $col2 ? ', "' . str_replace('"', '""', $col2) . '"' : '';
-    $sql = "SELECT id, {$quotedCol1} AS val1 {$sel2} FROM app.{$quotedTable} ORDER BY id DESC LIMIT 500";
+    $quotedSchema = '"' . str_replace('"', '""', sys_schema()) . '"';
+    $sql = "SELECT id, {$quotedCol1} AS val1 {$sel2} FROM {$quotedSchema}.{$quotedTable} ORDER BY id DESC LIMIT 500";
     $res = pg_query($conn, $sql);
     if (!$res) {
         error_log('api_files actionGetRelatedRecords query failed: ' . pg_last_error($conn));

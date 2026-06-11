@@ -121,7 +121,7 @@ if ($action === 'mass_edit_preview' && $method === 'POST') {
     );
     if (!$countRes) {
         http_response_code(500);
-        exit(json_encode(['error' => pg_last_error($conn)]));
+        exit(json_encode(['error' => 'Database query failed.']));
     }
     $count = (int)pg_fetch_result($countRes, 0, 0);
     pg_free_result($countRes);
@@ -137,7 +137,7 @@ if ($action === 'mass_edit_preview' && $method === 'POST') {
     );
     if (!$rowRes) {
         http_response_code(500);
-        exit(json_encode(['error' => pg_last_error($conn)]));
+        exit(json_encode(['error' => 'Database query failed.']));
     }
 
     $rows = [];
@@ -163,22 +163,32 @@ if ($action === 'mass_edit_apply' && $method === 'POST') {
         ? ($body['value'] === null ? null : (string)$body['value'])
         : null;
 
-    [, $tableName, , $colSql, $tblSql] = validateTableColumn($body, $schema);
+    [$tableCfg, $tableName, , $colSql, $tblSql] = validateTableColumn($body, $schema);
 
     $arrParam = pgIntArray($rowIds);
 
     @pg_query($conn, 'BEGIN');
 
-    $res = @pg_query_params(
-        $conn,
-        "UPDATE {$tblSql} SET {$colSql} = \$2 WHERE id = ANY(\$1::int[])",
-        [$arrParam, $value]
-    );
+    if (!empty($tableCfg['owner_restricted'])) {
+        $tOwners = sys_table('record_owners');
+        $uid     = (int)$_SESSION['user_id'];
+        $res = @pg_query_params(
+            $conn,
+            "UPDATE {$tblSql} AS _t SET {$colSql} = \$2 WHERE _t.id = ANY(\$1::int[]) AND NOT EXISTS (SELECT 1 FROM {$tOwners} ro WHERE ro.table_name = \$3 AND ro.record_id = _t.id AND ro.is_current = true AND ro.owner_id != \$4)",
+            [$arrParam, $value, $tableName, $uid]
+        );
+    } else {
+        $res = @pg_query_params(
+            $conn,
+            "UPDATE {$tblSql} SET {$colSql} = \$2 WHERE id = ANY(\$1::int[])",
+            [$arrParam, $value]
+        );
+    }
 
     if (!$res) {
         @pg_query($conn, 'ROLLBACK');
         http_response_code(500);
-        exit(json_encode(['error' => pg_last_error($conn)]));
+        exit(json_encode(['error' => 'Database update failed.']));
     }
 
     $affected = pg_affected_rows($res);
@@ -233,14 +243,28 @@ if ($action === 'mass_duplicate' && $method === 'POST') {
 
     @pg_query($conn, 'BEGIN');
 
-    $res = @pg_query_params(
-        $conn,
-        "INSERT INTO {$tblSql} ({$colIdents})
-         SELECT {$colIdents} FROM {$tblSql}
-         WHERE id = ANY(\$1::int[])
-         RETURNING id",
-        [$arrParam]
-    );
+    if (!empty($tableCfg['owner_restricted'])) {
+        $tOwners = sys_table('record_owners');
+        $uid     = (int)$_SESSION['user_id'];
+        $res = @pg_query_params(
+            $conn,
+            "INSERT INTO {$tblSql} ({$colIdents})
+             SELECT {$colIdents} FROM {$tblSql} AS _t
+             WHERE _t.id = ANY(\$1::int[])
+             AND NOT EXISTS (SELECT 1 FROM {$tOwners} ro WHERE ro.table_name = \$2 AND ro.record_id = _t.id AND ro.is_current = true AND ro.owner_id != \$3)
+             RETURNING id",
+            [$arrParam, $tableName, $uid]
+        );
+    } else {
+        $res = @pg_query_params(
+            $conn,
+            "INSERT INTO {$tblSql} ({$colIdents})
+             SELECT {$colIdents} FROM {$tblSql}
+             WHERE id = ANY(\$1::int[])
+             RETURNING id",
+            [$arrParam]
+        );
+    }
 
     if (!$res) {
         @pg_query($conn, 'ROLLBACK');
@@ -248,8 +272,8 @@ if ($action === 'mass_duplicate' && $method === 'POST') {
         $isUnique = stripos($pgErr, 'unique') !== false || stripos($pgErr, 'unikaln') !== false;
         http_response_code(422);
         exit(json_encode([
-            'error'        => $isUnique ? 'unique_violation' : $pgErr,
-            'is_unique'    => $isUnique,
+            'error'     => $isUnique ? 'unique_violation' : 'Database duplicate failed.',
+            'is_unique' => $isUnique,
         ]));
     }
 
@@ -287,16 +311,26 @@ if ($action === 'mass_delete' && $method === 'POST') {
 
     @pg_query($conn, 'BEGIN');
 
-    $res = @pg_query_params(
-        $conn,
-        "DELETE FROM {$tblSql} WHERE id = ANY(\$1::int[])",
-        [$arrParam]
-    );
+    if (!empty($tableCfg['owner_restricted'])) {
+        $tOwners = sys_table('record_owners');
+        $uid     = (int)$_SESSION['user_id'];
+        $res = @pg_query_params(
+            $conn,
+            "DELETE FROM {$tblSql} AS _t WHERE _t.id = ANY(\$1::int[]) AND NOT EXISTS (SELECT 1 FROM {$tOwners} ro WHERE ro.table_name = \$2 AND ro.record_id = _t.id AND ro.is_current = true AND ro.owner_id != \$3)",
+            [$arrParam, $tableName, $uid]
+        );
+    } else {
+        $res = @pg_query_params(
+            $conn,
+            "DELETE FROM {$tblSql} WHERE id = ANY(\$1::int[])",
+            [$arrParam]
+        );
+    }
 
     if (!$res) {
         @pg_query($conn, 'ROLLBACK');
         http_response_code(500);
-        exit(json_encode(['error' => pg_last_error($conn)]));
+        exit(json_encode(['error' => 'Database delete failed.']));
     }
 
     $affected = pg_affected_rows($res);

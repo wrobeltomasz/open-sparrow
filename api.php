@@ -273,7 +273,7 @@ try {
                         $data = (int)($row['count'] ?? 0);
                         pg_free_result($res);
                     } else {
-                        $widget['sql_error'] = pg_last_error($conn);
+                        $widget['sql_error'] = 'Query failed.';
                     }
                 }
             } elseif ($qType === 'sum') {
@@ -287,7 +287,7 @@ try {
                         $data = ($val == (int)$val) ? (int)$val : round($val, 2);
                         pg_free_result($res);
                     } else {
-                        $widget['sql_error'] = pg_last_error($conn);
+                        $widget['sql_error'] = 'Query failed.';
                     }
                 }
             } elseif ($qType === 'group_by') {
@@ -308,7 +308,7 @@ try {
                         pg_free_result($res);
                         $widget['column_type'] = $tableCfg['columns'][$grpCol]['type'] ?? 'text';
                     } else {
-                        $widget['sql_error'] = pg_last_error($conn);
+                        $widget['sql_error'] = 'Query failed.';
                     }
                 }
             } else {
@@ -337,7 +337,7 @@ try {
                         }
                         $widget['column_types'] = $colTypes;
                     } else {
-                        $widget['sql_error'] = pg_last_error($conn);
+                        $widget['sql_error'] = 'Query failed.';
                     }
                 }
             }
@@ -614,6 +614,16 @@ try {
                 exit;
             }
 
+            // Owner-restricted: prevent moving a record owned by someone else.
+            if (!empty($tableCfg['owner_restricted'])) {
+                $ownerId = get_record_owner_id($conn, $table, $id);
+                if ($ownerId !== null && $ownerId !== (int)$_SESSION['user_id']) {
+                    http_response_code(403);
+                    echo json_encode(['error' => 'Forbidden']);
+                    exit;
+                }
+            }
+
             // Validate strict YYYY-MM-DD date format
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $newDate) || !checkdate((int)substr($newDate, 5, 2), (int)substr($newDate, 8, 2), (int)substr($newDate, 0, 4))) {
                 http_response_code(400);
@@ -658,6 +668,8 @@ try {
                 echo json_encode(['error' => 'Record not found']);
                 exit;
             }
+
+            log_user_action($conn, (int)$_SESSION['user_id'], 'CALENDAR_MOVE', $table, $id);
 
             echo json_encode(['success' => true]);
             exit;

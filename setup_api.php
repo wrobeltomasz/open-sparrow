@@ -249,12 +249,17 @@ if ($action === 'init_database') {
             }
         }
 
-        // Create default admin account (only if no users exist)
-        $firstAdminHash = password_hash('admin', PASSWORD_DEFAULT);
+        // Create default admin account (only if no users exist).
+        // Generates a random temporary password; logged to PHP error_log — must be changed on first login.
+        $tmpPassword    = bin2hex(random_bytes(12));
+        $firstAdminSalt = bin2hex(random_bytes(32));
+        $argonOpts      = ['memory_cost' => 1 << 17, 'time_cost' => 4, 'threads' => 1];
+        $firstAdminHash = password_hash($firstAdminSalt . $tmpPassword, PASSWORD_ARGON2ID, $argonOpts);
+        error_log('[OpenSparrow] First-run admin password: ' . $tmpPassword . ' — change immediately after login!');
         $resAdmin = @pg_query_params(
             $conn,
-            "INSERT INTO $tUsers (username, password_hash, is_active, role) SELECT 'admin', \$1, true, 'admin' WHERE NOT EXISTS (SELECT 1 FROM $tUsers LIMIT 1)",
-            [$firstAdminHash]
+            "INSERT INTO $tUsers (username, password_hash, salt, password_algo, password_params, is_active, role) SELECT 'admin', \$1, \$2, \$3, \$4, true, 'admin' WHERE NOT EXISTS (SELECT 1 FROM $tUsers LIMIT 1)",
+            [$firstAdminHash, $firstAdminSalt, 'argon2id', json_encode($argonOpts)]
         );
 
         if (!$resAdmin) {
@@ -292,10 +297,10 @@ if ($action === 'init_database') {
         }
 
         echo json_encode([
-            'success' => true,
-            'message' => 'System initialized successfully.',
-            'admin_user' => 'admin',
-            'admin_password' => 'admin'
+            'success'        => true,
+            'message'        => 'System initialized successfully.',
+            'admin_user'     => 'admin',
+            'admin_password' => $tmpPassword,
         ]);
     } catch (Exception $e) {
         echo json_encode([

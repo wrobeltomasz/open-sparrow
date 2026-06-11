@@ -893,6 +893,13 @@ if ($action === 'export') {
 
 // Import JSON configurations from a ZIP file safely
 if ($action === 'import' && isset($_FILES['backup_file'])) {
+    if ($isDemoMode) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Import is disabled in Demo Mode.']);
+        exit;
+    }
+
     if (!class_exists('ZipArchive')) {
         http_response_code(500);
         header('Content-Type: application/json');
@@ -925,8 +932,16 @@ if ($action === 'import' && isset($_FILES['backup_file'])) {
             $validFiles[] = $filename;
         }
 
-        // Extract only the validated files
+        // Validate JSON content before writing, then extract
         foreach ($validFiles as $file) {
+            $jsonContent = $zip->getFromName($file);
+            if ($jsonContent === false || json_decode($jsonContent) === null) {
+                $zip->close();
+                http_response_code(400);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Invalid JSON content in archive: ' . $file]);
+                exit;
+            }
             $zip->extractTo($extractPath, $file);
         }
 
