@@ -38,6 +38,12 @@
         box-shadow: none;
     }
 
+    .header-search-icon {
+        display: block;
+        width: 22px;
+        height: 22px;
+    }
+
     /* Push user menu to right of header row */
     .header-user-menu {
         margin-left: auto;

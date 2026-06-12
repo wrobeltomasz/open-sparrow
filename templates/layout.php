@@ -25,7 +25,8 @@ $extraScripts ??= '';
     <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link href="/assets/css/styles.css?v=<?= @filemtime(__DIR__ . '/../assets/css/styles.css') ?>" rel="stylesheet">
-    <link href="/assets/css/mobile.css?v=<?= @filemtime(__DIR__ . '/../assets/css/mobile.css') ?>" rel="stylesheet" media="only screen and (max-width: 768px)">
+    <link href="/assets/css/mobile.css?v=<?= @filemtime(__DIR__ . '/../assets/css/mobile.css') ?>"
+          rel="stylesheet" media="only screen and (max-width: 768px)">
     <?= $extraCss ?>
     <?= $extraMeta ?>
 </head>
