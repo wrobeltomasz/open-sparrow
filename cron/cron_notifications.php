@@ -30,6 +30,34 @@ function print_log(string $msg): void
 
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
+
+function cron_mysql_bt(string $name): string
+{
+    return '`' . str_replace('`', '', $name) . '`';
+}
+
+function cron_mysql_pdo(): ?\PDO
+{
+    if (MYSQL_HOST === '' || MYSQL_DB === '' || MYSQL_USER === '') {
+        return null;
+    }
+    try {
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4;connect_timeout=5',
+            MYSQL_HOST,
+            MYSQL_PORT,
+            MYSQL_DB
+        );
+        return new \PDO($dsn, MYSQL_USER, MYSQL_PASSWORD, [
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+    } catch (\PDOException $e) {
+        error_log('[cron][mysql] ' . $e->getMessage());
+        return null;
+    }
+}
+
 $triggeredBy = (isset($argv[1]) && $argv[1] === 'admin') ? 'admin' : 'cron';
 print_log("<h3>Start CRON - Diagnostics</h3>");
 $configFile = __DIR__ . '/../config/calendar.json';
@@ -53,6 +81,13 @@ $schemaTables = [];
 if (file_exists($schemaFile)) {
     $schemaCfg    = json_decode(file_get_contents($schemaFile), true) ?? [];
     $schemaTables = is_array($schemaCfg['tables'] ?? null) ? $schemaCfg['tables'] : [];
+}
+
+$mysqlGatewayPath   = __DIR__ . '/../config/mysql_gateway.json';
+$mysqlGatewayTables = [];
+if (file_exists($mysqlGatewayPath)) {
+    $mgCfg              = json_decode(file_get_contents($mysqlGatewayPath), true);
+    $mysqlGatewayTables = is_array($mgCfg) ? ($mgCfg['mysql_tables'] ?? []) : [];
 }
 try {
     print_log("Connecting to the database...");
@@ -87,19 +122,53 @@ try {
             . " (looking for date: <b>" . htmlspecialchars($targetDate, ENT_QUOTES, 'UTF-8') . "</b>"
             . " in column <b>" . htmlspecialchars($dateCol, ENT_QUOTES, 'UTF-8') . "</b>)"
         );
-    // Fetch records matching the date directly from the target table
-        $tableSchema = (string)($schemaTables[$table]['schema'] ?? sys_schema());
-        $sql = sprintf(
-            'SELECT id AS record_id, %s AS title FROM %s.%s WHERE DATE(%s) = $1',
-            pg_ident($titleCol),
-            pg_ident($tableSchema),
-            pg_ident($table),
-            pg_ident($dateCol)
-        );
-        $result = pg_query_params($conn, $sql, [$targetDate]);
-        if (!$result) {
-            print_log("<span style='color:red;'>SQL QUERY ERROR: " . htmlspecialchars(pg_last_error($conn), ENT_QUOTES, 'UTF-8') . "</span>");
-            continue;
+    // Fetch records — branch on MySQL gateway vs native PostgreSQL
+        if (in_array($table, $mysqlGatewayTables, true)) {
+            $pdo = cron_mysql_pdo();
+            if ($pdo === null) {
+                print_log(
+                    "<span style='color:orange;'>Skipping MySQL table <b>"
+                    . htmlspecialchars($table, ENT_QUOTES, 'UTF-8')
+                    . "</b> — MySQL Gateway not configured.</span>"
+                );
+                continue;
+            }
+            $mysqlPk = (string)($schemaTables[$table]['mysql_pk'] ?? 'id');
+            $sql     = sprintf(
+                'SELECT %s AS record_id, %s AS title FROM %s.%s WHERE DATE(%s) = ?',
+                cron_mysql_bt($mysqlPk),
+                cron_mysql_bt($titleCol),
+                cron_mysql_bt(MYSQL_DB),
+                cron_mysql_bt($table),
+                cron_mysql_bt($dateCol)
+            );
+            try {
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute([$targetDate]);
+                $rows = $stmt->fetchAll();
+            } catch (\PDOException $e) {
+                print_log(
+                    "<span style='color:red;'>MySQL QUERY ERROR: "
+                    . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')
+                    . "</span>"
+                );
+                continue;
+            }
+        } else {
+            $tableSchema = (string)($schemaTables[$table]['schema'] ?? sys_schema());
+            $sql         = sprintf(
+                'SELECT id AS record_id, %s AS title FROM %s.%s WHERE DATE(%s) = $1',
+                pg_ident($titleCol),
+                pg_ident($tableSchema),
+                pg_ident($table),
+                pg_ident($dateCol)
+            );
+            $result = pg_query_params($conn, $sql, [$targetDate]);
+            if (!$result) {
+                print_log("<span style='color:red;'>SQL QUERY ERROR: " . htmlspecialchars(pg_last_error($conn), ENT_QUOTES, 'UTF-8') . "</span>");
+                continue;
+            }
+            $rows = pg_fetch_all($result) ?: [];
         }
 
         // Resolve only user IDs that actually exist and are active
@@ -111,9 +180,9 @@ try {
             continue;
         }
 
-        $rowCount = pg_num_rows($result);
+        $rowCount = count($rows);
         print_log("Found matching records in database: <b>$rowCount</b>");
-        while ($row = pg_fetch_assoc($result)) {
+        foreach ($rows as $row) {
             $recordId = (int)$row['record_id'];
         // Prepend target date to the title
             $titleText = $targetDate . ": " . $row['title'];

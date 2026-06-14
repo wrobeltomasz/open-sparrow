@@ -40,6 +40,40 @@ $conn   = db_connect();
 $schemaJson = file_get_contents(__DIR__ . '/config/schema.json');
 $schema     = json_decode($schemaJson, true, 512, JSON_THROW_ON_ERROR);
 
+$mysqlGatewayPath   = __DIR__ . '/config/mysql_gateway.json';
+$mysqlGatewayTables = [];
+if (file_exists($mysqlGatewayPath)) {
+    $mgCfg              = json_decode(file_get_contents($mysqlGatewayPath), true);
+    $mysqlGatewayTables = is_array($mgCfg) ? ($mgCfg['mysql_tables'] ?? []) : [];
+}
+
+function mass_edit_mysql_bt(string $name): string
+{
+    return '`' . str_replace('`', '', $name) . '`';
+}
+
+function mass_edit_mysql_pdo(): ?\PDO
+{
+    if (MYSQL_HOST === '' || MYSQL_DB === '' || MYSQL_USER === '') {
+        return null;
+    }
+    try {
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4;connect_timeout=5',
+            MYSQL_HOST,
+            MYSQL_PORT,
+            MYSQL_DB
+        );
+        return new \PDO($dsn, MYSQL_USER, MYSQL_PASSWORD, [
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+    } catch (\PDOException $e) {
+        error_log('[mass_edit][mysql] ' . $e->getMessage());
+        return null;
+    }
+}
+
 // Validate table + column against schema. Returns [$tableCfg, $tableName, $colCfg, $colSql, $tblSql].
 function validateTableColumn(array $body, array $schema): array
 {
@@ -111,6 +145,39 @@ if ($action === 'mass_edit_preview' && $method === 'POST') {
     }
 
     [$tableCfg, $tableName, , $colSql, $tblSql] = validateTableColumn($body, $schema);
+
+    if (in_array($tableName, $mysqlGatewayTables, true)) {
+        $pdo = mass_edit_mysql_pdo();
+        if ($pdo === null) {
+            http_response_code(503);
+            exit(json_encode(['error' => 'MySQL connection unavailable']));
+        }
+        $colName  = (string)($body['column'] ?? '');
+        $mysqlPk  = (string)($tableCfg['mysql_pk'] ?? 'id');
+        $pkBt     = mass_edit_mysql_bt($mysqlPk);
+        $colBt    = mass_edit_mysql_bt($colName);
+        $tblBt    = mass_edit_mysql_bt(MYSQL_DB) . '.' . mass_edit_mysql_bt($tableName);
+        $inList   = implode(',', array_fill(0, count($rowIds), '?'));
+        try {
+            $stmtCnt = $pdo->prepare("SELECT COUNT(*) FROM {$tblBt} WHERE {$pkBt} IN ({$inList})");
+            $stmtCnt->execute($rowIds);
+            $count   = (int)$stmtCnt->fetchColumn();
+            $stmtRows = $pdo->prepare(
+                "SELECT {$pkBt} AS id, {$colBt} AS current_val FROM {$tblBt}"
+                . " WHERE {$pkBt} IN ({$inList}) ORDER BY {$pkBt} LIMIT 10"
+            );
+            $stmtRows->execute($rowIds);
+            $mysqlRows = $stmtRows->fetchAll();
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'MySQL query failed.']));
+        }
+        $rows = array_map(
+            fn($r) => ['id' => (int)$r['id'], 'current' => $r['current_val']],
+            $mysqlRows
+        );
+        exit(json_encode(['count' => $count, 'rows' => $rows]));
+    }
 
     $arrParam = pgIntArray($rowIds);
 
@@ -194,6 +261,32 @@ if ($action === 'mass_edit_apply' && $method === 'POST') {
 
     [$tableCfg, $tableName, , $colSql, $tblSql] = validateTableColumn($body, $schema);
 
+    if (in_array($tableName, $mysqlGatewayTables, true)) {
+        $pdo = mass_edit_mysql_pdo();
+        if ($pdo === null) {
+            http_response_code(503);
+            exit(json_encode(['error' => 'MySQL connection unavailable']));
+        }
+        $colName = (string)($body['column'] ?? '');
+        $mysqlPk = (string)($tableCfg['mysql_pk'] ?? 'id');
+        $pkBt    = mass_edit_mysql_bt($mysqlPk);
+        $colBt   = mass_edit_mysql_bt($colName);
+        $tblBt   = mass_edit_mysql_bt(MYSQL_DB) . '.' . mass_edit_mysql_bt($tableName);
+        $inList  = implode(',', array_fill(0, count($rowIds), '?'));
+        try {
+            $params = array_merge([$value], $rowIds);
+            $stmt   = $pdo->prepare("UPDATE {$tblBt} SET {$colBt} = ? WHERE {$pkBt} IN ({$inList})");
+            $stmt->execute($params);
+            $affected = $stmt->rowCount();
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'MySQL update failed.']));
+        }
+        $uid = (int)$_SESSION['user_id'];
+        log_user_action($conn, $uid, 'MASS_EDIT', $tableName, null);
+        exit(json_encode(['updated' => $affected]));
+    }
+
     $arrParam = pgIntArray($rowIds);
 
     @pg_query($conn, 'BEGIN');
@@ -246,6 +339,11 @@ if ($action === 'mass_duplicate' && $method === 'POST') {
     } catch (\RuntimeException $e) {
         http_response_code(400);
         exit(json_encode(['error' => 'Unknown table']));
+    }
+
+    if (in_array($tableName, $mysqlGatewayTables, true)) {
+        http_response_code(422);
+        exit(json_encode(['error' => 'Mass duplicate is not supported for external MySQL tables']));
     }
 
     // Build column list — exclude id and virtual columns
@@ -344,6 +442,29 @@ if ($action === 'mass_delete' && $method === 'POST') {
     } catch (\RuntimeException $e) {
         http_response_code(400);
         exit(json_encode(['error' => 'Unknown table']));
+    }
+
+    if (in_array($tableName, $mysqlGatewayTables, true)) {
+        $pdo = mass_edit_mysql_pdo();
+        if ($pdo === null) {
+            http_response_code(503);
+            exit(json_encode(['error' => 'MySQL connection unavailable']));
+        }
+        $mysqlPk = (string)($tableCfg['mysql_pk'] ?? 'id');
+        $pkBt    = mass_edit_mysql_bt($mysqlPk);
+        $tblBt   = mass_edit_mysql_bt(MYSQL_DB) . '.' . mass_edit_mysql_bt($tableName);
+        $inList  = implode(',', array_fill(0, count($rowIds), '?'));
+        try {
+            $stmt = $pdo->prepare("DELETE FROM {$tblBt} WHERE {$pkBt} IN ({$inList})");
+            $stmt->execute($rowIds);
+            $affected = $stmt->rowCount();
+        } catch (\PDOException $e) {
+            http_response_code(500);
+            exit(json_encode(['error' => 'MySQL delete failed.']));
+        }
+        $uid = (int)$_SESSION['user_id'];
+        log_user_action($conn, $uid, 'MASS_DELETE', $tableName, null);
+        exit(json_encode(['deleted' => $affected]));
     }
 
     $schemaName = $tableCfg['schema'] ?? 'public';

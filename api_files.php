@@ -99,6 +99,33 @@ function saveConfig(array $config): void
     rename($tmpPath, $path);
 }
 
+function files_mysql_bt(string $name): string
+{
+    return '`' . str_replace('`', '', $name) . '`';
+}
+
+function files_mysql_pdo(): ?\PDO
+{
+    if (MYSQL_HOST === '' || MYSQL_DB === '' || MYSQL_USER === '') {
+        return null;
+    }
+    try {
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4;connect_timeout=5',
+            MYSQL_HOST,
+            MYSQL_PORT,
+            MYSQL_DB
+        );
+        return new \PDO($dsn, MYSQL_USER, MYSQL_PASSWORD, [
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+    } catch (\PDOException $e) {
+        error_log('[api_files][mysql] ' . $e->getMessage());
+        return null;
+    }
+}
+
 try {
     $method = $_SERVER['REQUEST_METHOD'];
     $action = '';
@@ -449,6 +476,62 @@ function actionGetRelatedRecords($conn): void
 
     $col1 = $relConfig['col1'] ?: 'id';
     $col2 = $relConfig['col2'] ?: '';
+
+    // MySQL Gateway: route through PDO when this table is external
+    $mgPath   = __DIR__ . '/config/mysql_gateway.json';
+    $mgTables = [];
+    if (file_exists($mgPath)) {
+        $mgCfg    = json_decode(file_get_contents($mgPath), true);
+        $mgTables = is_array($mgCfg) ? ($mgCfg['mysql_tables'] ?? []) : [];
+    }
+    if (in_array($reqTable, $mgTables, true)) {
+        $pdo = files_mysql_pdo();
+        if ($pdo === null) {
+            jsonSuccess(['records' => []]);
+        }
+        $schemaCfg = [];
+        $spPath = __DIR__ . '/config/schema.json';
+        if (file_exists($spPath)) {
+            $schemaCfg = json_decode(file_get_contents($spPath), true) ?? [];
+        }
+        $mysqlPk = (string)($schemaCfg['tables'][$reqTable]['mysql_pk'] ?? 'id');
+        try {
+            $stmtCols = $pdo->prepare(
+                'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?'
+            );
+            $stmtCols->execute([MYSQL_DB, $reqTable]);
+            $validCols = array_column($stmtCols->fetchAll(), 'COLUMN_NAME');
+        } catch (\PDOException $e) {
+            jsonSuccess(['records' => []]);
+        }
+        $col1 = in_array($col1, $validCols, true) ? $col1 : $mysqlPk;
+        $col2 = ($col2 && in_array($col2, $validCols, true)) ? $col2 : '';
+        $pkBt   = files_mysql_bt($mysqlPk);
+        $col1Bt = files_mysql_bt($col1);
+        $tblBt  = files_mysql_bt(MYSQL_DB) . '.' . files_mysql_bt($reqTable);
+        $sel2   = $col2 ? (', ' . files_mysql_bt($col2)) : '';
+        $sql    = "SELECT {$pkBt} AS id, {$col1Bt} AS val1 {$sel2} FROM {$tblBt} ORDER BY {$pkBt} DESC LIMIT 500";
+        try {
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+        } catch (\PDOException $e) {
+            error_log('[api_files][mysql] actionGetRelatedRecords: ' . $e->getMessage());
+            jsonSuccess(['records' => []]);
+        }
+        $records = [];
+        foreach ($rows as $row) {
+            $label = $row['val1'];
+            if ($col2 && isset($row[$col2])) {
+                $label .= ' - ' . $row[$col2];
+            }
+            $label     = $label
+                ? mb_substr((string)$label, 0, 100) . " (ID: {$row['id']})"
+                : "ID: {$row['id']}";
+            $records[] = ['id' => $row['id'], 'label' => $label];
+        }
+        jsonSuccess(['records' => $records]);
+    }
+
 // Validate columns directly from database schema
     $sqlCols = "SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2";
     $resCols = pg_query_params($conn, $sqlCols, [sys_schema(), $reqTable]);

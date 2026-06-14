@@ -40,6 +40,13 @@ $conn   = db_connect();
 $schemaJson = file_get_contents(__DIR__ . '/config/schema.json');
 $schema     = json_decode($schemaJson, true, 512, JSON_THROW_ON_ERROR);
 
+$mysqlGatewayPath   = __DIR__ . '/config/mysql_gateway.json';
+$mysqlGatewayTables = [];
+if (file_exists($mysqlGatewayPath)) {
+    $mgCfg              = json_decode(file_get_contents($mysqlGatewayPath), true);
+    $mysqlGatewayTables = is_array($mgCfg) ? ($mgCfg['mysql_tables'] ?? []) : [];
+}
+
 // Escape a string for use as a POSIX ERE literal (all metacharacters neutralised).
 function pgRegexEscape(string $s): string
 {
@@ -162,6 +169,12 @@ if ($action === 'data_cleanup_preview' && $method === 'POST') {
     }
 
     [$tableCfg, , $tableName, $colSql, $tblSql] = validateInput($body, $schema, $conn);
+
+    if (in_array($tableName, $mysqlGatewayTables, true)) {
+        http_response_code(422);
+        exit(json_encode(['error' => 'Data Cleanup is not supported for external MySQL tables']));
+    }
+
     [$pattern, $flags, $whereOp, $safeReplace] = buildExpressions(
         $find,
         $replace,
@@ -254,6 +267,12 @@ if ($action === 'data_cleanup_apply' && $method === 'POST') {
     }
 
     [$tableCfg, , $tableName, $colSql, $tblSql] = validateInput($body, $schema, $conn);
+
+    if (in_array($tableName, $mysqlGatewayTables, true)) {
+        http_response_code(422);
+        exit(json_encode(['error' => 'Data Cleanup is not supported for external MySQL tables']));
+    }
+
     [$pattern, $flags, $whereOp, $safeReplace] = buildExpressions(
         $find,
         $replace,
