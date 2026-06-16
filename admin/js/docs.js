@@ -326,6 +326,7 @@ ${_ul([
 ])}
 
 ${_h3('doc-9l', s.s9l_head)}
+${_warn(s.s9l_warn_strong, s.s9l_warn_text)}
 ${_p(s.s9l_desc)}
 ${_h4(s.s9l_conn_head)}
 ${_p(s.s9l_conn)}
