@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-/**
- * Many-to-many helper functions.
- * Each function reads config from the many_to_many entry in schema.json.
- * All SQL identifiers go through pg_ident() to prevent injection.
- */
+// m2m.php — Many-to-many relationship helpers (junction table sync)
+// Functions: m2m_options() fetches selectable "other" side records, m2m_selected() gets currently linked IDs, m2m_sync() replaces junction rows atomically (DELETE + INSERT in transaction)
+// All SQL identifiers quoted with pg_ident(); values parameterised; logs errors but does not throw
+// Reads schema.json for table metadata; used by create.php and edit.php
 
 /**
  * Fetch all selectable options from the "other" side of the M2M relation.

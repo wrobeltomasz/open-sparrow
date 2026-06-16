@@ -1,5 +1,9 @@
 <?php
 
+// logout.php — Logout handler
+// Writes a LOGOUT audit entry (log_user_action) if a session is active, then clears $_SESSION, expires the session cookie, destroys the session, and redirects to login.php
+// No CSRF/role checks — purely tears down the current session
+
 require_once __DIR__ . '/includes/session.php';
 start_session();
 

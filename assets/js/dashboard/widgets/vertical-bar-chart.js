@@ -1,3 +1,5 @@
+// assets/js/dashboard/widgets/vertical-bar-chart.js — Registers the 'vertical_bar_chart' widget; delegates to _bar-chart-base renderBars.
+
 import { WidgetRegistry } from '../registry.js';
 import { renderBars } from './_bar-chart-base.js';
 

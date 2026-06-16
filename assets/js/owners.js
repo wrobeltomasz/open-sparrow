@@ -1,3 +1,6 @@
+// assets/js/owners.js — Record-ownership panel on edit.php (window.EDIT_TABLE/EDIT_ID)
+// Shows the current owner + change history and lets editors reassign ownership via api_owners.php. Avatars via renderAvatar.
+
 import { I18n } from './i18n.js';
 
 const table    = window.EDIT_TABLE;

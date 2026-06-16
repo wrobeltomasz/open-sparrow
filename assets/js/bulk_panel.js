@@ -1,3 +1,5 @@
+// assets/js/bulk_panel.js — Reusable slide-in drawer (BulkPanel class) for bulk operations; CSS prefix bp-. Used by grid mass-edit, owner and export panels.
+
 /**
  * BulkPanel — universal reusable slide-in drawer panel for bulk operations.
  *

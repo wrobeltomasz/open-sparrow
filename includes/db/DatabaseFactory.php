@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// DatabaseFactory.php — Picks the right DatabaseGatewayInterface per table (MySQL gateway routing)
+// setMysqlTables(array) registers the table names routed to MySQL (from config/mysql_gateway.json)
+// make($table, $pgConn, $mysqlPdo): returns MysqlGateway when $table is in that list and a PDO is given, else PostgresGateway
+// Namespace OpenSparrow\Db
+
 namespace OpenSparrow\Db;
 
 class DatabaseFactory

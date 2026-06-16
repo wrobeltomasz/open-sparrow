@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// edit.php — Record edit form page (modern OOP path)
+// Boots via includes/bootstrap.php ($session, $request, $schemas, $fieldRegistry, CSRF) + includes/m2m.php; uses ByteFormatter for file sizes
+// Auth gate: redirect to login if no session; UA/lifetime enforcement; editor role required for POST (read-only users get 403)
+// Loads existing record by ?id and renders a dynamic edit form from schema.json (incl. many_to_many); CSP nonce + send_security_headers('unsafe-style')
+
 require __DIR__ . '/includes/bootstrap.php';
 require __DIR__ . '/includes/m2m.php';
 

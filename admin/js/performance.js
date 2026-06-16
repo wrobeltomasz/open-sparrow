@@ -1,4 +1,5 @@
-﻿// admin/performance.js — Performance & Index Advisor
+﻿// admin/js/performance.js — Performance & Index Advisor page
+// Tabs over api.php performance_* actions (check, slow_queries, table_stats, db_health, unused_indexes, schema_warnings); severity badges.
 import { buildInnerTabs } from './ui.js';
 
 function escHtml(str) {

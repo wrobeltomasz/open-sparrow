@@ -2,6 +2,11 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// automations.php — Rule engine for automation triggers (update, notify, create_record)
+// Loads rules from config/automations.json; evaluates conditions (AND/OR groups, operators: =, !=, contains, is_empty, etc.)
+// Executes actions: update fields (with template placeholders {{record.field}}, {{current_user.id}}), create notifications (with daily de-duplication), or insert related records
+// Logs each run to spw_automation_runs; called from api.php after INSERT/PATCH
 
 declare(strict_types=1);
 

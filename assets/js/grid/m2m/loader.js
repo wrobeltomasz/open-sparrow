@@ -1,3 +1,5 @@
+// assets/js/grid/m2m/loader.js — Many-to-many cell data store: loads + caches related items per (table:rowId:m2mIdx); getM2mItems/clearM2mStore.
+
 import { debugLog } from '../../debug.js';
 import { state } from '../state.js';
 

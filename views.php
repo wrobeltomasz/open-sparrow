@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// views.php — Custom/saved views page (frontend HTML)
+// Auth gate: redirect to login if no session; admin redirected to /admin; UA/lifetime enforcement
+// Generates CSRF token + CSP nonce + send_security_headers('unsafe-style'); ?view= selects the view (max 64 chars)
+// Renders the saved-view UI (views.css); data via api_views.php
+
 require_once __DIR__ . '/includes/session.php';
 start_session();
 

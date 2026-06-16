@@ -1,3 +1,5 @@
+// assets/js/grid/cells/virtual-cell.js — Computed/virtual column: computeVirtual(formula, row) evaluates op over cols (used at load-time pre-compute and in the renderer); registers 'virtual'.
+
 import { CellRenderer } from './registry.js';
 
 /**

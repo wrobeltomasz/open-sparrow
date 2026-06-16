@@ -1,3 +1,7 @@
+// calendar.js — Calendar view (non-module classic script)
+// Renders records of a table as events positioned by a date column; dragging an
+// event reschedules it via api.php (api=calendar). CSRF from meta tag; i18n via /api.php?action=i18n_bundle.
+
 function getCsrfToken() {
   return document.querySelector('meta[name="csrf-token"]')?.content || '';
 }

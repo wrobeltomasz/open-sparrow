@@ -1,5 +1,7 @@
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// user-menu.js — Header user menu: avatar picker (1..24) and change-password, saved via api.php (update_avatar / change_password). CSRF from meta tag.
 
 import { showToast } from './toast.js';
 import { I18n } from './i18n.js';

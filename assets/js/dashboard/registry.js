@@ -1,3 +1,5 @@
+// assets/js/dashboard/registry.js — WidgetRegistry: maps widget.type -> renderer fn (register/render/has). Widget modules self-register here; render() returns an error node for unknown types.
+
 const renderers = new Map();
 
 export const WidgetRegistry = {

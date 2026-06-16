@@ -2,6 +2,10 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// deprecation.php — Helper for logging usage of deprecated configuration fields
+// deprecated_field($config, $key, $replacement) reads a legacy key, writes a timestamped warning to storage/logs/deprecations.log, and returns the value
+// Used during migration from older config structures; does not throw errors
 
 declare(strict_types=1);
 

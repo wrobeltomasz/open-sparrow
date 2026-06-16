@@ -1,3 +1,5 @@
+// assets/js/grid/cells/registry.js — CellRenderer: maps column type -> cell renderer fn (register/render/has). Cell modules self-register; render() throws on an unknown type.
+
 const renderers = new Map();
 
 export const CellRenderer = {

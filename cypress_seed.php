@@ -1,8 +1,9 @@
 <?php
 
-// cypress_seed.php — Development-only test data seeder for Cypress E2E tests.
-// This file must NEVER be deployed to production.
-// It is called by Cypress via cy.request() in before() hooks.
+// cypress_seed.php — Development-only test-data seeder for Cypress E2E tests.
+// SECURITY: must NEVER be deployed to production. Called by Cypress via cy.request() in before() hooks.
+// Guarded by a shared token (CYPRESS_SEED_TOKEN env, default 'cypress-dev-seed') compared with hash_equals
+// actions: seed/users — upserts fixed test users (Argon2id hashes) into sys_table('users'); returns JSON results
 
 declare(strict_types=1);
 

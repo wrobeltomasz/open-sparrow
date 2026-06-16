@@ -1,5 +1,10 @@
 <?php
 
+// api_schema.php — Public schema descriptor endpoint for the client UI (AJAX, GET-only)
+// Auth gate: session + UA enforcement; GET + X-Requested-With required; no-store
+// Returns a sanitised view of config/schema.json (tables, columns, FK reference_table, default_page_size); strips sensitive config
+// Role-aware; read-only
+
 // Disable HTML error output to prevent corrupting JSON payload
 ini_set('display_errors', 0);
 require_once __DIR__ . '/includes/session.php';

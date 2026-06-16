@@ -1,6 +1,9 @@
 <?php
 
-// Helper functions for API
+// api_helpers.php — Shared helper functions for API endpoints
+// Provides safe table/column access, FK display mapping, boolean normalization, type min values, audit logging, ownership checks, and record snapshots
+// All SQL identifiers are quoted with pg_ident(); values are escaped or parameterized; uses sys_table() for system tables
+// Functions: safe_table, column_list, pg_ident, map_fk_display, log_user_action, get_record_owner_id, can_access_record, set_record_owner, snapshot_record
 
 function safe_table(array $schema, string $table): array
 {

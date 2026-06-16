@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// admin/api.php — Main admin-panel REST API (large action-based endpoint)
+// Auth gate: session + role === 'admin' (403 otherwise); CSRF on POST; DEMO_MODE disables writes
+// ~60 actions by $action: init_db, users_* , create_table/add_column/schema_add_table, health, export/import backup, menu_config, get/save config files, performance_*, cron_*, list/create/delete_m2m, rag_* (knowledge base), automations_*, overview, snapshot/language/chat_bubble settings
+// admin_db_fail() logs raw pg errors and returns a generic message (never leaks schema/constraint details); requires api_demo.php at the end
+
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
 
@@ -24,6 +29,33 @@ function admin_db_fail($conn, string $context): void
     $raw = $conn !== null ? pg_last_error($conn) : 'no connection';
     error_log('[admin_api][' . $context . '] ' . $raw);
     throw new RuntimeException('Database operation failed. Check server logs for details.');
+}
+
+function admin_mysql_bt(string $name): string
+{
+    return '`' . str_replace('`', '', $name) . '`';
+}
+
+function admin_mysql_pdo(): ?\PDO
+{
+    if (MYSQL_HOST === '' || MYSQL_DB === '' || MYSQL_USER === '') {
+        return null;
+    }
+    try {
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4;connect_timeout=5',
+            MYSQL_HOST,
+            MYSQL_PORT,
+            MYSQL_DB
+        );
+        return new \PDO($dsn, MYSQL_USER, MYSQL_PASSWORD, [
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]);
+    } catch (\PDOException $e) {
+        error_log('[admin][mysql] ' . $e->getMessage());
+        return null;
+    }
 }
 // CSRF Protection for state-changing POST requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -3086,13 +3118,39 @@ if ($action === 'overview') {
         $schemaObj   = file_exists($schemaPath) ? @json_decode((string) file_get_contents($schemaPath), true) : null;
         $schemaTables = (is_array($schemaObj) && is_array($schemaObj['tables'] ?? null)) ? $schemaObj['tables'] : [];
 
+        $mgOvPath   = __DIR__ . '/../config/mysql_gateway.json';
+        $mgOvTables = [];
+        if (file_exists($mgOvPath)) {
+            $mgOvRaw    = json_decode((string) file_get_contents($mgOvPath), true);
+            $mgOvTables = is_array($mgOvRaw) ? ($mgOvRaw['mysql_tables'] ?? []) : [];
+        }
+        $mysqlPdoOv = null;
+
         $tables   = [];
         $totalRec = 0;
         foreach ($schemaTables as $tableName => $tableDef) {
             $tableSchema = $tableDef['schema'] ?? 'public';
-            $safeTable = sprintf('%s.%s', pg_ident($tableSchema), pg_ident((string) $tableName));
-            $cRes  = @pg_query($conn, "SELECT COUNT(*) AS n FROM {$safeTable}");
-            $count = $cRes ? (int) pg_fetch_result($cRes, 0, 0) : 0;
+            if (in_array($tableName, $mgOvTables, true)) {
+                if ($mysqlPdoOv === null) {
+                    $mysqlPdoOv = admin_mysql_pdo();
+                }
+                $count = 0;
+                if ($mysqlPdoOv !== null) {
+                    try {
+                        $stmtOv = $mysqlPdoOv->query(
+                            'SELECT COUNT(*) FROM '
+                            . admin_mysql_bt(MYSQL_DB) . '.' . admin_mysql_bt((string) $tableName)
+                        );
+                        $count = $stmtOv ? (int) $stmtOv->fetchColumn() : 0;
+                    } catch (\PDOException $e) {
+                        error_log('[admin][overview][mysql] ' . $e->getMessage());
+                    }
+                }
+            } else {
+                $safeTable = sprintf('%s.%s', pg_ident($tableSchema), pg_ident((string) $tableName));
+                $cRes  = @pg_query($conn, "SELECT COUNT(*) AS n FROM {$safeTable}");
+                $count = $cRes ? (int) pg_fetch_result($cRes, 0, 0) : 0;
+            }
             $totalRec += $count;
             $tables[] = [
                 'name'  => $tableName,

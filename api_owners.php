@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// api_owners.php — Record ownership API (current + historical owner per record)
+// Auth gate: session + UA enforcement; CSRF on POST; write actions go through requireWrite()
+// match() action routing: get, history, editors, set, mass_set — keyed by (table_name, record_id), is_current flag
+// sys_table('record_owners'); parameterized queries; JSON via jsonError()/jsonSuccess()
+
 ini_set('display_errors', '0');
 require_once __DIR__ . '/includes/session.php';
 require_once __DIR__ . '/includes/db.php';

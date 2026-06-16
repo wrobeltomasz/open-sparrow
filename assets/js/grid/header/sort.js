@@ -1,3 +1,5 @@
+// assets/js/grid/header/sort.js — toggleSortState(): cycles a column's sort (asc -> desc -> none) and re-sorts the rows.
+
 import { state, sortRows } from '../state.js';
 
 export function toggleSortState(col) {

@@ -1,4 +1,5 @@
-﻿// admin/cron.js — Cron Notifications management page
+﻿// admin/js/cron.js — Cron notifications management page
+// Shows run log/stats and lets the admin trigger or purge cron via api.php (cron_log, cron_stats, cron_purge_log, run_cron_notifications). CSRF from meta tag.
 import { buildInnerTabs } from './ui.js';
 
 function cronEscHtml(str) {

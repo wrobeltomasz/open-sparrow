@@ -1,4 +1,5 @@
-// assets/js/debug.js
+// assets/js/debug.js — Debug logging helpers
+// isDebugEnabled() (localStorage 'sparrow_debug_mode'); debugLog(msg, obj) writes to the #debug panel (falls back to console), capped at MAX_LOG_LENGTH.
 
 export function isDebugEnabled() {
   return localStorage.getItem('sparrow_debug_mode') === 'true';

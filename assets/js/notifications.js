@@ -1,5 +1,7 @@
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// notifications.js — Header notification bell. Polls api_notifications.php (get_count for the unread badge, get_list for the dropdown) and marks items read. Runs on DOMContentLoaded.
 
 document.addEventListener('DOMContentLoaded', () => {
     const badge    = document.getElementById('notif-badge');

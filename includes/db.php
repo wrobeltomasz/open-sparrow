@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+// db.php — PostgreSQL connection manager and system table naming helpers
+// db_connect() reads config/database.json + env vars (PGHOST, PGPORT, etc.) and returns PgSql\Connection
+// sys_schema() returns schema name (default "app") from config/database.json or PGSCHEMA env
+// sys_table($name) returns fully qualified quoted identifier: schema."spw_$name"
+// Throws RuntimeException on connection failure; sets session timezone using pg_escape_literal
+
 require_once __DIR__ . '/config.php';
 
 function db_connect(): \PgSql\Connection

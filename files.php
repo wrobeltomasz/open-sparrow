@@ -1,6 +1,10 @@
 <?php
 
-// files.php
+// files.php — Files module page (frontend HTML)
+// Auth gate: redirect to login if no session; admin redirected to /admin; UA/lifetime enforcement
+// Generates CSRF token + CSP nonce + send_security_headers(); exposes capability flags (canEdit/canExport) to the client
+// Renders the file manager UI; data and uploads via api_files.php, downloads via file_download.php
+
 declare(strict_types=1);
 
 require_once __DIR__ . '/includes/session.php';

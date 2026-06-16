@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+// admin/api_demo_wms.php — Warehouse-management (WMS) demo app definition (data only, no auth/routing)
+// demo_def_wms($conn): returns the spw_wms schema spec — DDL, view names (stock, low stock, PO status, expiring soon, inventory value), and seed data
+// Consumed by api_demo.php during demo_install
+
 function demo_def_wms($conn): array
 {
     return [

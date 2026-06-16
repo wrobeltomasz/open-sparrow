@@ -1,3 +1,5 @@
+// assets/js/grid/header/render.js — renderThead(): builds the header row (select-all + columns) and wires per-column sort, resize and drag-and-drop reordering.
+
 import { state } from '../state.js';
 import { toggleSortState } from './sort.js';
 import { initColumnResize } from './resize.js';

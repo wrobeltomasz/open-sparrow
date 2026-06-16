@@ -1,4 +1,5 @@
-// admin/js/automations.js — Automation rules management
+// admin/js/automations.js — Automation rules management UI
+// CRUD over config/automations.json via api.php (automations_list/save/delete) plus run history (automations_runs). HTML-escapes output; CSRF from meta tag.
 
 function autoEsc(str) {
     return String(str ?? '').replace(/[&<>"']/g, m => ({

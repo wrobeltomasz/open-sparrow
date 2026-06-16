@@ -1,4 +1,5 @@
-// admin/dashboard.js
+// admin/js/dashboard.js — Dashboard layout + widget editor
+// Imports the shared widget modules (self-register into WidgetRegistry) to live-preview widgets; edits dashboard.json widgets, queries and conditions.
 import { createTextInput, createSelectInput, createColorInput, createIconPicker, createCheckbox, renderGlobalSettings } from './ui.js';
 import { WidgetRegistry } from '../../assets/js/dashboard/registry.js';
 

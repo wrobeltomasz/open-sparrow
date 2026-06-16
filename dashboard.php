@@ -1,4 +1,10 @@
 <?php
+
+// dashboard.php — Dashboard page with widgets (frontend HTML)
+// Auth gate: redirect to login if no session; admin redirected to /admin; UA/lifetime enforcement
+// Generates CSP nonce + send_security_headers('no-connect'); exposes capability flags (canEdit/canExport) to the client instead of the raw role
+// Renders the dashboard UI; widget definitions from dashboard.json, data via api.php
+
 require_once __DIR__ . '/includes/session.php';
 start_session();
 

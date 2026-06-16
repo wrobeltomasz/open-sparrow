@@ -1,7 +1,7 @@
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
-
-// admin/audit.js
+//
+// admin/js/audit.js — Audit-log settings editor (renderAuditEditor); reads/writes audit config via api.php.
 import { showStatusPill } from './app.js';
 
 export async function renderAuditEditor(ctx) {

@@ -1,4 +1,5 @@
-﻿// admin/m2m.js — Many-to-Many Relationship Builder wizard
+﻿// admin/js/m2m.js — Many-to-Many relationship builder wizard
+// Lists/creates/deletes junction tables via api.php (list_m2m / create_m2m / delete_m2m). CSRF from meta tag.
 import { showStatusPill } from './app.js';
 
 let _renderGen = 0;

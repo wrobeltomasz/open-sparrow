@@ -1,3 +1,6 @@
+// assets/js/data_cleanup.js — Bulk find/replace (regex) cleanup panel (editor feature)
+// Slide-in panel over the current grid table: debounced, hashed preview then apply via api_data_cleanup.php. Skips numeric/boolean column types.
+
 import { I18n } from './i18n.js';
 import { state as gridState } from './grid/state.js';
 import { loadTable } from './grid.js';

@@ -1,3 +1,6 @@
+// assets/js/grid/index.js — Data-grid core orchestrator (real logic behind the grid.js barrel)
+// loadTable/renderGrid: fetches table data + foreign keys (api.js), renders thead/tbody, and wires comment counts/previews, subtable counts, many-to-many columns and virtual (computed) columns.
+
 import { debugLog } from '../debug.js';
 import { showToast } from '../toast.js';
 import { I18n } from '../i18n.js';

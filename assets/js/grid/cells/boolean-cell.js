@@ -1,3 +1,5 @@
+// assets/js/grid/cells/boolean-cell.js — Boolean cell: checkbox accepting Postgres (t/true) and MySQL tinyint (1/"1") truthy forms; registers 'boolean'.
+
 import { attachCellEvents } from '../../grid_actions.js';
 import { CellRenderer } from './registry.js';
 

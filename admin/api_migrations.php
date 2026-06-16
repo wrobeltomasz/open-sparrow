@@ -2,6 +2,11 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// admin/api_migrations.php — Schema migrations admin API
+// Auth gate: session + role === 'admin' (403); CSRF on POST
+// actions: scan (detect drift between schema.json and the live DB) and apply (run the generated migration SQL)
+// Reversible migrations; parameterized/quoted identifiers
 
 declare(strict_types=1);
 

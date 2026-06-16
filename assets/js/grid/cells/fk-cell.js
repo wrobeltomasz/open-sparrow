@@ -1,3 +1,5 @@
+// assets/js/grid/cells/fk-cell.js — Foreign-key cell: searchable input backed by a <datalist> of related records; registers 'fk'.
+
 import { attachCellEvents } from '../../grid_actions.js';
 import { state } from '../state.js';
 import { CellRenderer } from './registry.js';

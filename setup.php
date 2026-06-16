@@ -1,8 +1,9 @@
 <?php
 
-// setup.php - First-run database configuration wizard
-// This file is intentionally standalone (no config.php require)
-// to avoid errors when database.json doesn't exist yet.
+// setup.php — First-run database configuration wizard (HTML, standalone)
+// Intentionally standalone (no config.php / db require) so it runs before config/database.json exists
+// Aborts to login.php if database.json already exists; sets its own security headers (X-Frame-Options, CSP, etc.)
+// Renders a 4-step wizard (welcome -> DB connection -> init -> done); all actions POST to setup_api.php
 
 // Check if already configured
 if (file_exists(__DIR__ . '/config/database.json')) {

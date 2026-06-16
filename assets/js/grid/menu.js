@@ -1,3 +1,5 @@
+// assets/js/grid/menu.js — buildMenu(): renders the table-list sidebar from schema.tables (initial table from ?table= or first) and handles table selection.
+
 import { debugLog } from '../debug.js';
 
 export function buildMenu(schema, menuEl, gridTitleEl, addRowBtn, onTableSelect) {

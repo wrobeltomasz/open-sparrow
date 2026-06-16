@@ -2,6 +2,12 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// config.php — Central configuration loader (environment variables + JSON files)
+// Defines constants for DB, session, security, rate limiting, file uploads, comments, notifications, snapshots, chat bubble, RAG, MySQL gateway
+// Sets session.save_path to absolute path under project root; configures session.gc_maxlifetime; detects HTTPS behind reverse proxies
+// Generates IP_HASH_SALT for login throttling if not set via env; resolves TRUST_PROXY_HEADERS for client_ip()
+// Includes version.php and defines OPENSPARROW_CONFIG_LOADED guard to prevent double inclusion
 
 declare(strict_types=1);
 

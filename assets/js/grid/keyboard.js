@@ -1,3 +1,5 @@
+// assets/js/grid/keyboard.js — Keyboard navigation/shortcuts for the grid (arrow keys, page step, Ctrl/Cmd combos; Mac-aware). Skips action/m2m cells.
+
 import { I18n } from '../i18n.js';
 import { state } from './state.js';
 

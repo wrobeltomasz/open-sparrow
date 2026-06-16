@@ -1,5 +1,7 @@
 <?php
-// admin/index.php
+// admin/index.php — Admin panel shell (HTML + JS module loader, role: admin only)
+// First-run: redirects to ../setup.php if database.json is missing; allows access before spw_users exists so the operator can run "Initialize System Tables", otherwise requires login + admin role
+// Renders the admin SPA; tabs/logic live in admin/js/* (loaded by app.js)
 
 require_once __DIR__ . '/../includes/session.php';
 

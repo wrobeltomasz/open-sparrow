@@ -2,6 +2,12 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// i18n.php — Internationalisation engine (PHP side) with pluralisation and locale detection
+// Loads language JSON files from languages/; supports variable interpolation {key} and CLDR plural rules (pl, ru, uk, cs, sk, ro, hr, lt, sl, lv)
+// Detects locale via: GET ?lang= -> session (version-stamped) -> user preference -> settings.json -> Accept-Language -> 'en'
+// Provides t() helper, I18n::flatBundle() for JS bridge, and availableLanguageMeta() for language switcher
+// Initialised automatically via start_session()
 
 declare(strict_types=1);
 

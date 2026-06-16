@@ -1,4 +1,4 @@
-﻿// admin/users.js
+﻿// admin/js/users.js — User management (renderUsersEditor): list/add/toggle/change-role/change-password via api.php (users_* actions). CSRF from meta tag; HTML-escapes output.
 
 function escHtml(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

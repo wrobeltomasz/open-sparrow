@@ -1,5 +1,7 @@
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// sidebar.js — Mobile sidebar/search toggle. Injects an overlay and shows/hides the #menu sidebar below 768px. Runs on DOMContentLoaded.
 
 document.addEventListener('DOMContentLoaded', () => {
     const sidebarToggle = document.getElementById('sidebarToggle');

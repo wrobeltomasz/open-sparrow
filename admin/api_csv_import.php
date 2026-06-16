@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// admin/api_csv_import.php — CSV import admin API
+// Auth gate: session + role === 'admin' (401); CSRF on POST
+// actions: csv_import_upload (parse + preview), csv_import_execute (batched insert), csv_create_table (create table from CSV columns), csv_schemas, csv_import_config, csv_import_history/log
+// Limits: 500 MB max, 1000-row batches, 5 preview rows; parameterized inserts
+
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
@@ -749,6 +754,16 @@ if ($action === 'csv_import_execute') {
     $tableConfig = $schema['tables'][$tableName];
     $tableSchema = (string) ($tableConfig['schema'] ?? 'public');
     $schemaCols  = $tableConfig['columns'] ?? [];
+
+    $mgCsvPath = __DIR__ . '/../config/mysql_gateway.json';
+    if (file_exists($mgCsvPath)) {
+        $mgCsvRaw    = json_decode((string) file_get_contents($mgCsvPath), true);
+        $mgCsvTables = is_array($mgCsvRaw) ? ($mgCsvRaw['mysql_tables'] ?? []) : [];
+        if (in_array($tableName, $mgCsvTables, true)) {
+            @unlink($csvPath);
+            csv_fail('CSV import is not supported for external MySQL tables.');
+        }
+    }
 
     foreach ($mapping as $csvHeader => $dbCol) {
         if ($dbCol !== null && $dbCol !== '' && !isset($schemaCols[$dbCol])) {

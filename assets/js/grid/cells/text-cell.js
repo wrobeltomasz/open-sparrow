@@ -1,3 +1,5 @@
+// assets/js/grid/cells/text-cell.js — Text cell: contentEditable td (unless readonly) with search-term highlighting; registers 'text' (the default renderer).
+
 import { attachCellEvents } from '../../grid_actions.js';
 import { highlightInto } from '../../util/html.js';
 import { state } from '../state.js';

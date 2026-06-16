@@ -1,3 +1,5 @@
+// assets/js/util/format-value.js — Shared display formatting: formatBoolean (→ localized Yes/No via I18n) and formatCellValue(value, columnType). Used by dashboard widgets and grid cells.
+
 import { I18n } from '../i18n.js';
 
 export function formatBoolean(value) {

@@ -1,4 +1,5 @@
-﻿// admin/ui.js
+﻿// admin/js/ui.js — Shared admin UI toolkit
+// Reusable form-field builders (createTextInput/SelectInput/ColorInput/IconPicker/Checkbox/MultiSelect), inner tabs, menu preview, array/object reorder helpers, and field helpTexts. Imported across admin modules.
 
 export const helpTexts = {
     display_name: "The name that will be shown to users in the interface.",

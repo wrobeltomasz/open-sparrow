@@ -1,3 +1,5 @@
+// assets/js/grid/body/render.js — renderTbody(): builds grid rows, delegating each cell to its registered CellRenderer (imports all cell types so they self-register); adds row actions + expand button.
+
 import { I18n } from '../../i18n.js';
 import { deleteRow, duplicateRow } from '../../grid_actions.js';
 import { state } from '../state.js';

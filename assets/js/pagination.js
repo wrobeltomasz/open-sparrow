@@ -1,4 +1,5 @@
-// pagination.js
+// pagination.js — Client-side pagination for the data grid
+// Page-size selector [10/25/50/100] persisted in localStorage (sparrow_page_size); slices grid rows per page and re-renders. Wired to grid.js from app.js to avoid a circular import.
 import { renderGrid, getState } from './grid.js';
 import { debugLog } from './debug.js';
 import { I18n } from './i18n.js';

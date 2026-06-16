@@ -1,3 +1,5 @@
+// assets/js/grid/m2m/popup.js — Hover popup listing a row's many-to-many items (read from the m2m loader store).
+
 import { getM2mItems } from './loader.js';
 
 let popup   = null;

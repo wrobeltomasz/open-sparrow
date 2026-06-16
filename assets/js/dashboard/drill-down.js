@@ -1,3 +1,5 @@
+// assets/js/dashboard/drill-down.js — Drill-down helpers for dashboard widgets: firstEqCondition() + applyDrillDown() make a widget element clickable to open the pre-filtered table view.
+
 import { I18n } from '../i18n.js';
 
 /**

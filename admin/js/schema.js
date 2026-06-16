@@ -1,4 +1,5 @@
-﻿// admin/schema.js
+﻿// admin/js/schema.js — Schema editor (tables, columns, FKs, grid settings)
+// Core editor for schema.json: renderSchemaEditor / renderSchemaGlobalSettings / renderExternalTablesView, syncSchemaTables. XSS-escapes output; integrates MySQL gateway tables.
 import { createTextInput, createSelectInput, createCheckbox, createColorInput, createIconPicker, moveObjectKey, createMenuPreview } from './ui.js';
 import { showStatusPill, markDirty, isMysqlTable } from './app.js';
 

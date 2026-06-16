@@ -1,5 +1,8 @@
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// comments.js — Record comment thread on edit.php (window.EDIT_TABLE/EDIT_ID)
+// Lists/adds comments via api_comments.php, polls every 15s; read-only for non-editors. Includes an XSS-safe mini markdown formatter (escapes HTML, incl. quotes, before auto-linking URLs).
 
 import { renderAvatar } from './avatar.js';
 import { I18n } from './i18n.js';

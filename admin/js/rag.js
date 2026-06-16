@@ -1,4 +1,5 @@
-﻿// admin/rag.js — RAG knowledge base management page
+﻿// admin/js/rag.js — RAG knowledge base management page
+// Upload/list/delete/rechunk documents, edit settings, test query and Ollama check via api.php (rag_* actions). CSRF from meta tag.
 
 function ragEsc(str) {
     return String(str ?? '').replace(/[&<>"']/g, m => ({

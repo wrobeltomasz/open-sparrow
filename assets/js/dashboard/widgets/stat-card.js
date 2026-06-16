@@ -1,3 +1,5 @@
+// assets/js/dashboard/widgets/stat-card.js — Registers the 'stat_card' widget; large value tile (optional coloured background) + drill-down.
+
 import { applyDrillDown, firstEqCondition } from '../drill-down.js';
 import { WidgetRegistry } from '../registry.js';
 

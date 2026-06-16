@@ -1,5 +1,10 @@
 <?php
 
+// index.php — Front controller / main table data-grid page
+// First-run: redirects to setup.php if config/database.json is missing; otherwise redirect to login if no session; admin redirected to /admin
+// UA/lifetime enforcement; CSP nonce + send_security_headers('unsafe-style')
+// ?api routes the request straight to api.php; otherwise includes templates/template.php (the data grid UI)
+
 require_once __DIR__ . '/includes/session.php';
 start_session();
 // First-run setup check: if database.json doesn't exist and user is not authenticated,

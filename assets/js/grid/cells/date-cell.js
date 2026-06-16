@@ -1,3 +1,5 @@
+// assets/js/grid/cells/date-cell.js — Date cell: <input type=date>; normalizes DB/ISO/dd.mm.yyyy values to yyyy-mm-dd; registers 'date'.
+
 import { attachCellEvents } from '../../grid_actions.js';
 import { CellRenderer } from './registry.js';
 

@@ -1,3 +1,6 @@
+// assets/js/dashboard/index.js — Dashboard entry point
+// Imports all widget modules (they self-register into WidgetRegistry), loads i18n, then fetches dashboard.json widget data and renders #dashboardSection.
+
 import { WidgetRegistry } from './registry.js';
 import { I18n } from '../i18n.js';
 

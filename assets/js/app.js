@@ -1,3 +1,6 @@
+// assets/js/app.js — Main grid-page controller (ES module entry for index.php / template.php)
+// Wires grid.js with pagination, CSV export, workflows, data-cleanup, keyboard nav and mass-edit; owns the global filter/search state and the table menu, add-row, global search, column filter and clear-filters controls.
+
 import { I18n } from './i18n.js';
 import { loadTable, renderGrid, getState, setFilteredData, resetFilters, injectPagination, appendMoreRows, serverSearchRows } from './grid.js';
 import { state as gridState } from './grid/state.js';

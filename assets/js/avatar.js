@@ -1,5 +1,7 @@
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// avatar.js — renderAvatar(avatarId, username, size): returns an <img> (assets/img/avatar-N.png, 1..24) or an SVG with the username initial as fallback. Shared by comments, owners, user-menu, grid comment previews.
 
 /**
  * Renders a user avatar element.

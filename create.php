@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// create.php — Record creation form page (modern OOP path)
+// Boots via includes/bootstrap.php ($session, $request, $schemas, $fieldRegistry, CSRF) + includes/m2m.php
+// Auth gate: redirect to login if no session; UA/lifetime enforcement; editor role required for POST (read-only users get 403)
+// Renders a dynamic create form from schema.json (incl. many_to_many); CSP nonce + send_security_headers('unsafe-style')
+
 require __DIR__ . '/includes/bootstrap.php';
 require __DIR__ . '/includes/m2m.php';
 

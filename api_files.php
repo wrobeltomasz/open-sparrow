@@ -1,8 +1,10 @@
 <?php
 
-// api_files.php
-// OpenSparrow Files Module API
-// Handles configuration updates, file uploads, listing and safe deletion
+// api_files.php — Files module API (upload, list, soft-delete, config)
+// Auth gate: session + UA enforcement; CSRF where applicable; JSON via jsonError()/jsonSuccess()
+// match() action routing: list, get_config, upload, delete, save_config, get_relations_config, get_related_records
+// Multipart upload with post_max_size-drop detection (-> 413); soft-delete (deleted_at); pagination
+// Parameterized queries; sys_table('files')
 
 declare(strict_types=1);
 

@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// bootstrap.php — Application bootstrap for create.php, edit.php (and other pages using modern OOP)
+// Initialises session, request, CSRF token manager, schema repository, field registry, update mapper, and record repository (PostgreSQL + MySQL routing)
+// Sets up $GLOBALS['conn'] for legacy helpers; provides $fieldRegistry, $records, $files, $audit, $fkLoader
+// Requires autoload.php, session.php, db.php, api_helpers.php, automations.php
+
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/autoload.php';
 require_once __DIR__ . '/db.php';

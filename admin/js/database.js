@@ -1,4 +1,4 @@
-﻿// admin/database.js
+﻿// admin/js/database.js — PostgreSQL connection settings editor (renderDatabaseEditor): edits config/database.json; user must Save File before testing the connection.
 import { createTextInput } from './ui.js';
 
 export function renderDatabaseEditor(key, itemData, isArray, ctx) {

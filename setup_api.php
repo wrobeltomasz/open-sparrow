@@ -1,7 +1,9 @@
 <?php
 
-// setup_api.php - Setup wizard API endpoint
-// Handles test_connection and init_database actions for first-run setup
+// setup_api.php — First-run setup wizard API endpoint
+// Refuses to run (403) if config/database.json already exists — single-use by design
+// actions: test_connection (validate PG credentials) and init_database (create schema/tables + admin user, then write config/database.json)
+// SSRF guard: rejects private/loopback IPs (is_private_ip); libpq connstr values escaped (pg_connstr_escape); request body size-limited
 
 // Prevent PHP warnings/notices from polluting JSON output
 ini_set('display_errors', '0');

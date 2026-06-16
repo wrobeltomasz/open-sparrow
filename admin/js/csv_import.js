@@ -1,4 +1,5 @@
-// admin/csv_import.js
+// admin/js/csv_import.js — CSV import UI (delimiter/encoding/copy-mode persisted in localStorage)
+// Upload + preview, then execute import or create-table via admin/api_csv_import.php (csv_import_*, csv_create_table).
 
 const LS_COPY_MODE  = 'csv_import_default_copy';
 const LS_DELIMITER  = 'csv_import_delimiter';

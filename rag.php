@@ -1,8 +1,11 @@
 <?php
 
-// rag.php — Knowledge base chat interface
+// rag.php — Knowledge base chat interface page (frontend HTML)
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// Auth gate: redirect to login if no session; UA/lifetime enforcement; CSRF token + CSP nonce + send_security_headers()
+// Renders the RAG chat UI (rag.css) with a document sidebar; questions are sent to api_rag.php
 
 declare(strict_types=1);
 

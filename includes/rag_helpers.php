@@ -2,6 +2,11 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// rag_helpers.php — RAG (Retrieval-Augmented Generation) core logic
+// Implements: config loading, PostgreSQL text array conversion, document chunking, full-text search retrieval (tsvector/tsquery), prompt building (with page context and conversation history), Ollama API calls (cURL), query logging, and suggestion extraction (FOLLOW_UP: markers)
+// Supports hybrid chunk-level and file-level retrieval; uses sys_table('rag_*') for system tables; respects chunking settings from rag.json
+// Called by api_rag.php
 
 declare(strict_types=1);
 

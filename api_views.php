@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// api_views.php — Saved/custom views API (backed by MySQL gateway views)
+// Auth gate: session + UA enforcement; CSRF on POST
+// actions: list (GET), config (GET, admin), data (GET — runs the view SELECT / drill-down GROUP BY), sync (GET, admin — discovers MySQL information_schema.VIEWS), save (POST, admin)
+// Reads/writes config/views.json; column names validated against schema, values parameterized
+
 require_once __DIR__ . '/includes/session.php';
 start_session();
 

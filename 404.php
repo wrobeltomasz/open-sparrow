@@ -1,4 +1,8 @@
 <!doctype html>
+<!--
+  404.php — Static "Page Not Found" error page (pure HTML, no PHP / auth / DB).
+  Served by the .htaccess ErrorDocument directive. Standalone styling (assets/css/styles.css), link back to home.
+-->
 <html lang="en">
 <head>
     <meta charset="utf-8" />

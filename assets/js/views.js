@@ -1,4 +1,5 @@
-/* assets/js/views.js — frontend views module */
+/* assets/js/views.js — Frontend custom-views renderer (views.php page)
+   Fetches saved views from api_views.php and renders read-only tables with client-side sorting and per-cell colour rules (applyColorRules). */
 
 import { sortRows } from './grid/state.js';
 import { I18n } from './i18n.js';

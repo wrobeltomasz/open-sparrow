@@ -1,4 +1,5 @@
-// admin/js/fdw.js — MySQL Gateway configuration panel.
+// admin/js/fdw.js — MySQL Gateway (FDW) configuration panel
+// Connect/test the external MySQL, pick gateway tables + per-table metadata/icons, and sync columns via admin/api_fdw.php (mysql_* actions).
 import { showStatusPill } from './app.js';
 
 const ICONS = [

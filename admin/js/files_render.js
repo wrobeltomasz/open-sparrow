@@ -1,5 +1,4 @@
-﻿// admin/files_render.js
-// OpenSparrow Files Module UI
+﻿// admin/js/files_render.js — Files module UI (admin): lists/filters/paginates files via api_files.php (FILES_API). Text type tags ([IMG]/[PDF]/...), 25 per page.
 
 const FILES_API = 'api_files.php';
 

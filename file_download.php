@@ -1,9 +1,9 @@
 <?php
 
-// file_download.php
-// OpenSparrow Secure File Download Proxy
-// Usage: file_download.php?uuid=<uuid>
-// Usage: file_download.php?uuid=<uuid>&thumb=1
+// file_download.php — Secure file download / thumbnail proxy
+// Usage: file_download.php?uuid=<uuid>  |  file_download.php?uuid=<uuid>&thumb=1
+// Auth gate: session required (401 otherwise); send_security_headers('download')
+// Validates UUID-v4 format (anti path-traversal), looks up files table, honours soft-delete (deleted_at), then streams bytes with the stored mime_type
 
 declare(strict_types=1);
 

@@ -1,3 +1,2 @@
-// Barrel — delegates to dashboard/index.js.
-// dashboard.php loads this file via <script type="module">.
+// assets/js/dashboard.js — Barrel entry; dashboard.php loads it via <script type="module"> and it delegates to dashboard/index.js.
 import './dashboard/index.js';

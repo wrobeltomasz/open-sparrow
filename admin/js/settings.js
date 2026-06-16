@@ -1,7 +1,7 @@
 ﻿// This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
-
-// admin/settings.js
+//
+// admin/js/settings.js — General settings page (renderSettingsPage): loads/saves app + chat-bubble settings via api.php (get/set_*_setting).
 import { showStatusPill } from './app.js';
 
 export async function renderSettingsPage(ctx) {

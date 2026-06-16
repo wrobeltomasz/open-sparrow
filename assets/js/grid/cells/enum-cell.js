@@ -1,3 +1,5 @@
+// assets/js/grid/cells/enum-cell.js — Enum cell: <select> of allowed values with optional per-value background colour; registers 'enum'.
+
 import { attachCellEvents } from '../../grid_actions.js';
 import { CellRenderer } from './registry.js';
 

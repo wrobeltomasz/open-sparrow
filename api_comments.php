@@ -2,6 +2,11 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// api_comments.php — Comments module API (discussion threads attached to records)
+// Auth gate: session + UA enforcement + CSRF on POST; JSON responses via jsonError()/jsonSuccess()
+// match() action routing: list, add, delete, counts — comments keyed by (related_table, related_id), table validated against schema.json
+// Parameterized queries; sys_table('comments')
 
 declare(strict_types=1);
 

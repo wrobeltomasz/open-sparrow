@@ -1,4 +1,5 @@
-// grid_actions.js
+// grid_actions.js — Inline cell editing + row actions for the data grid
+// attachCellEvents (PATCH edited cells to api.php), deleteRow, duplicateRow; toasts + debug-panel error logging; CSRF from meta tag.
 import { debugLog } from './debug.js';
 import { showToast } from './toast.js';
 import { loadTable } from './grid.js';

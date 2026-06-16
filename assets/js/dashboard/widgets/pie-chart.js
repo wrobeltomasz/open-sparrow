@@ -1,3 +1,5 @@
+// assets/js/dashboard/widgets/pie-chart.js — Registers the 'pie_chart' widget; renders an SVG pie with a colour palette, legend and drill-down.
+
 import { applyDrillDown } from '../drill-down.js';
 import { WidgetRegistry } from '../registry.js';
 import { formatCellValue } from '../../util/format-value.js';

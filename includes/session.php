@@ -2,6 +2,12 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// session.php — Session management, security headers, and session staleness enforcement
+// start_session() sets cookie parameters (secure, httponly, samesite) and initialises I18n
+// send_security_headers() sends CSP (various modes), HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+// session_is_stale() checks absolute lifetime (SESSION_MAX_LIFETIME) and User-Agent binding
+// enforce_session_json() and enforce_session_redirect() destroy stale sessions and return 401/redirect
 
 declare(strict_types=1);
 

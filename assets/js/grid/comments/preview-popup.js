@@ -1,3 +1,5 @@
+// assets/js/grid/comments/preview-popup.js — Hover popup showing a row's latest comments (cached); fetched via api.js, avatars via renderAvatar.
+
 import { renderAvatar } from '../../avatar.js';
 import { fetchCommentPreview } from '../api.js';
 import { state } from '../state.js';

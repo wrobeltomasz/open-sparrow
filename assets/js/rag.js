@@ -1,4 +1,5 @@
-// assets/js/rag.js — Knowledge base chat interface
+// assets/js/rag.js — Knowledge base chat interface (rag.php page)
+// Document picker + chat sent to api_rag.php, answers rendered via rag-render.js; token-count warning (>8000), conversation memory, stop/clear. CSRF from window.CSRF_TOKEN/meta.
 
 import { renderAnswer } from './rag-render.js';
 

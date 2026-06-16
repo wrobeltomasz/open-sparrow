@@ -1,4 +1,4 @@
-// admin/docs-strings.js
+// admin/js/docs-strings.js — Localized documentation strings (STRINGS) for the admin docs page, keyed by language (en/pl/de/fr/it/es). Data only; consumed by docs.js.
 export const STRINGS = {
     en: {
         sidebarTitle: 'Contents',

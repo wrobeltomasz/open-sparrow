@@ -1,3 +1,5 @@
+// assets/js/i18n.js — Client-side i18n bridge (I18n.load/t with pluralisation + {var} interpolation); also sets window.I18n for non-module scripts.
+
 /**
  * i18n JS bridge — mirrors includes/i18n.php for client-side translation.
  * Loads the flat bundle from /api.php?action=i18n_bundle (auth required).

@@ -1,3 +1,5 @@
+// assets/js/dashboard/widgets/_bar-chart-base.js — renderBars(widget, orientation): shared renderer for horizontal + vertical bar charts; supports drill-down and value formatting. Not registered directly.
+
 import { applyDrillDown } from '../drill-down.js';
 import { formatCellValue } from '../../util/format-value.js';
 

@@ -1,3 +1,5 @@
+// assets/js/util/html.js — highlightInto(td, value, term): appends text into a cell, wrapping case-insensitive matches of the search term in <mark class="search-highlight">. XSS-safe (textContent, no innerHTML).
+
 export function highlightInto(td, value, term) {
     const str = String(value);
     if (!term) { td.textContent = str; return; }

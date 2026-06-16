@@ -1,3 +1,5 @@
+// assets/js/grid/header/dnd.js — initColumnDnD(): drag-and-drop column reordering (updates state via reorderColumns).
+
 import { state, reorderColumns } from '../state.js';
 
 export function initColumnDnD(th, col, onReorder) {

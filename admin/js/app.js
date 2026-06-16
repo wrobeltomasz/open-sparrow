@@ -1,4 +1,5 @@
-﻿// admin/app.js
+﻿// admin/js/app.js — Admin panel SPA controller / router (loaded by admin/index.php)
+// Builds the sidebar tabs and dispatches each to its render*() module (schema, dashboard, users, rag, performance, cron, ...); owns currentConfig, dirty-state tracking and the Save File action. Exports showStatusPill, markDirty, isMysqlTable.
 import { moveArrayItem, moveObjectKey, renderGlobalSettings, createFullMenuPreview } from './ui.js';
 import { syncSchemaTables, renderSchemaEditor, renderSchemaGlobalSettings, renderExternalTablesView } from './schema.js';
 import { renderDashboardLayout, renderDashboardEditor, initDashboardUI } from './dashboard.js';

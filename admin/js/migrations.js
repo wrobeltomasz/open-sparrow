@@ -1,4 +1,5 @@
-﻿import { buildInnerTabs } from './ui.js';
+﻿// admin/js/migrations.js — Migrations page (renderMigrationsPage): scan for schema drift and apply pending migrations via admin/api_migrations.php (scan/apply); inner tabs.
+import { buildInnerTabs } from './ui.js';
 
 export async function renderMigrationsPage(ctx) {
     const { workspaceEl } = ctx;

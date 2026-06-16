@@ -1,5 +1,10 @@
 <?php
 
+// api_fk.php — Foreign-key options lookup for FK dropdowns (AJAX-only, read-only)
+// Auth gate: session + X-Requested-With header required; UA enforcement
+// GET table+col -> resolves reference_table from schema.json foreign_keys, returns selectable rows
+// Defensive: returns {"rows":[]} on any failure (missing schema, unknown relation)
+
 // Disable HTML error output to prevent corrupting JSON payload
 ini_set('display_errors', 0);
 require_once __DIR__ . '/includes/session.php';

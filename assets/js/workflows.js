@@ -1,3 +1,5 @@
+// assets/js/workflows.js — Loads workflow/automation config from api.php?api=workflows (CSRF + X-Requested-With) and renders the workflows UI. Toasts on error.
+
 import { showToast } from './toast.js';
 import { I18n } from './i18n.js';
 

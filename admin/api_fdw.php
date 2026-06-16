@@ -2,6 +2,11 @@
 
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// admin/api_fdw.php — MySQL gateway (FDW) configuration admin API
+// Auth gate: session + role === 'admin' (403); CSRF on POST
+// actions: mysql_status, mysql_credentials_save, mysql_test, mysql_tables_save, mysql_preview, mysql_meta_save, mysql_columns_sync
+// Manages config/mysql_gateway.json and the external MySQL connection; uses DatabaseFactory/PostgresGateway/MysqlGateway
 
 declare(strict_types=1);
 

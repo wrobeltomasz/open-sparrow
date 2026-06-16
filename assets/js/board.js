@@ -1,9 +1,10 @@
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
 //
-// Board (Kanban) view — visualises records of a single table as cards laid out
-// in lanes, one lane per value of the configured status column. Dragging a card
-// to another lane updates that record's status via api.php (api=board).
+// board.js — Board (Kanban) view (non-module classic script)
+// Visualises records of a single table as cards laid out in lanes, one lane per
+// value of the configured status column. Dragging a card to another lane updates
+// that record's status via api.php (api=board). CSRF from meta tag; i18n via /api.php?action=i18n_bundle.
 
 function getCsrfToken() {
     return document.querySelector('meta[name="csrf-token"]')?.content || '';

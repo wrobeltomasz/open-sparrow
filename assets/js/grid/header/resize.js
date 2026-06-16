@@ -1,3 +1,5 @@
+// assets/js/grid/header/resize.js — initColumnResize(): adds a drag handle to a header cell to resize the column width.
+
 export function initColumnResize(th) {
     const resizer = document.createElement('div');
     resizer.className = 'col-resizer';

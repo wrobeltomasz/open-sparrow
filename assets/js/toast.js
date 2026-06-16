@@ -1,5 +1,5 @@
-// Shared non-blocking toast used across FE modules.
-// Stacks at bottom-right, auto-dismisses after 4 s.
+// assets/js/toast.js — showToast(message, variant, duration): shared non-blocking toast used across FE modules.
+// Stacks bottom-right, auto-dismisses (default 4s). Variants: error/success/info.
 export function showToast(message, variant = 'error', duration = 4000) {
     const colors = {
         error:   { bg: '#fee2e2', fg: '#991b1b', border: '#fca5a5' },

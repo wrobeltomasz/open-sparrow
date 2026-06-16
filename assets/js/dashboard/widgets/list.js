@@ -1,3 +1,5 @@
+// assets/js/dashboard/widgets/list.js — Registers the 'list' widget; compact table of the configured display_columns rows.
+
 import { WidgetRegistry } from '../registry.js';
 import { formatCellValue } from '../../util/format-value.js';
 

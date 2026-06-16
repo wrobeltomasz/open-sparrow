@@ -1,3 +1,5 @@
+// assets/js/grid/comments/counts.js — loadCommentCounts(): fetches per-row comment counts (api.js) for the visible rows and shows them as badges.
+
 import { debugLog } from '../../debug.js';
 import { fetchCommentCounts } from '../api.js';
 import { state } from '../state.js';

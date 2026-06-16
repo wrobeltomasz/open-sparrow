@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+// admin/api_demo_crm.php — CRM demo app definition (data only, no auth/routing)
+// demo_def_crm($conn): returns the spw_crm schema spec — DDL (companies, contacts, deals, activities, leads, products, quotes, invoices, assets), view names, and seed data
+// Consumed by api_demo.php during demo_install
+
 function demo_def_crm($conn): array
 {
     return [

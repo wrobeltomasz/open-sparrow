@@ -1,3 +1,5 @@
+// assets/js/grid/body/drilldown.js — buildExpandButton(): per-row expander that loads and shows subtable (child) records inline beneath the row.
+
 import { state } from '../state.js';
 import { I18n } from '../../i18n.js';
 

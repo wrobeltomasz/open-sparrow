@@ -1,3 +1,5 @@
+// assets/js/export_csv.js — exportCSV(): builds a CSV from the grid's displayedColumns + filteredData (respects current filter/sort) and triggers a client-side download. No server call.
+
 import { getState } from './grid.js';
 import { debugLog } from './debug.js';
 

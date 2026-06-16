@@ -1,3 +1,5 @@
+// assets/js/grid/mass_edit.js — Mass-edit selection bar + bulk panels (edit / owner / export) over selected rows; previews then applies via api_mass_edit.php. Built on BulkPanel.
+
 import { I18n } from '../i18n.js';
 import { showToast } from '../toast.js';
 import { state, clearSelection } from './state.js';

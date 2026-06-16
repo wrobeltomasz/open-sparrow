@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// api_notifications.php — User notifications API
+// Auth gate: session + UA enforcement; CSRF on POST; all queries scoped to the authenticated user_id (prevents IDOR)
+// actions: get_count (unread badge), get_list (dropdown), mark_read
+// sys_table('users_notifications'); parameterized queries
+
 require_once __DIR__ . '/includes/session.php';
 start_session();
 // Block unauthenticated access immediately to prevent IDOR

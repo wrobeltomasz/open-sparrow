@@ -1,4 +1,5 @@
-// admin/js/overview.js — Admin home dashboard
+// admin/js/overview.js — Admin home / overview page
+// Summary cards (record counts, DB size, etc.) via api.php (overview). Local HTML-escape + byte-format helpers.
 
 function ovEsc(str) {
     return String(str ?? '').replace(/[&<>"']/g, m => ({

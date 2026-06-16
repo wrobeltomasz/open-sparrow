@@ -1,3 +1,5 @@
+// assets/js/grid/cells/timestamp-cell.js — Timestamp cell: normalizes display (T->space, strips milliseconds + timezone); registers 'timestamp'.
+
 import { attachCellEvents } from '../../grid_actions.js';
 import { CellRenderer } from './registry.js';
 

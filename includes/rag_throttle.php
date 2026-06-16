@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-// RAG throttling: per-user rate limiting and a global concurrency semaphore.
-// Both mechanisms are file-based so they require no database schema and release
-// cleanly when a PHP worker dies mid-request (the OS frees flock handles on close).
+// rag_throttle.php — File-based rate limiting and concurrency control for RAG
+// Per-user sliding window (60s) using JSON files in storage/ratelimit; global semaphore (exclusive flock) limits concurrent Ollama requests
+// Drops .htaccess deny-all for defence in depth; fails open (never blocks) on filesystem errors
+// Functions: rag_rate_limit_ok($userId, $maxPerMinute) -> bool; rag_semaphore_acquire($maxConcurrent) -> file handle or null; rag_semaphore_release($handle)
 
 // Returns the directory holding throttle state, creating it on first use.
 // Drops a deny-all .htaccess as defense-in-depth for Apache deployments (Nginx

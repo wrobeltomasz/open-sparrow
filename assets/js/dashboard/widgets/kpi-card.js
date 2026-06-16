@@ -1,3 +1,5 @@
+// assets/js/dashboard/widgets/kpi-card.js — Registers the 'kpi_card' widget; single metric with a coloured left border + drill-down.
+
 import { applyDrillDown, firstEqCondition } from '../drill-down.js';
 import { WidgetRegistry } from '../registry.js';
 

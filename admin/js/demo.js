@@ -1,4 +1,7 @@
-﻿const DEMOS = {
+﻿// admin/js/demo.js — Demo sample-apps catalog + install UI
+// DEMOS metadata (CRM/WMS/Tasks: labels, schemas, tables, feature lists); installs/uninstalls the demo apps via api.php (demo_install / demo_uninstall / demo_status).
+
+const DEMOS = {
     crm: {
         label:       'CRM',
         description: 'Full-featured Customer Relationship Management — companies, contacts, deals, leads, products, quotes, invoices, and assets. 75 companies, 60 leads, and 28 deals with full history seeded.',

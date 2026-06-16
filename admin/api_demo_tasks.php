@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+// admin/api_demo_tasks.php — Tasks/project-management demo app definition (data only, no auth/routing)
+// demo_def_tasks($conn): returns the spw_tasks schema spec — DDL, view names (summary, workload, milestone progress, time report), and seed data
+// Consumed by api_demo.php during demo_install
+
 function demo_def_tasks($conn): array
 {
     return [

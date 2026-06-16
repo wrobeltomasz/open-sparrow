@@ -1,6 +1,8 @@
 // assets/js/agent-panel.js — Sliding AI agent panel
 // This file is part of OpenSparrow - https://opensparrow.org
 // Licensed under LGPL v3. See LICENCE file for details.
+//
+// Slide-in AI assistant over the grid: sends the visible rows (max 50x12) as page context + the question to api_rag.php, renders answers via rag-render.js. Tag filter, conversation history, abort/stop, clear. CSRF from meta tag.
 
 import { I18n } from './i18n.js';
 import { renderAnswer } from './rag-render.js';

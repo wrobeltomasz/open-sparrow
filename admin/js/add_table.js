@@ -1,4 +1,4 @@
-// admin/add_table.js
+// admin/js/add_table.js — "Add Table" wizard: builds a new DB table from column definitions/presets and creates it via api.php (create_table). COLUMN_TYPES list.
 import { showStatusPill } from './app.js';
 
 const COLUMN_TYPES = [

@@ -1,3 +1,5 @@
+// assets/js/grid/body/subtable-counts.js — loadSubtableCounts(): fetches child-record counts (api.js) for the visible rows and shows them on the expand buttons.
+
 import { debugLog } from '../../debug.js';
 import { fetchSubtableCounts } from '../api.js';
 import { state } from '../state.js';

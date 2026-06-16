@@ -1,4 +1,5 @@
-// admin/board.js — editor for the Board (Kanban) view configuration.
+// admin/js/board.js — Board (Kanban) view configuration editor
+// Edits the board config (status column, lanes, colors, icons) with ui.js field builders, plus a string-preserving column multi-select (ui.js createMultiSelect coerces values to numbers).
 import {
     createTextInput,
     createSelectInput,

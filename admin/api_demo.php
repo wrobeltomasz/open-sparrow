@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+// admin/api_demo.php — Demo sample-app handler (included at the end of admin/api.php, not called directly)
+// Relies on $action, $isDemoMode and DEMO_MODE from the parent; aborts 403 if DEMO_MODE undefined
+// actions: demo_status, demo_install, demo_uninstall — installs/removes ready-made CRM/Tasks/WMS schemas + seed data
+// Loads schema definitions from api_demo_crm.php / api_demo_wms.php / api_demo_tasks.php; writes config/demo_meta.json; install blocked when running in read-only demo mode
+
 if (!defined('DEMO_MODE')) {
     http_response_code(403);
     exit;

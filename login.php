@@ -1,5 +1,10 @@
 <?php
 
+// login.php — Login page and post-login landing resolver
+// First-run: redirects to setup.php if config/database.json is missing
+// POST authenticates against sys_table('users') with password_verify (Argon2) + CSRF; brute-force throttling via sys_table('login_attempts') (per username + IP hash)
+// resolve_landing_page() walks the sidebar order (dashboard -> calendar -> files -> first table), skipping modules hidden in their JSON config; reads includes/VERSION
+
 require_once __DIR__ . '/includes/session.php';
 
 // First-run check: if database.json doesn't exist, redirect to setup wizard
