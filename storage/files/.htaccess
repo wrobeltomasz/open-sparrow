@@ -1,0 +1,3 @@
+# Deny all direct web access to stored files.
+# Files must be served through file_download.php (session-validated proxy).
+Deny from all

@@ -1,0 +1,3 @@
+# Files to exclude from GitHub source archive exports (ZIP/tar.gz).
+# These are development-only files that must never appear in release packages.
+public/cypress_seed.php export-ignore

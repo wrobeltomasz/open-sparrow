@@ -57,6 +57,7 @@ __pycache__/
 # Files storage
 storage/files/*
 !storage/files/.gitkeep
+!storage/files/.htaccess
 
 # Runtime ratelimit state
 storage/ratelimit/*
