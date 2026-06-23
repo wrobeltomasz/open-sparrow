@@ -72,18 +72,27 @@ final class MysqlRecordRepository implements RecordRepositoryInterface
 
     public function insert(TableConfig $cfg, RecordData $data): string|int
     {
-        if ($data->isEmpty()) {
-            $sql = sprintf('INSERT INTO %s () VALUES ()', MysqlIdentifier::quote($cfg->name));
-            $this->conn->execute($sql);
-            return $this->conn->lastInsertId();
-        }
         $cols   = [];
         $ph     = [];
         $params = [];
         foreach ($data->bindings as $b) {
+            $value = $this->toMysql($cfg, $b['col'], $b['bound']);
+            // Omit NULL-valued columns so MySQL applies the column's own default
+            // (e.g. `created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP`). A
+            // blank form field maps to NULL upstream, but binding an explicit NULL
+            // would violate a NOT NULL column even when it has a usable default.
+            if ($value === null) {
+                continue;
+            }
             $cols[]   = MysqlIdentifier::quote($b['col']);
             $ph[]     = '?';
-            $params[] = $this->toMysql($cfg, $b['col'], $b['bound']);
+            $params[] = $value;
+        }
+        if ($cols === []) {
+            // Nothing explicit to set — let every column take its default.
+            $sql = sprintf('INSERT INTO %s () VALUES ()', MysqlIdentifier::quote($cfg->name));
+            $this->conn->execute($sql);
+            return $this->conn->lastInsertId();
         }
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',

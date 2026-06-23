@@ -157,7 +157,7 @@ final class MysqlRecordRepositoryTest extends TestCase
         $this->assertSame('2026-06-14 12:17:00', $pdo->lastStatement->executedParams[0]);
     }
 
-    public function testNullAndPlainTextPassThroughUnchanged(): void
+    public function testNullColumnsAreOmittedSoDatabaseDefaultsApply(): void
     {
         $pdo  = new FakeMysqlPdo();
         $repo = new MysqlRecordRepository(new MysqlConnection($pdo));
@@ -167,6 +167,9 @@ final class MysqlRecordRepositoryTest extends TestCase
             ['col' => 'created_at', 'bound' => new BoundValue(null)],
         ]));
 
-        $this->assertSame(['Plain text', null], $pdo->lastStatement->executedParams);
+        // A NULL-valued column is omitted from the INSERT so MySQL applies its own
+        // default (e.g. created_at NOT NULL DEFAULT CURRENT_TIMESTAMP); only the
+        // non-null column is bound, and plain text still passes through unchanged.
+        $this->assertSame(['Plain text'], $pdo->lastStatement->executedParams);
     }
 }

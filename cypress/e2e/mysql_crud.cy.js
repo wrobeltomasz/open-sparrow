@@ -211,9 +211,13 @@ describe('MySQL CRUD E2E Tests', () => {
     //    grid do JEDNEGO wiersza ZANIM zaczniemy edycję inline — inaczej to
     //    opóźnione przerenderowanie odpina komórkę w trakcie pisania i zapisuje
     //    tylko fragment wartości (np. "Edi").
+    // Wait for the grid's initial load to render before searching, otherwise the
+    // debounced search is discarded by the still-in-flight initial fetch and the
+    // grid settles on the unfiltered (newest-first) page of 25 rows.
+    cy.get('#grid tbody tr', { timeout: 15000 }).should('have.length.greaterThan', 0);
     cy.get('#globalSearch').clear().type(username);
+    cy.contains('#grid tbody tr', username, { timeout: 10000 }).should('be.visible');
     cy.get('#grid tbody tr', { timeout: 10000 }).should('have.length', 1);
-    cy.contains('tr', username).should('be.visible');
 
     // 3. Edycja inline – komórki to contenteditable <td>, więc czyścimy przez
     //    {selectall}{backspace} (cy.clear() działa tylko na input/textarea).
@@ -237,9 +241,12 @@ describe('MySQL CRUD E2E Tests', () => {
     //    grid przeładował się bez filtra, więc filtrujemy ponownie i — tak jak
     //    wyżej — czekamy aż debounce ustabilizuje grid do 1 wiersza, dopiero
     //    potem otwieramy edycję.
+    // The grid reloads after the inline save; wait for it to render before
+    // re-searching so the debounced search isn't discarded by the in-flight reload.
+    cy.get('#grid tbody tr', { timeout: 15000 }).should('have.length.greaterThan', 0);
     cy.get('#globalSearch').clear().type(username);
+    cy.contains('#grid tbody tr', username, { timeout: 10000 }).should('be.visible');
     cy.get('#grid tbody tr', { timeout: 10000 }).should('have.length', 1);
-    cy.contains('tr', username).should('be.visible');
     cy.get('button[data-cy="row-edit"]').first().click();
     cy.url().should('include', 'edit.php');
     cy.get('input[name="first_name"]').should('have.value', newFirstName);
