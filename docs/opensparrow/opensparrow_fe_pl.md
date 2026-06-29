@@ -914,7 +914,7 @@ Zakładka **External Databases** (sekcja Data Management) umożliwia skonfigurow
 
 Zakładka **Anonymization** (sekcja System) obsługuje automatyczną anonimizację danych osobowych zgodnie z wymogami RODO — prawdziwie zanonimizowane dane nie są danymi osobowymi i nie podlegają przepisom o ochronie danych UE. Moduł działa wyłącznie w panelu admina, cronie i bazie danych (brak wpływu na frontend).
 
-**Zakładka Rules:** definiuje reguły anonimizacji — dla każdej reguły wybierz tabelę, kolumnę i wartość zastępczą (np. `***ANONYMIZED***`). Reguły przechowywane w `config/anonymization.json`. Historia wykonań widoczna w sekcji Run History (tabela `spw_anonymization_log`).
+**Zakładka Rules:** definiuje reguły anonimizacji — dla każdej reguły wybierz tabelę, kolumnę typu data/znacznik czasu oraz próg wieku (anonimizowane są tylko rekordy starsze niż N dni liczonych od tej kolumny), kolumnę z danymi osobowymi i wartość zastępczą (np. `***ANONYMIZED***`). Przycisk **Preview (dry run)** wykonuje próbny przebieg: zlicza, ile wierszy obejmie każda reguła, **bez modyfikowania danych** — pozwala zweryfikować konfigurację przed nieodwracalnym nadpisaniem. Reguły przechowywane w `config/anonymization.json`. Historia wykonań widoczna w sekcji Run History (tabela `spw_anonymization_log`).
 
 **Zakładka Schedule:** włączenie/wyłączenie modułu, wybór częstotliwości (Manual / Daily / Weekly / Monthly) egzekwowanej przez sam skrypt crona. Przycisk **Run Now** uruchamia `cron/cron_anonymization.php` natychmiast przez panel admina. Sekcja Cron Setup Guide zawiera gotowe polecenia dla Linux/macOS (crontab), Windows (Task Scheduler) i Docker.
 
@@ -922,7 +922,7 @@ Zakładka **Anonymization** (sekcja System) obsługuje automatyczną anonimizacj
 
 **Zakładka Dictionary:** lista słów kluczowych rozdzielona przecinkami (np. `PESEL, NIP, email, phone, address, imię, nazwisko`). Używana przez zakładkę Suggestions do dopasowania nazw kolumn (dopasowanie podciągu, bez rozróżniania wielkości liter). Sekcja Log Cleanup pozwala usunąć stare wpisy z `spw_anonymization_log` starsze niż N dni.
 
-**Skrypt crona:** `cron/cron_anonymization.php` — tylko CLI. Sprawdza flagę `enabled`, egzekwuje okno częstotliwości (sprawdza ostatni udany run w tabeli logu), wykonuje `UPDATE` dla każdej reguły z użyciem `pg_ident()` dla identyfikatorów. Rejestruje każde wykonanie w `spw_anonymization_log` (status running → success/error, liczba przetworzonych reguł, liczba zanonimizowanych wierszy).
+**Skrypt crona:** `cron/cron_anonymization.php` — tylko CLI. Sprawdza flagę `enabled`, egzekwuje okno częstotliwości (sprawdza ostatni udany run w tabeli logu), wykonuje `UPDATE` dla każdej reguły z użyciem `pg_ident()` dla identyfikatorów; warunek `WHERE` filtruje rekordy starsze niż próg dni względem wskazanej kolumny daty. Rejestruje każde wykonanie w `spw_anonymization_log` (status running → success/error, liczba przetworzonych reguł, liczba zanonimizowanych wierszy). Tryb próbny (drugi argument `dry`, wywoływany przez przycisk **Preview**) uruchamia `SELECT COUNT(*)` z tym samym warunkiem `WHERE` zamiast `UPDATE` — nie zmienia danych i nie zapisuje wpisu w dzienniku.
 
 ---
 

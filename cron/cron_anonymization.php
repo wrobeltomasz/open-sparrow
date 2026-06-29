@@ -30,7 +30,11 @@ require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/api_helpers.php';
 
 $triggeredBy = ($argv[1] ?? '') === 'admin' ? 'admin' : 'cron';
+$dryRun      = (($argv[2] ?? '') === 'dry');
 
+if ($dryRun) {
+    anon_log('[anonymization] DRY RUN — previewing only, no data will be modified.');
+}
 anon_log('[anonymization] Starting (' . $triggeredBy . ')...');
 
 $configPath = __DIR__ . '/../config/anonymization.json';
@@ -55,7 +59,7 @@ $enabled   = (bool)($config['enabled'] ?? false);
 $frequency = (string)($config['frequency'] ?? 'daily');
 $rules     = (array)($config['rules']    ?? []);
 
-if (!$enabled) {
+if (!$enabled && !$dryRun) {
     anon_log('[anonymization] Module is disabled. Exiting.');
     exit(0);
 }
@@ -94,15 +98,17 @@ if ($frequency === 'manual' && $triggeredBy === 'cron') {
     exit(0);
 }
 
-// Insert log entry.
-$logId  = null;
-$logRes = @pg_query_params(
-    $conn,
-    "INSERT INTO {$tLog} (triggered_by, status) VALUES (\$1, 'running') RETURNING id",
-    [$triggeredBy]
-);
-if ($logRes && ($logRow = pg_fetch_assoc($logRes))) {
-    $logId = (int)$logRow['id'];
+// Insert log entry (skipped for dry runs — previews are not audited).
+$logId = null;
+if (!$dryRun) {
+    $logRes = @pg_query_params(
+        $conn,
+        "INSERT INTO {$tLog} (triggered_by, status) VALUES (\$1, 'running') RETURNING id",
+        [$triggeredBy]
+    );
+    if ($logRes && ($logRow = pg_fetch_assoc($logRes))) {
+        $logId = (int)$logRow['id'];
+    }
 }
 
 $rulesProcessed = 0;
@@ -149,6 +155,30 @@ foreach ($rules as $rule) {
     $columnIdent  = pg_ident($column);
     $dateColIdent = pg_ident($dateColumn);
 
+    if ($dryRun) {
+        $sql = "SELECT COUNT(*) AS cnt FROM {$schemaIdent}.{$tableIdent}
+                WHERE {$columnIdent} IS NOT NULL AND {$columnIdent} != \$1
+                  AND {$dateColIdent} < NOW() - (\$2::int * INTERVAL '1 day')";
+        $res = @pg_query_params($conn, $sql, [$replacement, $days]);
+        if (!$res) {
+            $dbErr = pg_last_error($conn);
+            error_log('[cron_anonymization] Preview failed on ' . $table . '.' . $column . ': ' . $dbErr);
+            anon_log("[anonymization] ERROR previewing {$table}.{$column} — check server error log.");
+            if ($errorMessage === null) {
+                $errorMessage = 'Error previewing ' . $table . '.' . $column;
+            }
+            continue;
+        }
+        $cntRow          = pg_fetch_assoc($res);
+        $wouldAffect     = (int)($cntRow['cnt'] ?? 0);
+        $rowsAnonymized += $wouldAffect;
+        $rulesProcessed++;
+        anon_log("[anonymization] {$tableSchema}.{$table}.{$column}"
+            . " (date: {$dateColumn}, older than {$days} days):"
+            . " {$wouldAffect} row(s) would be anonymized.");
+        continue;
+    }
+
     anon_log("[anonymization] Rule: {$tableSchema}.{$table}.{$column}"
         . " (date: {$dateColumn}, older than {$days} days) -> '{$replacement}'");
 
@@ -184,6 +214,13 @@ if ($logId !== null) {
          WHERE id = \$5",
         [$finalStatus, $rulesProcessed, $rowsAnonymized, $errorMessage, $logId]
     );
+}
+
+if ($dryRun) {
+    anon_log("[anonymization] DRY RUN complete. Rules previewed: {$rulesProcessed},"
+        . " total rows that would be anonymized: {$rowsAnonymized}.");
+    anon_log('[anonymization] No data was modified.');
+    exit($errorMessage !== null ? 1 : 0);
 }
 
 anon_log("[anonymization] Done. Rules processed: {$rulesProcessed}, rows anonymized: {$rowsAnonymized}.");

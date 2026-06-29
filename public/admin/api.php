@@ -2495,6 +2495,25 @@ if ($action === 'run_anonymization') {
     exit;
 }
 
+if ($action === 'preview_anonymization') {
+    header('Content-Type: application/json');
+    // Dry run — read-only COUNT(*), modifies no data, so it is allowed even in demo mode.
+    $cronScript = realpath(__DIR__ . '/../../cron/cron_anonymization.php');
+    if ($cronScript === false || !is_readable($cronScript)) {
+        echo json_encode(['status' => 'error', 'error' => 'Anonymization cron script not found.']);
+        exit;
+    }
+    if (!function_exists('exec')) {
+        echo json_encode(['status' => 'error', 'error' => 'exec() is disabled on this server.']);
+        exit;
+    }
+    $lines      = [];
+    $returnCode = 0;
+    exec(PHP_BINARY . ' ' . escapeshellarg($cronScript) . ' admin dry 2>&1', $lines, $returnCode);
+    echo json_encode(['status' => 'success', 'output' => implode("\n", $lines)]);
+    exit;
+}
+
 if ($action === 'anonymization_log') {
     header('Content-Type: application/json');
     try {

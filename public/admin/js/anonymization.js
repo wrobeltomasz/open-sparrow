@@ -164,6 +164,7 @@ function buildRulesTab(ctx) {
             });
 
             body.appendChild(tbl);
+            buildPreviewBlock(body);
         } else {
             const empty = document.createElement('p');
             empty.textContent = 'No rules configured yet. Use the form below to add one.';
@@ -176,6 +177,52 @@ function buildRulesTab(ctx) {
 
     renderRulesTable();
     return card;
+}
+
+function buildPreviewBlock(container) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-bottom:20px;';
+
+    const btn = document.createElement('button');
+    btn.className   = 'btn-action';
+    btn.textContent = 'Preview (dry run)';
+    btn.style.cssText = 'padding:7px 18px; font-size:13px;';
+
+    const hint = document.createElement('span');
+    hint.textContent = 'Counts how many rows each rule would anonymize — no data is modified.';
+    hint.style.cssText = 'margin-left:12px; font-size:12px; color:var(--muted);';
+
+    const out = document.createElement('pre');
+    out.style.cssText = 'margin-top:12px; padding:12px; background:#F4F7F9; border:1px solid var(--border); border-radius:4px; font-size:12px; line-height:1.6; max-height:300px; overflow-y:auto; white-space:pre-wrap; display:none;';
+
+    btn.addEventListener('click', async () => {
+        btn.disabled    = true;
+        btn.textContent = 'Previewing…';
+        out.style.display = '';
+        out.textContent   = 'Please wait…';
+        out.style.color   = '';
+        try {
+            const res  = await fetch('api.php?action=preview_anonymization', {
+                method:  'POST',
+                headers: { 'X-CSRF-Token': getCsrf() },
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                out.textContent = data.output || '(no output)';
+            } else {
+                out.textContent = 'Error: ' + (data.error || 'unknown');
+                out.style.color = '#a80000';
+            }
+        } catch (e) {
+            out.textContent = 'Request failed: ' + e.message;
+            out.style.color = '#a80000';
+        }
+        btn.disabled    = false;
+        btn.textContent = 'Preview (dry run)';
+    });
+
+    wrap.append(btn, hint, out);
+    container.appendChild(wrap);
 }
 
 function buildAddForm(container, tableOptions, onAdded) {
